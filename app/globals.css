@@ -1,26 +1,86 @@
 @import "tailwindcss";
 
+/* ─── Sigrid Design System ─── */
+
+/* Color primitives as CSS variables (update these to retheme the entire app) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --sig-bg: #F9F7F4;
+  --sig-surface: #FFFFFF;
+  --sig-surface-2: #F2EEE8;
+  --sig-border: #E4DDD2;
+  --sig-border-soft: #EDE8E1;
+  --sig-primary: #BF8B5E;
+  --sig-primary-deep: #9A6E45;
+  --sig-primary-soft: #F5EAE0;
+  --sig-ink: #1A1815;
+  --sig-ink-2: #6B635A;
+  --sig-ink-3: #A39B92;
+  --sig-success: #4E7D4F;
+  --sig-success-soft: #E3EEE3;
+  --sig-warn: #D4903A;
+  --sig-warn-soft: #FBF0E0;
+  --sig-danger: #C5574A;
+  --sig-danger-soft: #F9E0DC;
+  --sig-overlay: rgba(26, 24, 21, 0.5);
 }
 
+/* Expose color variables as Tailwind utilities */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--sig-bg);
+  --color-surface: var(--sig-surface);
+  --color-surface-2: var(--sig-surface-2);
+  --color-rim: var(--sig-border);
+  --color-rim-soft: var(--sig-border-soft);
+  --color-primary: var(--sig-primary);
+  --color-primary-deep: var(--sig-primary-deep);
+  --color-primary-soft: var(--sig-primary-soft);
+  --color-ink: var(--sig-ink);
+  --color-ink-2: var(--sig-ink-2);
+  --color-ink-3: var(--sig-ink-3);
+  --color-success: var(--sig-success);
+  --color-success-soft: var(--sig-success-soft);
+  --color-warn: var(--sig-warn);
+  --color-warn-soft: var(--sig-warn-soft);
+  --color-danger: var(--sig-danger);
+  --color-danger-soft: var(--sig-danger-soft);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Typography scale */
+@theme {
+  --text-display: 2.125rem;
+  --text-title: 1.75rem;
+  --text-heading: 1.375rem;
+  --text-body: 1.0625rem;
+  --text-label: 0.9375rem;
+  --text-caption: 0.8125rem;
+
+  /* Custom shadows */
+  --shadow-soft: 0 2px 12px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.04);
+  --shadow-card: 0 4px 20px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.04);
+  --shadow-modal: 0 20px 60px rgb(0 0 0 / 0.18), 0 4px 20px rgb(0 0 0 / 0.1);
+  --shadow-tab: 0 -1px 0 var(--sig-border);
+}
+
+/* Base styles */
+html {
+  background-color: var(--sig-bg);
+  color: var(--sig-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--sig-bg);
+  color: var(--sig-ink);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Smooth scroll */
+* {
+  -webkit-tap-highlight-color: transparent;
 }

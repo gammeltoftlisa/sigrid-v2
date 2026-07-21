@@ -1,0 +1,182 @@
+'use client'
+
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import BodySilhouette from '@/components/ui/BodySilhouette'
+import { creators } from '@/lib/data'
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <motion.button
+      onClick={() => onChange(!checked)}
+      className={`relative w-12 h-7 rounded-full transition-colors duration-300 ${checked ? 'bg-primary' : 'bg-rim'}`}
+    >
+      <motion.div
+        animate={{ x: checked ? 20 : 2 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        className="absolute top-[3px] w-[22px] h-[22px] bg-surface rounded-full shadow-soft"
+      />
+    </motion.button>
+  )
+}
+
+export default function ProfilePage() {
+  const [unit, setUnit] = useState<'cm' | 'inches'>('cm')
+  const [notifications, setNotifications] = useState(true)
+  const [followedCreators] = useState(creators.slice(0, 2))
+
+  const measurements = {
+    bust: 88,
+    waist: 70,
+    hips: 96,
+    height: 168,
+    inseam: 78,
+  }
+
+  return (
+    <div className="min-h-full bg-bg">
+      <div className="px-5 pt-14 pb-6">
+        <motion.h1
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-display font-bold text-ink"
+        >
+          Profile
+        </motion.h1>
+      </div>
+
+      {/* User card */}
+      <div className="px-5 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-surface rounded-3xl p-5 shadow-soft flex items-center gap-4"
+        >
+          <div className="w-16 h-16 rounded-full bg-primary-soft flex items-center justify-center text-[28px] font-bold text-primary">
+            E
+          </div>
+          <div>
+            <h2 className="text-heading font-semibold text-ink">Emma</h2>
+            <p className="text-caption text-ink-3">emma@example.com</p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Measurements */}
+      <div className="px-5 mb-6">
+        <h2 className="text-heading font-semibold text-ink mb-4">My measurements</h2>
+        <div className="bg-surface rounded-3xl p-5 shadow-soft">
+          <div className="flex gap-4 items-start">
+            <div className="w-24 flex-shrink-0">
+              <BodySilhouette
+                measurements={measurements}
+                className="h-40"
+              />
+            </div>
+            <div className="flex-1 space-y-2.5">
+              {Object.entries(measurements).map(([key, val]) => (
+                <div key={key} className="flex items-center justify-between">
+                  <span className="text-label font-medium text-ink-2 capitalize">{key}</span>
+                  <span className="text-label font-semibold text-ink">
+                    {unit === 'cm' ? `${val} cm` : `${(val / 2.54).toFixed(1)}"`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button className="mt-4 w-full py-3 rounded-2xl border border-rim text-label font-semibold text-ink-2">
+            Edit measurements
+          </button>
+        </div>
+      </div>
+
+      {/* Preferences */}
+      <div className="px-5 mb-6">
+        <h2 className="text-heading font-semibold text-ink mb-4">Preferences</h2>
+        <div className="bg-surface rounded-3xl shadow-soft overflow-hidden divide-y divide-rim-soft">
+          {/* Units */}
+          <div className="flex items-center justify-between px-5 py-4">
+            <div>
+              <p className="text-label font-medium text-ink">Measurement units</p>
+              <p className="text-caption text-ink-3">Used throughout your patterns</p>
+            </div>
+            <div className="flex items-center gap-2 bg-surface-2 rounded-full p-1">
+              {(['cm', 'inches'] as const).map((u) => (
+                <button
+                  key={u}
+                  onClick={() => setUnit(u)}
+                  className={`px-3 py-1.5 rounded-full text-label font-medium transition-all duration-200 ${
+                    unit === u ? 'bg-primary text-surface shadow-soft' : 'text-ink-2'
+                  }`}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Notifications */}
+          <div className="flex items-center justify-between px-5 py-4">
+            <div>
+              <p className="text-label font-medium text-ink">Push notifications</p>
+              <p className="text-caption text-ink-3">Sewing tips and reminders</p>
+            </div>
+            <Toggle checked={notifications} onChange={setNotifications} />
+          </div>
+        </div>
+      </div>
+
+      {/* Payment */}
+      <div className="px-5 mb-6">
+        <h2 className="text-heading font-semibold text-ink mb-4">Subscription</h2>
+        <Link href="/payment">
+          <div className="bg-surface rounded-3xl p-5 shadow-soft flex items-center justify-between">
+            <div>
+              <p className="text-label font-medium text-ink">Beta access</p>
+              <p className="text-caption text-ink-3">Payment coming soon</p>
+            </div>
+            <span className="text-[12px] font-semibold bg-warn-soft text-warn px-2.5 py-1 rounded-full">
+              Coming soon
+            </span>
+          </div>
+        </Link>
+      </div>
+
+      {/* Creators I follow */}
+      <div className="px-5 mb-6">
+        <h2 className="text-heading font-semibold text-ink mb-4">Creators I follow</h2>
+        <div className="flex flex-col gap-3">
+          {followedCreators.map((creator) => (
+            <Link key={creator.id} href={`/creator/${creator.id}`}>
+              <div className="bg-surface rounded-2xl p-4 shadow-soft flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-surface font-bold"
+                  style={{ backgroundColor: creator.avatarColor }}
+                >
+                  {creator.name[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-label font-semibold text-ink">{creator.handle}</p>
+                  <p className="text-caption text-ink-3">{creator.followerCount} followers</p>
+                </div>
+                {creator.isCertified && (
+                  <span className="text-[10px] font-semibold bg-primary-soft text-primary px-2 py-0.5 rounded-full">
+                    ✓ Certified
+                  </span>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Sign out */}
+      <div className="px-5 pb-8">
+        <button className="w-full py-4 rounded-full text-danger text-label font-semibold">
+          Sign out
+        </button>
+      </div>
+    </div>
+  )
+}
