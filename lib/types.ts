@@ -88,3 +88,67 @@ export interface FabricOption {
   isEco?: boolean
   isSecondhand?: boolean
 }
+
+// ── 2D Step-by-step guide ────────────────────────────────────────────────────
+
+export type StepAction =
+  | 'prepare'
+  | 'cut'
+  | 'mark'
+  | 'fold'
+  | 'pin'
+  | 'sew'
+  | 'press'
+  | 'attach'
+
+export type PieceEdge = 'top' | 'bottom' | 'left' | 'right'
+export type FabricSide = 'right' | 'wrong'
+
+export interface UserMeasurements {
+  bust: number
+  waist: number
+  hips: number
+  height: number
+  inseam: number
+}
+
+export interface PieceDims {
+  topWidth: number
+  bottomWidth: number
+  height: number
+}
+
+export interface GuidePiece {
+  id: string
+  label: string
+  shape: 'rectangle' | 'trapezoid'
+  dims: PieceDims | ((m: UserMeasurements) => PieceDims)
+  grainLine?: 'vertical' | 'horizontal'
+  seamAllowance?: number
+}
+
+export interface StepAnnotation {
+  type: 'cut-line' | 'fold-line' | 'sew-line' | 'pin-row' | 'measure-arrow'
+  edge?: PieceEdge
+  amount?: number
+  label?: string
+}
+
+export interface SewingStep2D {
+  id: number
+  action: StepAction
+  title: string
+  instruction: string
+  pieceId?: string
+  fabricSide?: FabricSide
+  annotation?: StepAnnotation
+  tool?: 'scissors' | 'pins' | 'needle' | 'iron' | 'chalk' | 'ruler'
+  measurement?: string
+  tip?: string
+}
+
+export interface GarmentGuide {
+  garmentId: string
+  pieces: GuidePiece[]
+  steps: SewingStep2D[]
+}
