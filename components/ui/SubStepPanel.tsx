@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { GARMENT_STEPS, type StepKey } from './StepTracker'
+import GarmentIllustration from './GarmentIllustration'
 
 interface Props {
   current: StepKey
@@ -11,9 +12,10 @@ interface Props {
   onPrev?: () => void
   onExit?: () => void
   isLast?: boolean
+  garmentName?: string
 }
 
-export default function SubStepPanel({ current, activeSubStep, onNext, onPrev, onExit, isLast }: Props) {
+export default function SubStepPanel({ current, activeSubStep, onNext, onPrev, onExit, isLast, garmentName }: Props) {
   const step = GARMENT_STEPS.find((s) => s.key === current)!
   const [openStep, setOpenStep] = useState<number | null>(activeSubStep ?? 0)
 
@@ -26,8 +28,14 @@ export default function SubStepPanel({ current, activeSubStep, onNext, onPrev, o
 
   return (
     <div className="w-1/3 shrink-0 bg-surface border-r border-rim flex flex-col overflow-hidden">
+      {/* Garment illustration */}
+      {garmentName && (
+        <div className="px-4 pt-4 pb-3 shrink-0 flex items-center justify-center border-b border-rim">
+          <GarmentIllustration name={garmentName} className="w-20 h-20" />
+        </div>
+      )}
       {/* Label */}
-      <div className="px-3 pt-4 pb-2 shrink-0">
+      <div className="px-3 pt-3 pb-2 shrink-0">
         <p className="text-[11px] font-bold text-ink-3 uppercase tracking-widest">Steps</p>
       </div>
 

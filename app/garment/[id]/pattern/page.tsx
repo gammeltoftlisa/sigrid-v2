@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -56,10 +56,23 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
   const { id } = use(params)
   const router = useRouter()
   const garment = getGarmentById(id)
+  const [exiting, setExiting] = useState(false)
+  const [animateIn] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const flag = sessionStorage.getItem('sigrid_flow_enter')
+    if (flag) { sessionStorage.removeItem('sigrid_flow_enter'); return true }
+    return false
+  })
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-bg">
-      <StepTracker current="pattern" garmentId={id} garmentName={garment.name} />
+    <motion.div
+      className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-bg rounded-t-3xl overflow-hidden shadow-modal"
+      initial={{ y: animateIn ? '100%' : 0 }}
+      animate={{ y: exiting ? '100%' : 0 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+      onAnimationComplete={() => { if (exiting) router.push(`/garment/${id}`) }}
+    >
+      <StepTracker current="pattern" garmentId={id} garmentName={garment.name} onClose={() => setExiting(true)} />
 
       <div className="flex-1 flex flex-row overflow-hidden">
         <SubStepPanel
@@ -68,6 +81,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
           onNext={() => router.push(`/garment/${id}/materials`)}
           onPrev={() => router.push(`/garment/${id}/measurements`)}
           onExit={() => router.push('/home')}
+          garmentName={garment.name}
         />
 
         {/* Right 2/3 */}
@@ -141,6 +155,6 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

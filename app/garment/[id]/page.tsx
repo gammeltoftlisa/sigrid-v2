@@ -3,7 +3,7 @@
 import { useState, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { getGarmentById, creators } from '@/lib/data'
 import DifficultyBadge from '@/components/ui/DifficultyBadge'
 import FitBadge from '@/components/ui/FitBadge'
@@ -76,126 +76,171 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const [following, setFollowing] = useState(false)
   const router = useRouter()
 
-  return (
-    <div className="min-h-screen bg-bg pb-24">
-      {/* Back button */}
-      <div className="px-5 pt-14 pb-4 flex items-center gap-3">
-        <button
-          onClick={() => router.back()}
-          className="w-10 h-10 rounded-full bg-surface shadow-soft flex items-center justify-center"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="var(--sig-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-      </div>
+  const backButton = (
+    <button
+      onClick={() => router.back()}
+      className="w-10 h-10 rounded-full bg-surface shadow-soft flex items-center justify-center"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M15 18L9 12L15 6" stroke="var(--sig-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  )
 
-      {/* Garment illustration */}
-      <div className="mx-5 mb-6 bg-surface rounded-3xl overflow-hidden shadow-soft p-8 aspect-square flex items-center justify-center">
-        <GarmentIllustration name={garment.name} className="w-full h-full max-w-56" />
-      </div>
-
-      <div className="px-5">
-        {/* Name + badges */}
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div>
-            <h1 className="text-title font-bold text-ink mb-2">{garment.name}</h1>
-            <div className="flex items-center gap-2 flex-wrap">
-              <DifficultyBadge difficulty={garment.difficulty} size="md" />
-              <FitBadge fit={selectedFit} size="md" />
-              <span className="text-caption text-ink-3">⏱ {garment.estimatedTime}</span>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className="text-title font-bold text-primary">€{garment.price}</span>
+  const infoContent = (
+    <>
+      {/* Name + badges */}
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <h1 className="text-title font-bold text-ink mb-2">{garment.name}</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <DifficultyBadge difficulty={garment.difficulty} size="md" />
+            <FitBadge fit={selectedFit} size="md" />
+            <span className="text-caption text-ink-3">⏱ {garment.estimatedTime}</span>
           </div>
         </div>
+        <div className="text-right">
+          <span className="text-title font-bold text-primary">€{garment.price}</span>
+        </div>
+      </div>
 
-        <p className="text-body text-ink-2 mb-6 leading-relaxed">{garment.description}</p>
+      <p className="text-body text-ink-2 mb-6 leading-relaxed">{garment.description}</p>
 
-        {/* Creator section */}
-        {creator && (
-          <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft flex items-center gap-4">
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center text-surface text-xl font-bold flex-shrink-0"
-              style={{ backgroundColor: creator.avatarColor }}
-            >
-              {creator.name[0]}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-label font-semibold text-ink">{creator.handle}</p>
-                {creator.isCertified && (
-                  <span className="text-[10px] font-semibold bg-primary-soft text-primary px-2 py-0.5 rounded-full">
-                    ✓ Certified
-                  </span>
-                )}
-              </div>
-              <p className="text-caption text-ink-3">{creator.followerCount} followers</p>
-            </div>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setFollowing((f) => !f)}
-              className={`px-4 py-2 rounded-full text-label font-semibold transition-colors duration-200 ${
-                following ? 'bg-surface-2 text-ink-2' : 'bg-primary text-surface'
-              }`}
-            >
-              {following ? 'Following' : 'Follow'}
-            </motion.button>
+      {/* Creator section */}
+      {creator && (
+        <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft flex items-center gap-4">
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center text-surface text-xl font-bold flex-shrink-0"
+            style={{ backgroundColor: creator.avatarColor }}
+          >
+            {creator.name[0]}
           </div>
-        )}
-
-        {/* Fit selector (Sigrid base garments) */}
-        {!garment.isCreator && garment.fits && garment.fits.length > 1 && (
-          <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft">
-            <h3 className="text-heading font-semibold text-ink mb-2">Choose your fit</h3>
-            <p className="text-caption text-ink-3 mb-5">Drag to adjust how the garment sits on your body</p>
-            <div className="flex items-end gap-4 mb-5">
-              <div className="w-24 h-24">
-                <GarmentIllustration
-                  name={garment.name}
-                  className="w-full h-full"
-                  color={fitPositions.indexOf(selectedFit) > 1 ? 'var(--sig-primary-deep)' : 'var(--sig-primary)'}
-                />
-              </div>
-              <div className="flex-1">
-                <FitSlider
-                  fits={garment.fits}
-                  selected={selectedFit}
-                  onSelect={setSelectedFit}
-                />
-              </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-label font-semibold text-ink">{creator.handle}</p>
+              {creator.isCertified && (
+                <span className="text-[10px] font-semibold bg-primary-soft text-primary px-2 py-0.5 rounded-full">
+                  ✓ Certified
+                </span>
+              )}
             </div>
+            <p className="text-caption text-ink-3">{creator.followerCount} followers</p>
           </div>
-        )}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setFollowing((f) => !f)}
+            className={`px-4 py-2 rounded-full text-label font-semibold transition-colors duration-200 ${
+              following ? 'bg-surface-2 text-ink-2' : 'bg-primary text-surface'
+            }`}
+          >
+            {following ? 'Following' : 'Follow'}
+          </motion.button>
+        </div>
+      )}
 
-        {/* What's included */}
+      {/* Fit selector (Sigrid base garments) */}
+      {!garment.isCreator && garment.fits && garment.fits.length > 1 && (
         <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft">
-          <h3 className="text-heading font-semibold text-ink mb-4">What&apos;s included</h3>
-          <div className="space-y-3">
-            {[
-              { icon: '📐', title: 'Custom pattern', desc: 'Generated to your exact measurements' },
-              { icon: '🧵', title: 'Material guide', desc: 'Know exactly what to buy and where' },
-              { icon: '🎬', title: 'Animated guide', desc: '3D step-by-step sewing instructions' },
-            ].map((item) => (
-              <div key={item.title} className="flex items-center gap-4">
-                <span className="text-2xl">{item.icon}</span>
-                <div>
-                  <p className="text-label font-semibold text-ink">{item.title}</p>
-                  <p className="text-caption text-ink-3">{item.desc}</p>
-                </div>
-              </div>
-            ))}
+          <h3 className="text-heading font-semibold text-ink mb-2">Choose your fit</h3>
+          <p className="text-caption text-ink-3 mb-5">Drag to adjust how the garment sits on your body</p>
+          <div className="flex items-end gap-4 mb-5">
+            <div className="w-24 h-24">
+              <GarmentIllustration
+                name={garment.name}
+                className="w-full h-full"
+                color={fitPositions.indexOf(selectedFit) > 1 ? 'var(--sig-primary-deep)' : 'var(--sig-primary)'}
+              />
+            </div>
+            <div className="flex-1">
+              <FitSlider
+                fits={garment.fits}
+                selected={selectedFit}
+                onSelect={setSelectedFit}
+              />
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* What's included */}
+      <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft">
+        <h3 className="text-heading font-semibold text-ink mb-4">What&apos;s included</h3>
+        <div className="space-y-3">
+          {[
+            { icon: '📐', title: 'Custom pattern', desc: 'Generated to your exact measurements' },
+            { icon: '🧵', title: 'Material guide', desc: 'Know exactly what to buy and where' },
+            { icon: '🎬', title: 'Animated guide', desc: '3D step-by-step sewing instructions' },
+          ].map((item) => (
+            <div key={item.title} className="flex items-center gap-4">
+              <span className="text-2xl">{item.icon}</span>
+              <div>
+                <p className="text-label font-semibold text-ink">{item.title}</p>
+                <p className="text-caption text-ink-3">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+
+  return (
+    <div className="bg-bg md:flex md:h-screen md:overflow-hidden">
+
+      {/* ── Mobile layout ── */}
+      <div className="md:hidden min-h-screen pb-24">
+        <div className="px-5 pt-14 pb-4 flex items-center gap-3">
+          {backButton}
+          <nav className="flex items-center gap-1 text-caption text-ink-3">
+            <Link href="/home" className="hover:text-ink transition-colors">All garments</Link>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="text-ink font-medium">{garment.name}</span>
+          </nav>
+        </div>
+        <div className="mx-5 mb-6 bg-surface rounded-3xl overflow-hidden shadow-soft p-8 aspect-square flex items-center justify-center">
+          <GarmentIllustration name={garment.name} className="w-full h-full max-w-56" />
+        </div>
+        <div className="px-5">{infoContent}</div>
+        <div className="fixed bottom-0 left-0 right-0 px-5 pb-8 pt-4 bg-gradient-to-t from-bg via-bg to-transparent">
+          <Link href={`/garment/${id}/measurements`} onClick={() => sessionStorage.setItem('sigrid_flow_enter', '1')}>
+            <PrimaryButton>Start this project — €{garment.price}</PrimaryButton>
+          </Link>
         </div>
       </div>
 
-      {/* Sticky CTA */}
-      <div className="fixed bottom-0 left-0 right-0 px-5 pb-8 pt-4 bg-gradient-to-t from-bg via-bg to-transparent">
-        <Link href={`/garment/${id}/measurements`}>
-          <PrimaryButton>Start this project — €{garment.price}</PrimaryButton>
-        </Link>
+      {/* ── Desktop layout ── */}
+      {/* Left: sticky image panel */}
+      <div className="hidden md:flex md:w-1/2 md:h-screen md:flex-col md:bg-surface md:border-r md:border-rim">
+        <div className="px-6 pt-8 pb-4 flex items-center">{backButton}</div>
+        <div className="flex-1 flex items-center justify-center p-10">
+          <GarmentIllustration name={garment.name} className="w-full max-w-xs" />
+        </div>
       </div>
+
+      {/* Right: scrollable info + pinned CTA */}
+      <div className="hidden md:flex md:w-1/2 md:h-screen md:flex-col">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-8 pt-10 pb-4">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-1.5 text-caption text-ink-3 mb-6">
+            <Link href="/home" className="hover:text-ink transition-colors">All garments</Link>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="text-ink font-medium">{garment.name}</span>
+          </nav>
+          {infoContent}
+        </div>
+        {/* Pinned button — never scrolls away */}
+        <div className="shrink-0 px-8 py-6 border-t border-rim">
+          <Link href={`/garment/${id}/measurements`} onClick={() => sessionStorage.setItem('sigrid_flow_enter', '1')}>
+            <PrimaryButton>Start this project — €{garment.price}</PrimaryButton>
+          </Link>
+        </div>
+      </div>
+
     </div>
   )
 }

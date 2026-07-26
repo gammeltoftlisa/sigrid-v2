@@ -39,6 +39,8 @@ interface Props {
   garmentName: string
   /** 0–1: how far through the current step the user is. Extends the filled line past the active circle. */
   stepProgress?: number
+  /** If provided, called instead of router.push when the X is clicked (use to play exit animation first). */
+  onClose?: () => void
 }
 
 const STEP_URLS: Record<StepKey, (id: string) => string> = {
@@ -51,7 +53,7 @@ const STEP_URLS: Record<StepKey, (id: string) => string> = {
 
 const NODE = 32
 
-export default function StepTracker({ current, garmentId, garmentName, stepProgress = 0 }: Props) {
+export default function StepTracker({ current, garmentId, garmentName, stepProgress = 0, onClose }: Props) {
   const currentIdx = GARMENT_STEPS.findIndex((s) => s.key === current)
   const router = useRouter()
   const total = GARMENT_STEPS.length
@@ -65,7 +67,7 @@ export default function StepTracker({ current, garmentId, garmentName, stepProgr
       <div className="flex items-center justify-between px-5 pt-4 pb-3">
         <p className="text-label font-bold text-ink">{garmentName}</p>
         <button
-          onClick={() => router.push(`/garment/${garmentId}`)}
+          onClick={() => onClose ? onClose() : router.push(`/garment/${garmentId}`)}
           className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center hover:bg-rim transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
