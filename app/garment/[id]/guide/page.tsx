@@ -32,6 +32,13 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [direction, setDirection] = useState(1)
   const [measurements, setMeasurements] = useState<UserMeasurements>(DEFAULT_MEASUREMENTS)
   const [doneAnim, setDoneAnim] = useState(false)
+  const [exiting, setExiting] = useState(false)
+  const [animateIn] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const flag = sessionStorage.getItem('sigrid_flow_enter')
+    if (flag) { sessionStorage.removeItem('sigrid_flow_enter'); return true }
+    return false
+  })
 
   useEffect(() => {
     try {
@@ -92,12 +99,19 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const piece = step.pieceId ? (guide.pieces.find((p) => p.id === step.pieceId) ?? null) : null
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-bg overflow-hidden">
+    <motion.div
+      className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-bg rounded-t-3xl overflow-hidden shadow-modal"
+      initial={{ y: animateIn ? '100%' : 0 }}
+      animate={{ y: exiting ? '100%' : 0 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+      onAnimationComplete={() => { if (exiting) router.push(`/garment/${id}`) }}
+    >
       <StepTracker
         current="guide"
         garmentId={id}
         garmentName={garment.name}
         stepProgress={completedUntil / steps.length}
+        onClose={() => setExiting(true)}
       />
 
       <div className="flex-1 flex flex-row overflow-hidden">
@@ -159,6 +173,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

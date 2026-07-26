@@ -26,6 +26,13 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
   const router = useRouter()
   const garment = getGarmentById(id)
   const [selectedFabric, setSelectedFabric] = useState(0)
+  const [exiting, setExiting] = useState(false)
+  const [animateIn] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const flag = sessionStorage.getItem('sigrid_flow_enter')
+    if (flag) { sessionStorage.removeItem('sigrid_flow_enter'); return true }
+    return false
+  })
 
   const mainFabrics = tshirtFabrics.filter((f) => !f.isSecondhand)
   const ecoOptions  = tshirtFabrics.filter((f) => f.isEco)
@@ -34,8 +41,14 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
   const activeSubStep = selectedFabric >= 0 ? 1 : 0
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-bg">
-      <StepTracker current="materials" garmentId={id} garmentName={garment.name} stepProgress={selectedFabric >= 0 ? 1 / 3 : 0} />
+    <motion.div
+      className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-bg rounded-t-3xl overflow-hidden shadow-modal"
+      initial={{ y: animateIn ? '100%' : 0 }}
+      animate={{ y: exiting ? '100%' : 0 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+      onAnimationComplete={() => { if (exiting) router.push(`/garment/${id}`) }}
+    >
+      <StepTracker current="materials" garmentId={id} garmentName={garment.name} stepProgress={selectedFabric >= 0 ? 1 / 3 : 0} onClose={() => setExiting(true)} />
 
       <div className="flex-1 flex flex-row overflow-hidden">
         <SubStepPanel
@@ -44,6 +57,7 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
           onNext={() => router.push(`/garment/${id}/guide`)}
           onPrev={() => router.push(`/garment/${id}/pattern`)}
           onExit={() => router.push('/home')}
+          garmentName={garment.name}
         />
 
         {/* Right 2/3 */}
@@ -177,6 +191,6 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState, use } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import BodySilhouette from '@/components/ui/BodySilhouette'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import SecondaryButton from '@/components/ui/SecondaryButton'
@@ -32,6 +32,15 @@ export default function MeasurementsPage({ params }: { params: Promise<{ id: str
 
   const filledCount = fields.filter((f) => measurements[f.key] !== undefined).length
   const hasMeasurements = filledCount > 0
+  const [exiting, setExiting] = useState(false)
+  const [animateIn] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const flag = sessionStorage.getItem('sigrid_flow_enter')
+    if (flag) { sessionStorage.removeItem('sigrid_flow_enter'); return true }
+    return false
+  })
+
+  const handleClose = () => setExiting(true)
 
   const setValue = (field: MeasurementField, raw: string) => {
     const n = parseFloat(raw)
@@ -44,8 +53,14 @@ export default function MeasurementsPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-bg">
-      <StepTracker current="measurements" garmentId={id} garmentName={garment.name} stepProgress={filledCount / fields.length} />
+    <motion.div
+      className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-bg rounded-t-3xl overflow-hidden shadow-modal"
+      initial={{ y: animateIn ? '100%' : 0 }}
+      animate={{ y: exiting ? '100%' : 0 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+      onAnimationComplete={() => { if (exiting) router.push(`/garment/${id}`) }}
+    >
+      <StepTracker current="measurements" garmentId={id} garmentName={garment.name} stepProgress={filledCount / fields.length} onClose={handleClose} />
 
       <div className="flex-1 flex flex-row overflow-hidden">
         <SubStepPanel
@@ -54,6 +69,7 @@ export default function MeasurementsPage({ params }: { params: Promise<{ id: str
           onNext={handleConfirm}
           onPrev={() => router.back()}
           onExit={() => router.push('/home')}
+          garmentName={garment.name}
         />
 
         {/* Right 2/3 */}
@@ -153,6 +169,6 @@ export default function MeasurementsPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

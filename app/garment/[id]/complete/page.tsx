@@ -18,10 +18,23 @@ export default function CompletePage({ params }: { params: Promise<{ id: string 
   const router = useRouter()
   const [rating, setRating] = useState(0)
   const [hoveredStar, setHoveredStar] = useState(0)
+  const [exiting, setExiting] = useState(false)
+  const [animateIn] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const flag = sessionStorage.getItem('sigrid_flow_enter')
+    if (flag) { sessionStorage.removeItem('sigrid_flow_enter'); return true }
+    return false
+  })
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-[#F9F7F4]">
-      <StepTracker current="complete" garmentId={id} garmentName={garment.name} stepProgress={rating > 0 ? 0.5 : 0} />
+    <motion.div
+      className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-[#F9F7F4] rounded-t-3xl overflow-hidden shadow-modal"
+      initial={{ y: animateIn ? '100%' : 0 }}
+      animate={{ y: exiting ? '100%' : 0 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+      onAnimationComplete={() => { if (exiting) router.push(`/garment/${id}`) }}
+    >
+      <StepTracker current="complete" garmentId={id} garmentName={garment.name} stepProgress={rating > 0 ? 0.5 : 0} onClose={() => setExiting(true)} />
 
       <div className="flex-1 flex flex-row overflow-hidden">
         <SubStepPanel
@@ -31,6 +44,7 @@ export default function CompletePage({ params }: { params: Promise<{ id: string 
           onPrev={() => router.push(`/garment/${id}/guide`)}
           onExit={() => router.push('/home')}
           isLast
+          garmentName={garment.name}
         />
 
         {/* Right 2/3 */}
@@ -174,6 +188,6 @@ export default function CompletePage({ params }: { params: Promise<{ id: string 
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
