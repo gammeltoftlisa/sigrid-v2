@@ -2,7 +2,6 @@
 
 import { useRef, useEffect, useCallback } from 'react'
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import type { SewingStep } from '@/lib/types'
 
 interface Props {
@@ -167,19 +166,27 @@ export default function SewingGuide({ steps, currentStep, isCompleted }: Props) 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(W, H)
     renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = 1.05
+    renderer.outputColorSpace = THREE.SRGBColorSpace
     containerRef.current.appendChild(renderer.domElement)
 
-    // Lighting
-    scene.add(new THREE.AmbientLight(0xfff8f0, 0.9))
-    const key = new THREE.DirectionalLight(0xfff8f0, 1.6)
-    key.position.set(2.5, 6, 5); key.castShadow = true
+    // Lighting — studio setup matching reference
+    const hemi = new THREE.HemisphereLight(0xffffff, 0xD6D0C8, 0.70)
+    scene.add(hemi)
+    const key = new THREE.DirectionalLight(0xffffff, 2.4)
+    key.position.set(2.0, 9, 5); key.castShadow = true
+    key.shadow.mapSize.set(2048, 2048)
+    key.shadow.camera.near = 0.5; key.shadow.camera.far = 20
+    key.shadow.radius = 4
     scene.add(key)
-    const fill1 = new THREE.DirectionalLight(0xddeeff, 0.45)
-    fill1.position.set(-4, 2, -3); scene.add(fill1)
-    const fill2 = new THREE.DirectionalLight(0xfff0e0, 0.25)
-    fill2.position.set(0, -3, 2); scene.add(fill2)
-    const rim = new THREE.DirectionalLight(0xffffff, 0.30)
-    rim.position.set(0, 1, -5); scene.add(rim)
+    const fill1 = new THREE.DirectionalLight(0xddeeff, 0.55)
+    fill1.position.set(-4, 3, 2); scene.add(fill1)
+    const fill2 = new THREE.DirectionalLight(0xfff8f2, 0.20)
+    fill2.position.set(0, -2, 3); scene.add(fill2)
+    const rim = new THREE.DirectionalLight(0xffffff, 0.45)
+    rim.position.set(0, 3, -5); scene.add(rim)
 
     // Ground
     const ground = new THREE.Mesh(
@@ -191,47 +198,175 @@ export default function SewingGuide({ steps, currentStep, isCompleted }: Props) 
     ground.receiveShadow = true
     scene.add(ground)
 
-    // Stand
-    const stickMat = new THREE.MeshStandardMaterial({ color: 0xADA095, roughness: 0.45, metalness: 0.35 })
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.0, 10), stickMat)
-    pole.position.y = GROUND_Y + 0.50
-    scene.add(pole)
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.38, 0.055, 30), stickMat)
-    base.position.y = GROUND_Y + 0.028
-    scene.add(base)
-
-    // ── Load female mannequin GLB ────────────────────────────────────
+    // ── Parametric female mannequin ──────────────────────────────────
+    // Body built from continuous elliptical cross-section meshes —
+    // single smooth surface per body part, no visible seams.
     const manMat = new THREE.MeshStandardMaterial({
-      color: 0xC9BBAA, roughness: 0.65, metalness: 0.02,
+      color: 0xE8E5E0, roughness: 0.40, metalness: 0.0, envMapIntensity: 0.5,
     })
-    let cancelled = false
-    const loader = new GLTFLoader()
-    loader.load('/models/mannequin.glb', (gltf) => {
-      if (cancelled) return
-      const model = gltf.scene
 
-      // Scale so height fits MANNEQUIN_HEIGHT, center and place at ground
-      const box = new THREE.Box3().setFromObject(model)
-      const size = box.getSize(new THREE.Vector3())
-      const center = box.getCenter(new THREE.Vector3())
-      const scale = MANNEQUIN_HEIGHT / size.y
-      model.scale.setScalar(scale)
-      model.position.set(
-        -center.x * scale,
-        GROUND_Y - box.min.y * scale,
-        -center.z * scale,
-      )
-      // Neutral matte mannequin material on the single body mesh
-      model.traverse((child) => {
-        const mesh = child as THREE.Mesh
-        if (mesh.isMesh) {
-          mesh.material = manMat
-          mesh.castShadow = true
+    // Build a smooth mesh by stacking elliptical rings and connecting them.
+    // cz > 0 = shift oval forward (+z toward camera) — used for bust.
+    // cz < 0 = shift oval backward — used for buttocks.
+    type Sec = { y: number; rx: number; rz: number; cz?: number }
+    function buildSec(secs: Sec[], n: number, capBot: boolean, capTop: boolean): THREE.Mesh {
+      const v: number[] = [], ix: number[] = [], ri: number[] = []
+      for (const { y, rx, rz, cz = 0 } of secs) {
+        ri.push(v.length / 3)
+        for (let j = 0; j < n; j++) {
+          const a = (j / n) * Math.PI * 2
+          v.push(Math.cos(a) * rx, y, cz + Math.sin(a) * rz)
         }
-      })
+      }
+      for (let i = 0; i < secs.length - 1; i++) {
+        const r0 = ri[i], r1 = ri[i + 1]
+        for (let j = 0; j < n; j++) {
+          const j1 = (j + 1) % n
+          ix.push(r0+j, r1+j, r0+j1,  r0+j1, r1+j, r1+j1)
+        }
+      }
+      if (capBot) {
+        const ci = v.length / 3; const s = secs[0]
+        v.push(0, s.y, s.cz ?? 0)
+        for (let j = 0; j < n; j++) ix.push(ci, ri[0]+(j+1)%n, ri[0]+j)
+      }
+      if (capTop) {
+        const ci = v.length / 3; const s = secs[secs.length-1]
+        v.push(0, s.y, s.cz ?? 0)
+        const r = ri[secs.length-1]
+        for (let j = 0; j < n; j++) ix.push(ci, r+j, r+(j+1)%n)
+      }
+      const geo = new THREE.BufferGeometry()
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3))
+      geo.setIndex(ix); geo.computeVertexNormals()
+      const m = new THREE.Mesh(geo, manMat); m.castShadow = true; return m
+    }
 
-      scene.add(model)
-    })
+    // Build a tube mesh along an arbitrary 3D direction with varying radius.
+    // Used for arms so they sit naturally perpendicular to the arm axis.
+    function buildTube(
+      start: THREE.Vector3, dir: THREE.Vector3,
+      lengths: number[], radii: number[], n: number,
+    ): THREE.Mesh {
+      const up = new THREE.Vector3(0, 1, 0)
+      const p1 = new THREE.Vector3().crossVectors(dir, up).normalize()
+      const p2 = new THREE.Vector3().crossVectors(dir, p1).normalize()
+      const v: number[] = [], ix: number[] = [], ri: number[] = []
+      for (let i = 0; i < lengths.length; i++) {
+        ri.push(v.length / 3)
+        const c = start.clone().addScaledVector(dir, lengths[i])
+        for (let j = 0; j < n; j++) {
+          const a = (j / n) * Math.PI * 2
+          const p = c.clone().addScaledVector(p1, Math.cos(a) * radii[i])
+                              .addScaledVector(p2, Math.sin(a) * radii[i])
+          v.push(p.x, p.y, p.z)
+        }
+      }
+      for (let i = 0; i < lengths.length - 1; i++) {
+        const r0 = ri[i], r1 = ri[i+1]
+        for (let j = 0; j < n; j++) {
+          const j1 = (j+1)%n
+          ix.push(r0+j, r1+j, r0+j1,  r0+j1, r1+j, r1+j1)
+        }
+      }
+      // End cap at wrist
+      const ci = v.length/3; const last = ri[ri.length-1]
+      const ctr = start.clone().addScaledVector(dir, lengths[lengths.length-1])
+      v.push(ctr.x, ctr.y, ctr.z)
+      for (let j = 0; j < n; j++) ix.push(ci, last+j, last+(j+1)%n)
+      const geo = new THREE.BufferGeometry()
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3))
+      geo.setIndex(ix); geo.computeVertexNormals()
+      const m = new THREE.Mesh(geo, manMat); m.castShadow = true; return m
+    }
+
+    const body = new THREE.Group()
+
+    // ── TRUNK: crotch (−0.514) → crown (0.918), one continuous mesh ──
+    // The cz offset is the secret: +cz tilts the oval forward (bust),
+    // −cz tilts it backward (buttocks), giving proper 3D body contour.
+    const trunkSecs: Sec[] = [
+      { y: -0.514, rx: 0.092, rz: 0.078, cz:  0.000 }, // crotch
+      { y: -0.442, rx: 0.152, rz: 0.118, cz: -0.008 }, // lower pelvis
+      { y: -0.348, rx: 0.188, rz: 0.155, cz: -0.022 }, // full hip
+      { y: -0.272, rx: 0.194, rz: 0.162, cz: -0.030 }, // buttocks peak (shifted back)
+      { y: -0.195, rx: 0.180, rz: 0.144, cz: -0.020 }, // lower waist back
+      { y: -0.100, rx: 0.144, rz: 0.118, cz: -0.005 }, // high waist
+      { y:  0.000, rx: 0.118, rz: 0.096, cz:  0.010 }, // waist (narrowest)
+      { y:  0.104, rx: 0.150, rz: 0.120, cz:  0.022 }, // under-bust
+      { y:  0.186, rx: 0.170, rz: 0.152, cz:  0.045 }, // bust peak (shifted forward)
+      { y:  0.244, rx: 0.168, rz: 0.138, cz:  0.028 }, // upper bust
+      { y:  0.318, rx: 0.196, rz: 0.130, cz:  0.010 }, // chest / pectorals
+      { y:  0.382, rx: 0.208, rz: 0.128, cz: -0.004 }, // upper chest
+      { y:  0.426, rx: 0.212, rz: 0.130, cz: -0.010 }, // shoulder / deltoid peak
+      { y:  0.464, rx: 0.195, rz: 0.120, cz: -0.006 }, // shoulder top
+      { y:  0.502, rx: 0.162, rz: 0.108, cz:  0.000 }, // trapezius / neck base
+      { y:  0.530, rx: 0.125, rz: 0.090, cz:  0.000 }, // lower neck
+      { y:  0.550, rx: 0.090, rz: 0.076, cz:  0.000 }, // mid neck
+      { y:  0.568, rx: 0.074, rz: 0.065, cz:  0.000 }, // upper neck
+      { y:  0.582, rx: 0.068, rz: 0.060, cz:  0.002 }, // neck top
+      { y:  0.600, rx: 0.074, rz: 0.084, cz:  0.014 }, // chin / jaw base
+      { y:  0.626, rx: 0.110, rz: 0.114, cz:  0.012 }, // jaw / lower cheek
+      { y:  0.656, rx: 0.136, rz: 0.132, cz:  0.014 }, // cheekbones
+      { y:  0.692, rx: 0.150, rz: 0.142, cz:  0.008 }, // mid-face
+      { y:  0.724, rx: 0.152, rz: 0.138, cz:  0.004 }, // eye level
+      { y:  0.754, rx: 0.150, rz: 0.132, cz:  0.000 }, // brow ridge
+      { y:  0.780, rx: 0.142, rz: 0.124, cz:  0.000 }, // forehead
+      { y:  0.804, rx: 0.130, rz: 0.114, cz:  0.000 }, // upper forehead
+      { y:  0.826, rx: 0.112, rz: 0.098, cz:  0.000 }, // crown base
+      { y:  0.848, rx: 0.088, rz: 0.078, cz:  0.000 },
+      { y:  0.868, rx: 0.062, rz: 0.055, cz:  0.000 },
+      { y:  0.886, rx: 0.042, rz: 0.038, cz:  0.000 },
+      { y:  0.902, rx: 0.026, rz: 0.022, cz:  0.000 },
+      { y:  0.918, rx: 0.008, rz: 0.007, cz:  0.000 }, // crown tip
+    ]
+    body.add(buildSec(trunkSecs, 36, false, true))
+
+    // ── LEGS: floor (−1.72) → crotch (−0.514), one mesh per leg ─────
+    // Placed at x = ±legX after building. Foot shape captured via cz offsets.
+    const legSecs: Sec[] = [
+      { y: -1.720, rx: 0.036, rz: 0.072, cz:  0.040 }, // toe tips (floor)
+      { y: -1.710, rx: 0.038, rz: 0.076, cz:  0.036 }, // ball of foot
+      { y: -1.700, rx: 0.040, rz: 0.070, cz:  0.028 }, // mid foot
+      { y: -1.685, rx: 0.040, rz: 0.058, cz:  0.015 }, // arch
+      { y: -1.668, rx: 0.042, rz: 0.048, cz:  0.000 }, // ankle
+      { y: -1.648, rx: 0.046, rz: 0.044, cz:  0.000 }, // lower ankle
+      { y: -1.610, rx: 0.052, rz: 0.048, cz:  0.000 }, // ankle-calf join
+      { y: -1.520, rx: 0.058, rz: 0.052, cz:  0.000 }, // lower calf
+      { y: -1.420, rx: 0.064, rz: 0.058, cz:  0.000 }, // calf peak
+      { y: -1.320, rx: 0.062, rz: 0.056, cz:  0.000 }, // upper calf
+      { y: -1.210, rx: 0.058, rz: 0.052, cz:  0.000 }, // below knee
+      { y: -1.095, rx: 0.064, rz: 0.060, cz:  0.010 }, // kneecap (slight front bump)
+      { y: -1.000, rx: 0.062, rz: 0.055, cz:  0.000 }, // above knee
+      { y: -0.900, rx: 0.074, rz: 0.065, cz: -0.005 }, // lower thigh
+      { y: -0.800, rx: 0.082, rz: 0.072, cz: -0.010 }, // mid thigh
+      { y: -0.700, rx: 0.084, rz: 0.074, cz: -0.012 }, // upper thigh
+      { y: -0.610, rx: 0.078, rz: 0.068, cz: -0.006 }, // thigh tapering
+      { y: -0.540, rx: 0.060, rz: 0.052, cz:  0.000 }, // thigh top
+      { y: -0.514, rx: 0.044, rz: 0.038, cz:  0.000 }, // crotch join (open top)
+    ]
+    for (const side of [-1, 1] as const) {
+      const leg = buildSec(legSecs, 22, true, false)
+      leg.position.x = side * 0.090
+      body.add(leg)
+    }
+
+    // ── ARMS: shoulder → hand, tube built along arm direction ────────
+    const SH_X = 0.212
+    const SH_Y = 0.428
+    const armDir = (side: 1 | -1) =>
+      new THREE.Vector3(side * sinAP, -cosAP, 0).normalize()
+
+    const armLengths = [0, 0.05, 0.12, 0.22, 0.30, 0.36, 0.42, 0.48, 0.54, 0.58, 0.62, 0.65, 0.68]
+    const armRadii  = [0.068, 0.064, 0.060, 0.057, 0.055, 0.058, 0.053, 0.046, 0.038, 0.034, 0.041, 0.037, 0.019]
+    //                 shldr → deltoid → upper arm → elbow bump → forearm → wrist → palm → tips
+
+    for (const side of [-1, 1] as const) {
+      const start = new THREE.Vector3(side * SH_X, SH_Y, 0)
+      body.add(buildTube(start, armDir(side), armLengths, armRadii, 18))
+    }
+
+    scene.add(body)
 
     // ── T-SHIRT GARMENT ──────────────────────────────────────────────
     const garment = new THREE.Group()
@@ -429,7 +564,6 @@ export default function SewingGuide({ steps, currentStep, isCompleted }: Props) 
     animate()
 
     return () => {
-      cancelled = true
       cancelAnimationFrame(rafRef.current)
       window.removeEventListener('resize', onResize)
       renderer.dispose()
