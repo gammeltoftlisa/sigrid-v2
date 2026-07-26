@@ -1,212 +1,164 @@
 'use client'
 
-import { useState, use } from 'react'
-import dynamic from 'next/dynamic'
+import { useState, use, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { tshirtSteps, getGarmentById } from '@/lib/data'
-import ProgressBar from '@/components/ui/ProgressBar'
-import PrimaryButton from '@/components/ui/PrimaryButton'
+import { getGarmentById, getGarmentGuide } from '@/lib/data'
+import type { UserMeasurements } from '@/lib/types'
+import PatternCanvas from '@/components/sewing/PatternCanvas'
+import GuideSidePanel from '@/components/sewing/GuideSidePanel'
+import StepTracker from '@/components/ui/StepTracker'
 
-const SewingGuide = dynamic(() => import('@/components/three/SewingGuide'), { ssr: false })
+const DEFAULT_MEASUREMENTS: UserMeasurements = {
+  bust: 88, waist: 70, hips: 96, height: 168, inseam: 78,
+}
 
-const stitchIcons: Record<string, string> = {
-  'Straight stitch': '━━━',
-  'Stretch stitch': '〰〰',
-  'Zigzag stitch': '〈〉',
+const slideVariants = {
+  enter: (dir: number) => ({ x: dir > 0 ? 48 : -48, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit:  (dir: number) => ({ x: dir > 0 ? -48 : 48, opacity: 0 }),
 }
 
 export default function GuidePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const garment = getGarmentById(id)
+  const guide = getGarmentGuide(id)
   const router = useRouter()
-  const [currentStep, setCurrentStep] = useState(0)
-  const [completed, setCompleted] = useState<Set<number>>(new Set())
-  const [completedAnimation, setCompletedAnimation] = useState(false)
 
-  const step = tshirtSteps[currentStep]
-  const isLast = currentStep === tshirtSteps.length - 1
-  const progressPct = (completed.size / tshirtSteps.length) * 100
-  const isStepDone = completed.has(currentStep)
+  // completedUntil: index of the step currently being worked on (0..n-1 are done)
+  const [completedUntil, setCompletedUntil] = useState(0)
+  // viewStep: which step is shown in the canvas (can preview any step independently)
+  const [viewStep, setViewStep] = useState(0)
+  const [direction, setDirection] = useState(1)
+  const [measurements, setMeasurements] = useState<UserMeasurements>(DEFAULT_MEASUREMENTS)
+  const [doneAnim, setDoneAnim] = useState(false)
 
-  const markComplete = () => {
-    const next = new Set(completed).add(currentStep)
-    setCompleted(next)
-    setCompletedAnimation(true)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('sigrid_measurements')
+      if (raw) setMeasurements({ ...DEFAULT_MEASUREMENTS, ...JSON.parse(raw) })
+    } catch {}
+  }, [])
 
+  if (!guide || guide.steps.length === 0) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center gap-4 bg-bg px-6 text-center">
+        <div className="text-5xl">🧶</div>
+        <h2 className="text-heading font-bold text-ink">Guide coming soon</h2>
+        <p className="text-body text-ink-2">The step-by-step guide for this garment is still being crafted.</p>
+        <button onClick={() => router.back()} className="mt-4 text-label text-primary font-semibold">
+          ← Go back
+        </button>
+      </div>
+    )
+  }
+
+  const steps = guide.steps
+  const isLast = completedUntil === steps.length - 1
+
+  // Mark current step done and advance
+  const advance = () => {
+    setDoneAnim(true)
     setTimeout(() => {
-      setCompletedAnimation(false)
-      if (currentStep < tshirtSteps.length - 1) {
-        setCurrentStep((s) => s + 1)
-      } else {
+      setDoneAnim(false)
+      if (isLast) {
         router.push(`/garment/${id}/complete`)
+      } else {
+        const next = completedUntil + 1
+        setDirection(1)
+        setCompletedUntil(next)
+        setViewStep(next)
       }
-    }, 1200)
+    }, 500)
   }
 
-  const goNext = () => {
-    if (currentStep < tshirtSteps.length - 1) setCurrentStep((s) => s + 1)
+  // Navigate canvas view backwards — does NOT change completion status
+  const goBack = () => {
+    if (viewStep === 0) {
+      router.back()
+    } else {
+      setDirection(-1)
+      setViewStep((s) => s - 1)
+    }
   }
 
-  const goPrev = () => {
-    if (currentStep > 0) setCurrentStep((s) => s - 1)
+  // Preview any step in the canvas — does NOT change completion status
+  const preview = (index: number) => {
+    setDirection(index < viewStep ? -1 : 1)
+    setViewStep(index)
   }
+
+  const step  = steps[viewStep]
+  const piece = step.pieceId ? (guide.pieces.find((p) => p.id === step.pieceId) ?? null) : null
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-[#F9F7F4]">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-12 pb-3 bg-[#F9F7F4]/90 backdrop-blur-sm z-10">
-        <button
-          onClick={() => router.back()}
-          className="w-9 h-9 rounded-full bg-surface shadow-soft flex items-center justify-center"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="var(--sig-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+    <div className="fixed inset-0 flex flex-col bg-bg overflow-hidden">
+      <StepTracker
+        current="guide"
+        garmentId={id}
+        garmentName={garment.name}
+        stepProgress={completedUntil / steps.length}
+      />
 
-        <div className="flex flex-col items-center">
-          <p className="text-caption font-semibold text-ink-2">{garment.name}</p>
-          <p className="text-[12px] text-ink-3">Step {currentStep + 1} of {tshirtSteps.length}</p>
-        </div>
-
-        <div className="w-9" />
-      </div>
-
-      {/* Progress bar */}
-      <div className="px-4 pb-2">
-        <ProgressBar percent={progressPct} height={3} color="bg-primary" />
-      </div>
-
-      {/* 3D Canvas - fills remaining space */}
-      <div className="flex-1 relative overflow-hidden">
-        <SewingGuide
-          steps={tshirtSteps}
-          currentStep={currentStep}
-          isCompleted={completed.has(currentStep)}
+      <div className="flex-1 flex flex-row overflow-hidden">
+        <GuideSidePanel
+          steps={steps}
+          completedUntil={completedUntil}
+          viewStep={viewStep}
+          isLast={isLast}
+          onNext={advance}
+          onPrev={goBack}
+          onExit={() => router.push('/home')}
+          onPreview={preview}
         />
 
-        {/* Step complete animation overlay */}
-        <AnimatePresence>
-          {completedAnimation && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.3 }}
-              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            >
-              <div className="w-24 h-24 rounded-full bg-success shadow-modal flex items-center justify-center">
-                <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 7L9 18L4 13" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Right 2/3: canvas */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 relative px-5 py-2 min-h-0">
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.div
+                key={viewStep}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                className="w-full h-full"
+              >
+                <PatternCanvas
+                  piece={piece}
+                  action={step.action}
+                  annotation={step.annotation}
+                  fabricSide={step.fabricSide}
+                  measurements={measurements}
+                />
+              </motion.div>
+            </AnimatePresence>
 
-        {/* Swipe arrows (prev/next) */}
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          {currentStep > 0 && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              onClick={goPrev}
-              className="w-9 h-9 rounded-full bg-surface/80 backdrop-blur shadow-soft flex items-center justify-center pointer-events-auto"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18L9 12L15 6" stroke="var(--sig-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </motion.button>
-          )}
-        </div>
-        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-          {currentStep < tshirtSteps.length - 1 && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              onClick={goNext}
-              className="w-9 h-9 rounded-full bg-surface/80 backdrop-blur shadow-soft flex items-center justify-center pointer-events-auto"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M9 18L15 12L9 6" stroke="var(--sig-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </motion.button>
-          )}
+            {/* Done flash */}
+            <AnimatePresence>
+              {doneAnim && (
+                <motion.div
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <motion.div
+                    className="w-20 h-20 rounded-full bg-success flex items-center justify-center shadow-modal"
+                    initial={{ scale: 0.6 }} animate={{ scale: 1 }} exit={{ scale: 1.3 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                  >
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 7L9 18L4 13" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
-
-      {/* Bottom sheet */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentStep}
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -20, opacity: 0 }}
-          transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-          className="bg-surface rounded-t-[28px] shadow-modal px-6 pt-5 pb-safe-bottom"
-          style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 28px)' }}
-        >
-          {/* Handle */}
-          <div className="w-10 h-1 rounded-full bg-rim mx-auto mb-4" />
-
-          <div className="flex items-start justify-between mb-3">
-            <h2 className="text-heading font-bold text-ink pr-3">{step.title}</h2>
-            {isStepDone && (
-              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-success-soft flex items-center justify-center">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 7L9 18L4 13" stroke="var(--sig-success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            )}
-          </div>
-
-          <p className="text-body text-ink-2 mb-4 leading-relaxed">{step.description}</p>
-
-          {/* Metadata */}
-          <div className="flex flex-wrap gap-2 mb-5">
-            {step.measurement && (
-              <span className="flex items-center gap-1.5 text-caption font-semibold bg-primary-soft text-primary-deep px-3 py-1.5 rounded-full">
-                📏 {step.measurement}
-              </span>
-            )}
-            {step.stitchType && (
-              <span className="flex items-center gap-1.5 text-caption font-semibold bg-surface-2 text-ink-2 px-3 py-1.5 rounded-full">
-                {stitchIcons[step.stitchType] ?? '🧵'} {step.stitchType}
-              </span>
-            )}
-          </div>
-
-          {/* CTA */}
-          {isStepDone ? (
-            <div className="flex gap-3">
-              {currentStep > 0 && (
-                <button
-                  onClick={goPrev}
-                  className="flex-1 py-4 rounded-full border border-rim text-label font-semibold text-ink-2"
-                >
-                  Previous
-                </button>
-              )}
-              <button
-                onClick={goNext}
-                disabled={currentStep >= tshirtSteps.length - 1}
-                className="flex-1 py-4 rounded-full bg-surface-2 text-label font-semibold text-ink-2 disabled:opacity-40"
-              >
-                {isLast ? 'All done!' : 'Next step'}
-              </button>
-            </div>
-          ) : (
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={markComplete}
-              className="w-full py-4 rounded-full bg-primary text-surface text-label font-semibold shadow-soft"
-            >
-              {isLast ? '🎉 Complete my t-shirt!' : 'Mark as complete'}
-            </motion.button>
-          )}
-        </motion.div>
-      </AnimatePresence>
     </div>
   )
 }
