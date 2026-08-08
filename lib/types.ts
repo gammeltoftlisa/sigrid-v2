@@ -121,6 +121,7 @@ export interface PieceDims {
 export interface GuidePiece {
   id: string
   label: string
+  name?: string
   shape: 'rectangle' | 'trapezoid'
   dims: PieceDims | ((m: UserMeasurements) => PieceDims)
   grainLine?: 'vertical' | 'horizontal'

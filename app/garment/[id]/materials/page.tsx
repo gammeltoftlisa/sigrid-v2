@@ -55,7 +55,7 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
           current="materials"
           activeSubStep={activeSubStep}
           onNext={() => router.push(`/garment/${id}/guide`)}
-          onPrev={() => router.push(`/garment/${id}/pattern`)}
+          onPrev={() => router.push(`/garment/${id}/measurements`)}
           onExit={() => router.push('/home')}
           garmentName={garment.name}
         />
