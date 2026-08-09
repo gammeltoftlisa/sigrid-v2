@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import { useFlowOptional, type FlowStep } from '@/lib/flow-context'
 
 export const GARMENT_STEPS = [
   {
@@ -56,6 +57,7 @@ const NODE = 32
 export default function StepTracker({ current, garmentId, garmentName, stepProgress = 0, onClose }: Props) {
   const currentIdx = GARMENT_STEPS.findIndex((s) => s.key === current)
   const router = useRouter()
+  const flow = useFlowOptional()
   const total = GARMENT_STEPS.length
   // Add fractional within-step progress so the line extends past the active circle
   const progressFraction = (currentIdx + stepProgress) / (total - 1)
@@ -93,7 +95,7 @@ export default function StepTracker({ current, garmentId, garmentName, stepProgr
           return (
             <button
               key={step.key}
-              onClick={() => !active && router.push(STEP_URLS[step.key](garmentId))}
+              onClick={() => !active && (flow ? flow.goToStep(step.key as FlowStep) : router.push(STEP_URLS[step.key](garmentId)))}
               className="relative z-10 active:opacity-70 transition-opacity"
             >
               <motion.div
