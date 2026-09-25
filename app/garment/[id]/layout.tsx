@@ -13,7 +13,8 @@ export default function GarmentIdLayout({
 }) {
   const { id } = use(params)
   const pathname = usePathname()
-  const isFlowPage = pathname !== `/garment/${id}`
+  // The garment page shows behind the sewing sheet — not behind the printable pattern
+  const isFlowPage = pathname === `/garment/${id}/guide`
 
   return (
     <>

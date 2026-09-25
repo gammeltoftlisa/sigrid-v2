@@ -101,7 +101,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     return () => window.removeEventListener('keydown', onKey)
   }, [guide, sizeSheetOpen, doneOpen])
 
-  const printPattern = () => window.open(`/garment/${id}/pattern?print=true`, '_blank')
+  const printPattern = () => window.open(`/garment/${id}/pattern?print=true${size ? `&size=${size}` : ''}`, '_blank')
 
   if (!guide || guide.steps.length === 0) {
     return (
