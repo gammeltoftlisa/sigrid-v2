@@ -137,10 +137,12 @@ export interface StepAnnotation {
 
 export interface SewingStep2D {
   id: number
+  group: string
   action: StepAction
   title: string
   instruction: string
   pieceId?: string
+  secondPieceId?: string
   fabricSide?: FabricSide
   annotation?: StepAnnotation
   tool?: 'scissors' | 'pins' | 'needle' | 'iron' | 'chalk' | 'ruler'

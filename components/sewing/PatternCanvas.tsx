@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { motion, animate, useMotionValue } from 'framer-motion'
+import { IconYarn, IconScissors } from '@tabler/icons-react'
 import type { GuidePiece, StepAction, StepAnnotation, FabricSide, UserMeasurements, PieceDims } from '@/lib/types'
 
 interface Props {
@@ -15,15 +16,6 @@ interface Props {
 const VIEWBOX_W = 320
 const VIEWBOX_H = 380
 const PAD = 40
-
-const TOOL_ICONS: Record<string, string> = {
-  scissors: '✂️',
-  pins: '📌',
-  needle: '🧵',
-  iron: '🔥',
-  chalk: '✏️',
-  ruler: '📏',
-}
 
 function resolveDims(piece: GuidePiece, m: UserMeasurements): PieceDims {
   return typeof piece.dims === 'function' ? piece.dims(m) : piece.dims
@@ -245,9 +237,11 @@ export default function PatternCanvas({ piece, action, annotation, fabricSide, m
   if (!piece || action === 'prepare') {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-surface-2 rounded-3xl">
-        <div className="text-6xl">
-          {action === 'prepare' ? '🧶' : '✂️'}
-        </div>
+        {action === 'prepare' ? (
+          <IconYarn size={56} className="text-ink-3" stroke={1.5} />
+        ) : (
+          <IconScissors size={56} className="text-ink-3" stroke={1.5} />
+        )}
         <p className="text-label text-ink-3 font-medium">Get ready</p>
       </div>
     )
