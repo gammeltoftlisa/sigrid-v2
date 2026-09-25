@@ -8,6 +8,7 @@ import PatternCard from '@/components/ui/PatternCard'
 import ProgressBar from '@/components/ui/ProgressBar'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import { garments, creatorPatterns, activeProject } from '@/lib/data'
+import { useFlow } from '@/lib/flow-context'
 
 const SHOW_ACTIVE = true
 
@@ -19,6 +20,7 @@ function greeting() {
 }
 
 export default function HomePage() {
+  const { openFlow } = useFlow()
   const [activeCategory, setActiveCategory] = useState('All')
   const categories = ['All', 'Tops', 'Bottoms', 'Dresses', 'Outerwear']
 
@@ -70,9 +72,9 @@ export default function HomePage() {
               </div>
             </div>
             <ProgressBar percent={activeProject.progressPercent} showLabel />
-            <Link href={`/garment/${activeProject.garmentId}/guide`} className="block mt-4">
-              <PrimaryButton>Continue sewing</PrimaryButton>
-            </Link>
+            <div className="mt-4">
+              <PrimaryButton onClick={() => openFlow(activeProject.garmentId, 'guide')}>Continue sewing</PrimaryButton>
+            </div>
           </motion.div>
         </div>
       )}
