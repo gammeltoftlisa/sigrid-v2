@@ -286,7 +286,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
                 onClick={() => toggleJourney(j.key)}
                 aria-expanded={expanded}
                 className={`w-full flex items-center gap-2 px-2.5 py-2.5 text-left transition-colors ${
-                  current ? 'bg-primary-soft' : 'hover:bg-surface-2'
+                  current ? '' : 'hover:bg-surface-2'
                 }`}
               >
                 <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center ${
