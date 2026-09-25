@@ -100,3 +100,16 @@ body {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* One keyboard focus style for everything interactive */
+:where(a, button, input, select, textarea, [role='button'], [tabindex]):focus-visible {
+  outline: 2px solid var(--sig-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

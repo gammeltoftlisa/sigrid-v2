@@ -16,13 +16,13 @@ export default function GarmentCard({ garment, href }: Props) {
     <motion.div
       whileTap={{ scale: 0.97 }}
       transition={{ duration: 0.15 }}
-      className="bg-surface rounded-3xl overflow-hidden shadow-soft border border-rim-soft flex flex-col"
+      className="bg-surface rounded-3xl overflow-hidden shadow-soft border border-rim-soft flex flex-col hover:shadow-card hover:-translate-y-0.5 transition duration-200 ease-out"
     >
       <div className="bg-surface-2 h-44 flex items-center justify-center p-6">
         <GarmentIllustration name={garment.name} className="w-full h-full" />
       </div>
       <div className="p-4 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col items-start gap-1.5">
           <h3 className="text-label font-semibold text-ink leading-snug">{garment.name}</h3>
           <DifficultyBadge difficulty={garment.difficulty} />
         </div>

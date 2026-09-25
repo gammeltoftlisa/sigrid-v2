@@ -1,16 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import BodySilhouette from '@/components/ui/BodySilhouette'
+import SizePicker from '@/components/ui/SizePicker'
+import { allSizes, loadSavedSize, saveSize, sizeLabel } from '@/lib/sizes'
+import type { StandardSize } from '@/lib/types'
 import { creators } from '@/lib/data'
+import { TAP, cardInteractive } from '@/components/ui/interaction'
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <motion.button
+      role="switch"
+      aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative w-12 h-7 rounded-full transition-colors duration-300 ${checked ? 'bg-primary' : 'bg-rim'}`}
+      whileTap={TAP}
+      className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${checked ? 'bg-primary hover:bg-primary-deep' : 'bg-rim hover:bg-ink-3/40'}`}
     >
       <motion.div
         animate={{ x: checked ? 20 : 2 }}
@@ -22,16 +28,16 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 }
 
 export default function ProfilePage() {
-  const [unit, setUnit] = useState<'cm' | 'inches'>('cm')
   const [notifications, setNotifications] = useState(true)
   const [followedCreators] = useState(creators.slice(0, 2))
 
-  const measurements = {
-    bust: 88,
-    waist: 70,
-    hips: 96,
-    height: 168,
-    inseam: 78,
+  const [size, setSize] = useState<StandardSize | null>(null)
+
+  useEffect(() => setSize(loadSavedSize()), [])
+
+  const handleSelectSize = (s: StandardSize) => {
+    setSize(s)
+    saveSize(s)
   }
 
   return (
@@ -64,31 +70,16 @@ export default function ProfilePage() {
         </motion.div>
       </div>
 
-      {/* Measurements */}
+      {/* Size */}
       <div className="px-5 mb-6">
-        <h2 className="text-heading font-semibold text-ink mb-4">My measurements</h2>
+        <h2 className="text-heading font-semibold text-ink mb-4">My size</h2>
         <div className="bg-surface rounded-3xl p-5 shadow-soft">
-          <div className="flex gap-4 items-start">
-            <div className="w-24 flex-shrink-0">
-              <BodySilhouette
-                measurements={measurements}
-                className="h-40"
-              />
-            </div>
-            <div className="flex-1 space-y-2.5">
-              {Object.entries(measurements).map(([key, val]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <span className="text-label font-medium text-ink-2 capitalize">{key}</span>
-                  <span className="text-label font-semibold text-ink">
-                    {unit === 'cm' ? `${val} cm` : `${(val / 2.54).toFixed(1)}"`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <button className="mt-4 w-full py-3 rounded-2xl border border-rim text-label font-semibold text-ink-2">
-            Edit measurements
-          </button>
+          <p className="text-caption text-ink-3 mb-4">
+            {size
+              ? `Patterns start in ${sizeLabel(size)}. You can still pick another size per garment.`
+              : 'Pick your usual size and we\'ll pre-select it for every pattern.'}
+          </p>
+          <SizePicker sizes={allSizes} selected={size} onSelect={handleSelectSize} />
         </div>
       </div>
 
@@ -96,26 +87,6 @@ export default function ProfilePage() {
       <div className="px-5 mb-6">
         <h2 className="text-heading font-semibold text-ink mb-4">Preferences</h2>
         <div className="bg-surface rounded-3xl shadow-soft overflow-hidden divide-y divide-rim-soft">
-          {/* Units */}
-          <div className="flex items-center justify-between px-5 py-4">
-            <div>
-              <p className="text-label font-medium text-ink">Measurement units</p>
-              <p className="text-caption text-ink-3">Used throughout your patterns</p>
-            </div>
-            <div className="flex items-center gap-2 bg-surface-2 rounded-full p-1">
-              {(['cm', 'inches'] as const).map((u) => (
-                <button
-                  key={u}
-                  onClick={() => setUnit(u)}
-                  className={`px-3 py-1.5 rounded-full text-label font-medium transition-all duration-200 ${
-                    unit === u ? 'bg-primary text-surface shadow-soft' : 'text-ink-2'
-                  }`}
-                >
-                  {u}
-                </button>
-              ))}
-            </div>
-          </div>
           {/* Notifications */}
           <div className="flex items-center justify-between px-5 py-4">
             <div>
@@ -130,8 +101,8 @@ export default function ProfilePage() {
       {/* Payment */}
       <div className="px-5 mb-6">
         <h2 className="text-heading font-semibold text-ink mb-4">Subscription</h2>
-        <Link href="/payment">
-          <div className="bg-surface rounded-3xl p-5 shadow-soft flex items-center justify-between">
+        <Link href="/payment" className="block rounded-3xl">
+          <div className={`bg-surface rounded-3xl p-5 shadow-soft flex items-center justify-between ${cardInteractive}`}>
             <div>
               <p className="text-label font-medium text-ink">Beta access</p>
               <p className="text-caption text-ink-3">Payment coming soon</p>
@@ -148,8 +119,8 @@ export default function ProfilePage() {
         <h2 className="text-heading font-semibold text-ink mb-4">Creators I follow</h2>
         <div className="flex flex-col gap-3">
           {followedCreators.map((creator) => (
-            <Link key={creator.id} href={`/creator/${creator.id}`}>
-              <div className="bg-surface rounded-2xl p-4 shadow-soft flex items-center gap-3">
+            <Link key={creator.id} href={`/creator/${creator.id}`} className="block rounded-2xl">
+              <div className={`bg-surface rounded-2xl p-4 shadow-soft flex items-center gap-3 ${cardInteractive}`}>
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-surface font-bold"
                   style={{ backgroundColor: creator.avatarColor }}
@@ -173,7 +144,7 @@ export default function ProfilePage() {
 
       {/* Sign out */}
       <div className="px-5 pb-8">
-        <button className="w-full py-4 rounded-full text-danger text-label font-semibold">
+        <button className="w-full py-4 rounded-full text-danger text-label font-semibold hover:bg-danger-soft active:scale-[0.97] transition duration-150">
           Sign out
         </button>
       </div>

@@ -1,11 +1,14 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { disabled as disabledCls, feedback, hoverOnSurface, press } from './interaction'
 
 interface Props {
   children: ReactNode
   onClick?: () => void
+  /** Render as a link instead of wrapping the button in one */
+  href?: string
   disabled?: boolean
   className?: string
   type?: 'button' | 'submit'
@@ -16,6 +19,7 @@ interface Props {
 export default function SecondaryButton({
   children,
   onClick,
+  href,
   disabled = false,
   className = '',
   type = 'button',
@@ -24,28 +28,23 @@ export default function SecondaryButton({
 }: Props) {
   const variantClasses =
     variant === 'outline'
-      ? 'border border-rim bg-surface text-ink'
-      : 'bg-transparent text-ink-2'
-
+      ? `border border-rim bg-surface text-ink shadow-soft ${hoverOnSurface}`
+      : `bg-transparent text-ink-2 hover:text-ink ${hoverOnSurface}`
+  const cls = `
+    ${fullWidth ? 'w-full' : ''}
+    flex items-center justify-center gap-2
+    ${variantClasses}
+    text-[17px] font-medium
+    px-6 py-4 rounded-full
+    ${feedback} ${press} ${disabledCls}
+    ${className}
+  `
+  if (href) {
+    return <Link href={href} onClick={onClick} className={cls}>{children}</Link>
+  }
   return (
-    <motion.button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      whileTap={{ scale: 0.97 }}
-      transition={{ duration: 0.1 }}
-      className={`
-        ${fullWidth ? 'w-full' : ''}
-        flex items-center justify-center gap-2
-        ${variantClasses}
-        text-[17px] font-medium
-        px-6 py-4 rounded-full
-        disabled:opacity-40 disabled:cursor-not-allowed
-        transition-colors duration-200
-        ${className}
-      `}
-    >
+    <button type={type} onClick={onClick} disabled={disabled} className={cls}>
       {children}
-    </motion.button>
+    </button>
   )
 }

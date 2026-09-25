@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { getCreatorById, getPatternsByCreator } from '@/lib/data'
 import PatternCard from '@/components/ui/PatternCard'
+import IconButton from '@/components/ui/IconButton'
+import { IconChevronLeft } from '@tabler/icons-react'
+import { TAP } from '@/components/ui/interaction'
 
 export default function CreatorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -17,14 +20,9 @@ export default function CreatorPage({ params }: { params: Promise<{ id: string }
     <div className="min-h-screen bg-bg pb-8">
       {/* Header */}
       <div className="px-5 pt-14 pb-6">
-        <button
-          onClick={() => router.back()}
-          className="mb-5 w-10 h-10 rounded-full bg-surface shadow-soft flex items-center justify-center"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="var(--sig-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <IconButton label="Back" variant="raised" size="md" onClick={() => router.back()} className="mb-5">
+          <IconChevronLeft size={18} />
+        </IconButton>
 
         {/* Creator identity */}
         <motion.div
@@ -63,14 +61,14 @@ export default function CreatorPage({ params }: { params: Promise<{ id: string }
             <div className="w-px h-8 bg-rim" />
             <div className="text-center">
               <p className="text-heading font-bold text-ink">
-                {patterns.reduce((sum, p) => sum + p.timesMade, 0).toLocaleString()}
+                {patterns.reduce((sum, p) => sum + p.timesMade, 0).toLocaleString('en-US')}
               </p>
               <p className="text-caption text-ink-3">makes</p>
             </div>
           </div>
 
           <motion.button
-            whileTap={{ scale: 0.95 }}
+            whileTap={TAP}
             onClick={() => setFollowing((f) => !f)}
             className={`px-10 py-3.5 rounded-full text-label font-semibold transition-colors duration-200 ${
               following

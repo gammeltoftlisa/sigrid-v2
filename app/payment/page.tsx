@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import IconButton from '@/components/ui/IconButton'
+import { IconChevronLeft } from '@tabler/icons-react'
 
 const plans = [
   {
@@ -13,7 +15,7 @@ const plans = [
     features: [
       'One pattern at a time',
       'Full animated sewing guide',
-      'Custom measurements',
+      'Patterns in sizes XS–XXL',
       'Material guide',
     ],
     accent: 'var(--sig-primary-soft)',
@@ -42,14 +44,9 @@ export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-bg">
       <div className="px-5 pt-14 pb-6">
-        <button
-          onClick={() => router.back()}
-          className="mb-5 w-10 h-10 rounded-full bg-surface shadow-soft flex items-center justify-center"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="var(--sig-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <IconButton label="Back" variant="raised" size="md" onClick={() => router.back()} className="mb-5">
+          <IconChevronLeft size={18} />
+        </IconButton>
 
         <motion.h1
           initial={{ opacity: 0, y: 10 }}

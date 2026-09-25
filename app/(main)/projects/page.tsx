@@ -6,6 +6,7 @@ import ProgressBar from '@/components/ui/ProgressBar'
 import DifficultyBadge from '@/components/ui/DifficultyBadge'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import { activeProject, completedProjects } from '@/lib/data'
+import { cardInteractive } from '@/components/ui/interaction'
 
 export default function ProjectsPage() {
   return (
@@ -48,9 +49,7 @@ export default function ProjectsPage() {
             </div>
           </div>
           <ProgressBar percent={activeProject.progressPercent} showLabel className="mb-4" />
-          <Link href={`/garment/${activeProject.garmentId}/guide`}>
-            <PrimaryButton>Continue sewing</PrimaryButton>
-          </Link>
+          <PrimaryButton href={`/garment/${activeProject.garmentId}`}>Continue sewing</PrimaryButton>
         </motion.div>
       </div>
 
@@ -71,8 +70,8 @@ export default function ProjectsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 + i * 0.07 }}
               >
-                <Link href={`/garment/${project.garmentId}`}>
-                  <div className="bg-surface rounded-3xl overflow-hidden shadow-soft border border-rim-soft">
+                <Link href={`/garment/${project.garmentId}`} className="block rounded-3xl">
+                  <div className={`bg-surface rounded-3xl overflow-hidden shadow-soft border border-rim-soft ${cardInteractive}`}>
                     <div
                       className="h-40 flex items-center justify-center"
                       style={{ backgroundColor: project.userPhotoColor + '30' }}
@@ -113,9 +112,7 @@ export default function ProjectsPage() {
         >
           <p className="text-body font-semibold text-ink mb-1">Ready to make more?</p>
           <p className="text-caption text-ink-2 mb-4">Browse hundreds of patterns for your next project.</p>
-          <Link href="/explore">
-            <PrimaryButton>Explore patterns</PrimaryButton>
-          </Link>
+          <PrimaryButton href="/explore">Explore patterns</PrimaryButton>
         </motion.div>
       </div>
     </div>

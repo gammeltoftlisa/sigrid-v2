@@ -19,7 +19,7 @@ export default function PatternCard({ pattern }: Props) {
     <Link href={`/garment/${pattern.id}`}>
       <motion.div
         whileTap={{ scale: 0.97 }}
-        className="bg-surface rounded-3xl overflow-hidden shadow-soft border border-rim-soft flex flex-col"
+        className="bg-surface rounded-3xl overflow-hidden shadow-soft border border-rim-soft flex flex-col hover:shadow-card hover:-translate-y-0.5 transition duration-200 ease-out"
       >
         <div className="bg-surface-2 h-40 flex items-center justify-center p-6 relative">
           <GarmentIllustration name={pattern.name} className="w-full h-full" />
@@ -43,7 +43,7 @@ export default function PatternCard({ pattern }: Props) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <FitBadge fit={pattern.fit} />
-              <span className="text-caption text-ink-3">{pattern.timesMade.toLocaleString()} made</span>
+              <span className="text-caption text-ink-3">{pattern.timesMade.toLocaleString('en-US')} made</span>
             </div>
             <span className="text-label font-semibold text-primary">€{pattern.price}</span>
           </div>

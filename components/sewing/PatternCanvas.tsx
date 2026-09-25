@@ -11,6 +11,8 @@ interface Props {
   annotation?: StepAnnotation
   fabricSide?: FabricSide
   measurements: UserMeasurements
+  /** Shown when the step has no pattern piece to draw */
+  title?: string
 }
 
 const VIEWBOX_W = 320
@@ -232,7 +234,7 @@ function MeasureArrow({ edge, ox, oy, pw, ph, dims }: { edge: string; ox: number
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function PatternCanvas({ piece, action, annotation, fabricSide, measurements }: Props) {
+export default function PatternCanvas({ piece, action, annotation, fabricSide, measurements, title }: Props) {
   // Prepare step — no piece
   if (!piece || action === 'prepare') {
     return (
@@ -242,7 +244,7 @@ export default function PatternCanvas({ piece, action, annotation, fabricSide, m
         ) : (
           <IconScissors size={56} className="text-ink-3" stroke={1.5} />
         )}
-        <p className="text-label text-ink-3 font-medium">Get ready</p>
+        <p className="text-label text-ink-2 font-medium text-center px-6">{title ?? 'Get ready'}</p>
       </div>
     )
   }

@@ -5,17 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import SecondaryButton from '@/components/ui/SecondaryButton'
-import BodySilhouette from '@/components/ui/BodySilhouette'
-
-type MeasurementField = 'bust' | 'waist' | 'hips' | 'height' | 'inseam'
-
-const measurementFields: { key: MeasurementField; label: string; hint: string; unit: string }[] = [
-  { key: 'bust', label: 'Bust', hint: 'Around the fullest part of your chest', unit: 'cm' },
-  { key: 'waist', label: 'Waist', hint: 'Around your natural waist', unit: 'cm' },
-  { key: 'hips', label: 'Hips', hint: 'Around the fullest part of your hips', unit: 'cm' },
-  { key: 'height', label: 'Height', hint: 'Standing straight without shoes', unit: 'cm' },
-  { key: 'inseam', label: 'Inseam', hint: 'From crotch to ankle', unit: 'cm' },
-]
+import SizePicker from '@/components/ui/SizePicker'
+import { allSizes, saveSize } from '@/lib/sizes'
+import type { StandardSize } from '@/lib/types'
+import { textLink } from '@/components/ui/interaction'
 
 function ProgressDots({ total, current }: { total: number; current: number }) {
   return (
@@ -93,7 +86,7 @@ function Screen2({ onNext }: { onNext: () => void }) {
         <div className="text-center">
           <h1 className="text-display font-bold text-ink mb-3 leading-tight">Made for your body.</h1>
           <p className="text-body text-ink-2 leading-relaxed max-w-xs">
-            Enter your measurements once and every pattern fits you perfectly.
+            Tell us your size once and every pattern is ready in it.
           </p>
         </div>
       </div>
@@ -160,13 +153,13 @@ function Screen4({ onNext }: { onNext: () => void }) {
       </div>
 
       <div className="flex flex-col gap-3 mb-6">
-        <button className="w-full flex items-center justify-center gap-3 bg-ink text-surface py-4 rounded-full text-label font-semibold">
+        <button className="w-full flex items-center justify-center gap-3 bg-ink text-surface py-4 rounded-full text-label font-semibold hover:bg-ink/85 active:scale-[0.97] transition duration-150">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
             <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
           </svg>
           Continue with Apple
         </button>
-        <button className="w-full flex items-center justify-center gap-3 bg-surface border border-rim py-4 rounded-full text-label font-semibold text-ink">
+        <button className="w-full flex items-center justify-center gap-3 bg-surface border border-rim py-4 rounded-full text-label font-semibold text-ink hover:bg-surface-2 active:scale-[0.97] transition duration-150">
           <svg width="20" height="20" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -212,7 +205,7 @@ function Screen4({ onNext }: { onNext: () => void }) {
         <PrimaryButton onClick={onNext}>Create account</PrimaryButton>
         <p className="text-center text-caption text-ink-3">
           Already have an account?{' '}
-          <button className="text-primary font-semibold">Sign in</button>
+          <button className={textLink}>Sign in</button>
         </p>
       </div>
     </div>
@@ -220,56 +213,30 @@ function Screen4({ onNext }: { onNext: () => void }) {
 }
 
 function Screen5({ onFinish }: { onFinish: () => void }) {
-  const [activeField, setActiveField] = useState<MeasurementField | null>(null)
-  const [values, setValues] = useState<Partial<Record<MeasurementField, number>>>({})
+  const [size, setSize] = useState<StandardSize | null>(null)
 
-  const setValue = (field: MeasurementField, raw: string) => {
-    const n = parseFloat(raw)
-    setValues((prev) => ({ ...prev, [field]: isNaN(n) ? undefined : n }))
+  const handleSave = () => {
+    if (size) saveSize(size)
+    onFinish()
   }
-
-  const inputClass = (field: MeasurementField) => `
-    flex-1 px-4 py-3 rounded-xl border
-    ${activeField === field ? 'border-primary ring-2 ring-primary/20' : 'border-rim'}
-    bg-surface text-body text-ink placeholder:text-ink-3
-    focus:outline-none transition-all duration-200
-  `
 
   return (
     <div className="flex flex-col h-full px-6 pt-14 pb-8 overflow-y-auto">
       <div className="mb-6">
-        <h1 className="text-title font-bold text-ink mb-1">Your measurements</h1>
-        <p className="text-body text-ink-2">You can always add these later.</p>
+        <h1 className="text-title font-bold text-ink mb-1">What&apos;s your size?</h1>
+        <p className="text-body text-ink-2">We&apos;ll use it as your starting point for every pattern. You can change it any time.</p>
       </div>
 
-      <div className="flex gap-4 mb-6">
-        <div className="w-32 flex-shrink-0 flex items-center justify-center">
-          <BodySilhouette activeField={activeField} measurements={values} className="h-52" />
-        </div>
-        <div className="flex-1 flex flex-col gap-3">
-          {measurementFields.map((f) => (
-            <div key={f.key} className="flex flex-col gap-1">
-              <label className="text-caption font-semibold text-ink-2">{f.label}</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="—"
-                  onFocus={() => setActiveField(f.key)}
-                  onBlur={() => setActiveField(null)}
-                  onChange={(e) => setValue(f.key, e.target.value)}
-                  className={inputClass(f.key)}
-                />
-                <span className="text-caption text-ink-3 w-6">{f.unit}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="mb-6">
+        <SizePicker sizes={allSizes} selected={size} onSelect={setSize} />
       </div>
 
-      <ProgressDots total={5} current={4} />
-      <div className="mt-6 flex flex-col gap-3">
-        <PrimaryButton onClick={onFinish}>Save measurements</PrimaryButton>
-        <SecondaryButton variant="ghost" onClick={onFinish}>Skip for now</SecondaryButton>
+      <div className="mt-auto">
+        <ProgressDots total={5} current={4} />
+        <div className="mt-6 flex flex-col gap-3">
+          <PrimaryButton onClick={handleSave} disabled={!size}>Save my size</PrimaryButton>
+          <SecondaryButton variant="ghost" onClick={onFinish}>Skip for now</SecondaryButton>
+        </div>
       </div>
     </div>
   )
