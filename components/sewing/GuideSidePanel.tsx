@@ -1,8 +1,17 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { IconScissors, IconNeedleThread, IconIroning, IconDroplet, IconCheck, IconChevronDown } from '@tabler/icons-react'
 import type { SewingStep2D } from '@/lib/types'
+import { groupIntoJourneys, type JourneyKind } from '@/lib/journeys'
+
+const JOURNEY_ICONS: Record<JourneyKind, typeof IconScissors> = {
+  prepare: IconDroplet,
+  cut:    IconScissors,
+  sew:    IconNeedleThread,
+  finish: IconIroning,
+}
 
 const TOOL_LABELS: Record<string, string> = {
   scissors: '✂️ Scissors',
@@ -47,12 +56,50 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
   const [openStep, setOpenStep] = useState<number>(viewStep)
   const [showTip, setShowTip] = useState(false)
   const activeRef = useRef<HTMLDivElement>(null)
+  const journeys = useMemo(() => groupIntoJourneys(steps), [steps])
+  const journeyKeyAt = (i: number) => journeys.find((j) => j.stepIndices.includes(i))?.key
+  // Start with the journey you're working on open; the rest stay folded
+  const [openJourneys, setOpenJourneys] = useState<Set<string>>(() => {
+    const k = journeyKeyAt(completedUntil)
+    return new Set(k ? [k] : [])
+  })
+
+  const openJourneyFor = (i: number) => {
+    const k = journeyKeyAt(i)
+    if (k) setOpenJourneys((prev) => (prev.has(k) ? prev : new Set(prev).add(k)))
+  }
+
+  const toggleJourney = (k: string) =>
+    setOpenJourneys((prev) => {
+      const next = new Set(prev)
+      if (next.has(k)) next.delete(k)
+      else next.add(k)
+      return next
+    })
+
+  // Whatever step is on the canvas should be visible in the list
+  useEffect(() => { openJourneyFor(viewStep) }, [viewStep])
+
+  // A journey that was just finished always folds away, and the one now being
+  // worked on opens — regardless of which step the user is looking at.
+  useEffect(() => {
+    const finished = journeys.find((j) => j.stepIndices[j.stepIndices.length - 1] === completedUntil - 1)
+    if (!finished) return
+    const nextKey = journeyKeyAt(completedUntil)
+    setOpenJourneys((prev) => {
+      const next = new Set(prev)
+      next.delete(finished.key)
+      if (nextKey) next.add(nextKey)
+      return next
+    })
+  }, [completedUntil])
 
   // When completedUntil advances (Mark done pressed), open the new active step
   // only if the user isn't already previewing a different step.
   useEffect(() => {
     if (openStep === completedUntil - 1 || openStep === completedUntil) {
       setOpenStep(completedUntil)
+      openJourneyFor(completedUntil)
       setShowTip(false)
       activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
@@ -70,8 +117,136 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
     setShowTip(false)
   }
 
+  const renderStep = (s: SewingStep2D, i: number, n: number) => {
+    const done    = i < completedUntil
+    const active  = i === completedUntil
+    const isOpen  = openStep === i
+
+    return (
+      <div
+        key={s.id}
+        ref={active ? activeRef : undefined}
+        className={`mb-1 rounded-xl overflow-hidden border transition-colors duration-200 ${
+          active   ? 'border-primary/30 bg-primary-soft'
+          : done   ? 'border-transparent bg-transparent hover:bg-surface-2'
+          :          'border-rim bg-surface'
+        }`}
+      >
+        {/* Row header */}
+        <button
+          onClick={() => toggle(i)}
+          className="w-full flex items-center gap-2 px-2.5 py-2 text-left"
+        >
+          <div className={`w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center ${
+            done   ? 'bg-primary-soft'
+            : active ? 'border-2 border-primary bg-transparent'
+            :          'bg-surface-2 border border-rim'
+          }`}>
+            {done ? (
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none">
+                <path d="M20 6L9 17L4 12" stroke="var(--sig-primary)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : active ? (
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+            ) : (
+              <span className="text-[9px] font-bold text-ink-3">{n}</span>
+            )}
+          </div>
+
+          <span className={`flex-1 text-[13px] leading-tight truncate ${
+            done   ? 'text-ink-3/70'
+            : active ? 'text-ink font-bold'
+            :          'text-ink-3'
+          }`}>
+            {s.title}
+          </span>
+
+          <svg
+            width="10" height="10" viewBox="0 0 24 24" fill="none"
+            className={`flex-shrink-0 text-ink-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          >
+            <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+
+        {/* Expandable content */}
+        <AnimatePresence initial={false}>
+          {isOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="px-2.5 pb-3">
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full mb-2 inline-block ${ACTION_COLORS[s.action]}`}>
+                  {ACTION_LABELS[s.action]}
+                </span>
+
+                <p className="text-xs text-ink-2 leading-relaxed mb-2">{s.instruction}</p>
+
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {s.measurement && (
+                    <span className="text-[11px] font-semibold bg-white/70 text-primary-deep px-1.5 py-0.5 rounded-full">
+                      📏 {s.measurement}
+                    </span>
+                  )}
+                  {s.tool && (
+                    <span className="text-[11px] font-semibold bg-white/70 text-ink-2 px-1.5 py-0.5 rounded-full">
+                      {TOOL_LABELS[s.tool]}
+                    </span>
+                  )}
+                  {s.tip && active && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowTip((v) => !v) }}
+                      className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full transition-colors ${
+                        showTip ? 'bg-warn text-white' : 'bg-warn-soft text-warn'
+                      }`}
+                    >
+                      💡 Tip
+                    </button>
+                  )}
+                  {s.tip && !active && (
+                    <span className="text-[11px] font-semibold bg-warn-soft text-warn px-1.5 py-0.5 rounded-full">
+                      💡 {s.tip}
+                    </span>
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {showTip && active && s.tip && (
+                    <motion.p
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.16 }}
+                      className="text-[11px] text-ink-2 bg-warn-soft/60 rounded-lg px-2 py-1.5 mb-2 overflow-hidden leading-relaxed"
+                    >
+                      {s.tip}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+
+                {/* Jump back to a done step */}
+                {done && (
+                  <button
+                    onClick={() => onPreview(i)}
+                    className="w-full mt-1 py-1.5 rounded-lg border border-rim text-[11px] font-semibold text-ink-2 bg-surface hover:bg-surface-2 transition-colors"
+                  >
+                    ← View step
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    )
+  }
+
   return (
-    <div className="w-1/3 shrink-0 bg-surface border-r border-rim flex flex-col overflow-hidden">
+    <div className="order-2 md:order-none flex-1 min-h-0 md:flex-none md:w-1/3 md:shrink-0 bg-surface border-t md:border-t-0 md:border-r border-rim flex flex-col overflow-hidden">
       {/* Label + progress count */}
       <div className="px-3 pt-4 pb-2 shrink-0">
         <div className="flex items-center justify-between mb-1.5">
@@ -91,61 +266,64 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
 
       {/* Scrollable step list */}
       <div className="flex-1 overflow-y-auto px-2 pb-2">
-        {steps.map((s, i) => {
-          const done    = i < completedUntil
-          const active  = i === completedUntil
-          const isOpen  = openStep === i
+        {journeys.map((j, jIdx) => {
+          const doneCount = j.stepIndices.filter((i) => i < completedUntil).length
+          const total     = j.stepIndices.length
+          const complete  = doneCount === total
+          const current   = !complete && j.stepIndices[0] <= completedUntil
+          const expanded  = openJourneys.has(j.key)
+          const Icon      = JOURNEY_ICONS[j.kind]
 
           return (
             <div
-              key={s.id}
-              ref={active ? activeRef : undefined}
-              className={`mb-1 rounded-xl overflow-hidden border transition-colors duration-200 ${
-                active   ? 'border-primary/30 bg-primary-soft'
-                : done   ? 'border-rim bg-surface-2'
-                :          'border-rim bg-surface'
+              key={j.key}
+              className={`mb-2 rounded-2xl border overflow-hidden transition-colors ${
+                current ? 'border-primary/40' : 'border-rim'
               }`}
             >
-              {/* Row header */}
+              {/* Journey header — expanding only shows steps, never marks progress */}
               <button
-                onClick={() => toggle(i)}
-                className="w-full flex items-center gap-2 px-2.5 py-2 text-left"
+                onClick={() => toggleJourney(j.key)}
+                aria-expanded={expanded}
+                className={`w-full flex items-center gap-2 px-2.5 py-2.5 text-left transition-colors ${
+                  current ? 'bg-primary-soft' : 'hover:bg-surface-2'
+                }`}
               >
-                <div className={`w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center ${
-                  done   ? 'bg-primary border border-primary'
-                  : active ? 'border-2 border-primary bg-transparent'
-                  :          'bg-surface-2 border border-rim'
+                <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center ${
+                  complete ? 'bg-primary text-surface'
+                  : current ? 'bg-surface text-primary border border-primary/40'
+                  :           'bg-surface-2 text-ink-3'
                 }`}>
-                  {done ? (
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none">
-                      <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ) : active ? (
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  ) : (
-                    <span className="text-[9px] font-bold text-ink-3">{i + 1}</span>
-                  )}
+                  {complete ? (
+                    <motion.span
+                      initial={{ scale: 0.4 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 14 }}
+                      className="flex"
+                    >
+                      <IconCheck size={14} stroke={3} />
+                    </motion.span>
+                  ) : <Icon size={15} />}
                 </div>
-
-                <span className={`flex-1 text-[13px] leading-tight truncate ${
-                  done   ? 'text-ink-3 line-through'
-                  : active ? 'text-ink font-bold'
-                  :          'text-ink-3'
-                }`}>
-                  {s.title}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold text-ink-3 uppercase tracking-widest leading-none mb-0.5">
+                    Journey {jIdx + 1}
+                  </p>
+                  <p className={`text-[13px] font-bold leading-tight truncate ${complete ? 'text-ink-3' : 'text-ink'}`}>
+                    {j.title}
+                  </p>
+                </div>
+                <span className={`text-[11px] font-bold tabular-nums ${complete || current ? 'text-primary' : 'text-ink-3'}`}>
+                  {doneCount}/{total}
                 </span>
-
-                <svg
-                  width="10" height="10" viewBox="0 0 24 24" fill="none"
-                  className={`flex-shrink-0 text-ink-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                >
-                  <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <IconChevronDown
+                  size={12}
+                  className={`flex-shrink-0 text-ink-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+                />
               </button>
 
-              {/* Expandable content */}
               <AnimatePresence initial={false}>
-                {isOpen && (
+                {expanded && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
@@ -153,64 +331,8 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
                     transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
                     className="overflow-hidden"
                   >
-                    <div className="px-2.5 pb-3">
-                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full mb-2 inline-block ${ACTION_COLORS[s.action]}`}>
-                        {ACTION_LABELS[s.action]}
-                      </span>
-
-                      <p className="text-xs text-ink-2 leading-relaxed mb-2">{s.instruction}</p>
-
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {s.measurement && (
-                          <span className="text-[11px] font-semibold bg-white/70 text-primary-deep px-1.5 py-0.5 rounded-full">
-                            📏 {s.measurement}
-                          </span>
-                        )}
-                        {s.tool && (
-                          <span className="text-[11px] font-semibold bg-white/70 text-ink-2 px-1.5 py-0.5 rounded-full">
-                            {TOOL_LABELS[s.tool]}
-                          </span>
-                        )}
-                        {s.tip && active && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setShowTip((v) => !v) }}
-                            className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full transition-colors ${
-                              showTip ? 'bg-warn text-white' : 'bg-warn-soft text-warn'
-                            }`}
-                          >
-                            💡 Tip
-                          </button>
-                        )}
-                        {s.tip && !active && (
-                          <span className="text-[11px] font-semibold bg-warn-soft text-warn px-1.5 py-0.5 rounded-full">
-                            💡 {s.tip}
-                          </span>
-                        )}
-                      </div>
-
-                      <AnimatePresence>
-                        {showTip && active && s.tip && (
-                          <motion.p
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.16 }}
-                            className="text-[11px] text-ink-2 bg-warn-soft/60 rounded-lg px-2 py-1.5 mb-2 overflow-hidden leading-relaxed"
-                          >
-                            {s.tip}
-                          </motion.p>
-                        )}
-                      </AnimatePresence>
-
-                      {/* Jump back to a done step */}
-                      {done && (
-                        <button
-                          onClick={() => onPreview(i)}
-                          className="w-full mt-1 py-1.5 rounded-lg border border-rim text-[11px] font-semibold text-ink-2 bg-surface hover:bg-surface-2 transition-colors"
-                        >
-                          ← View step
-                        </button>
-                      )}
+                    <div className="px-2 pt-1 pb-1">
+                      {j.stepIndices.map((i, n) => renderStep(steps[i], i, n + 1))}
                     </div>
                   </motion.div>
                 )}

@@ -95,7 +95,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
             className="text-body text-ink-2">
-            {tshirtPatternPieces.length} pieces, scaled for your measurements.
+            {tshirtPatternPieces.length} pieces, graded to your size.
           </motion.p>
         </div>
 

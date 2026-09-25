@@ -13,7 +13,7 @@ const plans = [
     features: [
       'One pattern at a time',
       'Full animated sewing guide',
-      'Custom measurements',
+      'Patterns in sizes XS–XXL',
       'Material guide',
     ],
     accent: 'var(--sig-primary-soft)',

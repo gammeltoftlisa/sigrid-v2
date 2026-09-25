@@ -7,7 +7,6 @@ import { getGarmentById, getGarmentGuide } from '@/lib/data'
 import type { UserMeasurements } from '@/lib/types'
 import PatternCanvas from '@/components/sewing/PatternCanvas'
 import GuideSidePanel from '@/components/sewing/GuideSidePanel'
-import PatternPieceTracker from '@/components/sewing/PatternPieceTracker'
 import StepTracker from '@/components/ui/StepTracker'
 
 const DEFAULT_MEASUREMENTS: UserMeasurements = {
@@ -135,7 +134,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
         onClose={() => setExiting(true)}
       />
 
-      <div className="flex-1 flex flex-row overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
         <GuideSidePanel
           steps={steps}
           completedUntil={completedUntil}
@@ -147,8 +146,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
           onPreview={preview}
         />
 
-        {/* Right 2/3: canvas + pattern piece tracker */}
-        <div className="flex-1 flex flex-row overflow-hidden">
+        {/* Right 2/3: canvas (on phones: a fixed-height strip above the steps) */}
+        <div className="order-1 md:order-none h-[34vh] shrink-0 md:h-auto md:flex-1 flex flex-row overflow-hidden">
 
           {/* Canvas column */}
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -197,16 +196,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
             </div>
           </div>
 
-          {/* Pattern piece tracker — only shown when there are pieces */}
-          {guide.pieces.length > 0 && (
-            <PatternPieceTracker
-              pieces={guide.pieces}
-              steps={steps}
-              completedUntil={completedUntil}
-              garmentId={id}
-              onPieceClick={(stepIdx) => preview(stepIdx)}
-            />
-          )}
 
         </div>
       </div>

@@ -27,7 +27,7 @@ export default function SubStepPanel({ current, activeSubStep, onNext, onPrev, o
   const toggle = (i: number) => setOpenStep((prev) => (prev === i ? null : i))
 
   return (
-    <div className="w-1/3 shrink-0 bg-surface border-r border-rim flex flex-col overflow-hidden">
+    <div className="hidden md:flex w-1/3 shrink-0 bg-surface border-r border-rim flex-col overflow-hidden">
       {/* Garment illustration */}
       {garmentName && (
         <div className="px-4 pt-4 pb-3 shrink-0 flex items-center justify-center border-b border-rim">

@@ -180,7 +180,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
           )}
         </div>
         <p className="text-caption text-ink-2 mb-3">{recommendedFabric.description}</p>
-        <p className="text-caption text-ink-3">{recommendedFabric.quantityMeters}m needed · Based on your measurements</p>
+        <p className="text-caption text-ink-3">{recommendedFabric.quantityMeters}m needed · Varies slightly by size</p>
       </div>
 
       {/* What's included */}
@@ -188,7 +188,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         <h3 className="text-heading font-semibold text-ink mb-4">What&apos;s included</h3>
         <div className="space-y-3">
           {[
-            { icon: '📐', title: 'Custom pattern', desc: 'Generated to your exact measurements' },
+            { icon: '📐', title: 'Pattern in your size', desc: `Available in sizes ${garment.sizes[0]}–${garment.sizes[garment.sizes.length - 1]}` },
             { icon: '🧵', title: 'Material guide', desc: `Where to buy ${recommendedFabric.name.toLowerCase()} and how much you'll need` },
             { icon: '🎬', title: 'Animated guide', desc: '3D step-by-step sewing instructions' },
           ].map((item) => (
@@ -225,7 +225,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         </div>
         <div className="px-5">{infoContent}</div>
         <div className="fixed bottom-0 left-0 right-0 px-5 pb-8 pt-4 bg-gradient-to-t from-bg via-bg to-transparent">
-          <Link href={`/garment/${id}/measurements`} onClick={() => sessionStorage.setItem('sigrid_flow_enter', '1')}>
+          <Link href={`/garment/${id}/size`} onClick={() => sessionStorage.setItem('sigrid_flow_enter', '1')}>
             <PrimaryButton>Start this project — €{garment.price}</PrimaryButton>
           </Link>
         </div>
@@ -256,7 +256,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         </div>
         {/* Pinned button — never scrolls away */}
         <div className="shrink-0 px-8 py-6 border-t border-rim">
-          <Link href={`/garment/${id}/measurements`} onClick={() => sessionStorage.setItem('sigrid_flow_enter', '1')}>
+          <Link href={`/garment/${id}/size`} onClick={() => sessionStorage.setItem('sigrid_flow_enter', '1')}>
             <PrimaryButton>Start this project — €{garment.price}</PrimaryButton>
           </Link>
         </div>

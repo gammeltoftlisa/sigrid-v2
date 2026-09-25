@@ -5,17 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import SecondaryButton from '@/components/ui/SecondaryButton'
-import BodySilhouette from '@/components/ui/BodySilhouette'
-
-type MeasurementField = 'bust' | 'waist' | 'hips' | 'height' | 'inseam'
-
-const measurementFields: { key: MeasurementField; label: string; hint: string; unit: string }[] = [
-  { key: 'bust', label: 'Bust', hint: 'Around the fullest part of your chest', unit: 'cm' },
-  { key: 'waist', label: 'Waist', hint: 'Around your natural waist', unit: 'cm' },
-  { key: 'hips', label: 'Hips', hint: 'Around the fullest part of your hips', unit: 'cm' },
-  { key: 'height', label: 'Height', hint: 'Standing straight without shoes', unit: 'cm' },
-  { key: 'inseam', label: 'Inseam', hint: 'From crotch to ankle', unit: 'cm' },
-]
+import SizePicker from '@/components/ui/SizePicker'
+import { allSizes, saveSize } from '@/lib/sizes'
+import type { StandardSize } from '@/lib/types'
 
 function ProgressDots({ total, current }: { total: number; current: number }) {
   return (
@@ -93,7 +85,7 @@ function Screen2({ onNext }: { onNext: () => void }) {
         <div className="text-center">
           <h1 className="text-display font-bold text-ink mb-3 leading-tight">Made for your body.</h1>
           <p className="text-body text-ink-2 leading-relaxed max-w-xs">
-            Enter your measurements once and every pattern fits you perfectly.
+            Tell us your size once and every pattern is ready in it.
           </p>
         </div>
       </div>
@@ -220,56 +212,30 @@ function Screen4({ onNext }: { onNext: () => void }) {
 }
 
 function Screen5({ onFinish }: { onFinish: () => void }) {
-  const [activeField, setActiveField] = useState<MeasurementField | null>(null)
-  const [values, setValues] = useState<Partial<Record<MeasurementField, number>>>({})
+  const [size, setSize] = useState<StandardSize | null>(null)
 
-  const setValue = (field: MeasurementField, raw: string) => {
-    const n = parseFloat(raw)
-    setValues((prev) => ({ ...prev, [field]: isNaN(n) ? undefined : n }))
+  const handleSave = () => {
+    if (size) saveSize(size)
+    onFinish()
   }
-
-  const inputClass = (field: MeasurementField) => `
-    flex-1 px-4 py-3 rounded-xl border
-    ${activeField === field ? 'border-primary ring-2 ring-primary/20' : 'border-rim'}
-    bg-surface text-body text-ink placeholder:text-ink-3
-    focus:outline-none transition-all duration-200
-  `
 
   return (
     <div className="flex flex-col h-full px-6 pt-14 pb-8 overflow-y-auto">
       <div className="mb-6">
-        <h1 className="text-title font-bold text-ink mb-1">Your measurements</h1>
-        <p className="text-body text-ink-2">You can always add these later.</p>
+        <h1 className="text-title font-bold text-ink mb-1">What&apos;s your size?</h1>
+        <p className="text-body text-ink-2">We&apos;ll use it as your starting point for every pattern. You can change it any time.</p>
       </div>
 
-      <div className="flex gap-4 mb-6">
-        <div className="w-32 flex-shrink-0 flex items-center justify-center">
-          <BodySilhouette activeField={activeField} measurements={values} className="h-52" />
-        </div>
-        <div className="flex-1 flex flex-col gap-3">
-          {measurementFields.map((f) => (
-            <div key={f.key} className="flex flex-col gap-1">
-              <label className="text-caption font-semibold text-ink-2">{f.label}</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="—"
-                  onFocus={() => setActiveField(f.key)}
-                  onBlur={() => setActiveField(null)}
-                  onChange={(e) => setValue(f.key, e.target.value)}
-                  className={inputClass(f.key)}
-                />
-                <span className="text-caption text-ink-3 w-6">{f.unit}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="mb-6">
+        <SizePicker sizes={allSizes} selected={size} onSelect={setSize} />
       </div>
 
-      <ProgressDots total={5} current={4} />
-      <div className="mt-6 flex flex-col gap-3">
-        <PrimaryButton onClick={onFinish}>Save measurements</PrimaryButton>
-        <SecondaryButton variant="ghost" onClick={onFinish}>Skip for now</SecondaryButton>
+      <div className="mt-auto">
+        <ProgressDots total={5} current={4} />
+        <div className="mt-6 flex flex-col gap-3">
+          <PrimaryButton onClick={handleSave} disabled={!size}>Save my size</PrimaryButton>
+          <SecondaryButton variant="ghost" onClick={onFinish}>Skip for now</SecondaryButton>
+        </div>
       </div>
     </div>
   )

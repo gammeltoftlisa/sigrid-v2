@@ -8,6 +8,7 @@ import type {
   FabricOption,
   GarmentGuide,
   UserMeasurements,
+  StandardSize,
 } from './types'
 
 export const garments: Garment[] = [
@@ -20,6 +21,7 @@ export const garments: Garment[] = [
     price: 9,
     isCreator: false,
     fits: ['Relaxed', 'Regular', 'Fitted'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
     description: 'The perfect first project. Learn the fundamentals of sewing with this timeless wardrobe staple.',
   },
   {
@@ -31,6 +33,7 @@ export const garments: Garment[] = [
     price: 8,
     isCreator: false,
     fits: ['Relaxed', 'Regular', 'Fitted'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
     description: 'A flattering and simple skirt shape, perfect for beginners building their first wardrobe.',
   },
   {
@@ -42,6 +45,7 @@ export const garments: Garment[] = [
     price: 12,
     isCreator: false,
     fits: ['Relaxed', 'Regular', 'Fitted'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
     description: 'Classic straight-leg trousers that work for every occasion. A great next step after your first projects.',
   },
   {
@@ -53,6 +57,7 @@ export const garments: Garment[] = [
     price: 11,
     isCreator: false,
     fits: ['Oversized', 'Relaxed'],
+    sizes: ['S', 'M', 'L', 'XL'],
     description: 'Cosy and versatile, this hoodie is a wardrobe essential. Learn drawstrings, cuffs, and kangaroo pockets.',
   },
   {
@@ -64,6 +69,7 @@ export const garments: Garment[] = [
     price: 10,
     isCreator: false,
     fits: ['Relaxed', 'Regular', 'Fitted'],
+    sizes: ['XS', 'S', 'M', 'L'],
     description: 'Elegant and effortless. This bias-cut slip dress teaches you to work with silky fabrics.',
   },
   {
@@ -75,6 +81,7 @@ export const garments: Garment[] = [
     price: 15,
     isCreator: false,
     fits: ['Regular', 'Fitted'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
     description: 'The pinnacle of garment construction. Master lapels, lining, and structured tailoring.',
   },
 ]
@@ -344,8 +351,6 @@ export const tshirtFabrics: FabricOption[] = [
   },
 ]
 
-export type StandardSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL'
-
 export const standardSizes: Record<StandardSize, UserMeasurements> = {
   XS:  { bust: 80,  waist: 62, hips: 87,  height: 164, inseam: 74 },
   S:   { bust: 84,  waist: 66, hips: 91,  height: 166, inseam: 76 },
@@ -427,7 +432,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 3,
-        group: 'Cut',
+        group: 'Cut the front',
         action: 'mark',
         title: 'Mark the front panel',
         instruction: 'Using tailor\'s chalk and a ruler, mark the front panel shape on your fabric. The top width goes at the fold side.',
@@ -439,7 +444,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 4,
-        group: 'Cut',
+        group: 'Cut the front',
         action: 'cut',
         title: 'Cut the front panel',
         instruction: 'Cut along your chalk lines with sharp fabric scissors. Use long, smooth strokes — don\'t use small snips. Cut through both layers of fabric at once.',
@@ -452,7 +457,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 5,
-        group: 'Cut',
+        group: 'Cut the back',
         action: 'mark',
         title: 'Mark the back panel',
         instruction: 'Repeat the marking on a fresh section of fabric for the back panel. The back and front are the same shape for this skirt.',
@@ -464,7 +469,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 6,
-        group: 'Cut',
+        group: 'Cut the back',
         action: 'cut',
         title: 'Cut the back panel',
         instruction: 'Cut both layers — you\'ll end up with two identical back pieces which will be joined at the centre back seam (where the zip goes).',
@@ -476,7 +481,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 7,
-        group: 'Cut',
+        group: 'Waistband & marks',
         action: 'cut',
         title: 'Cut the waistband',
         instruction: 'Cut one waistband rectangle. The length runs along the grain line (horizontal). This piece will fold in half to form the finished waistband.',
@@ -488,7 +493,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 8,
-        group: 'Cut',
+        group: 'Waistband & marks',
         action: 'mark',
         title: 'Mark seam allowances',
         instruction: 'On each piece, mark a line 1.5 cm in from the left and right edges. This is your sewing line — you sew along this, not the cut edge.',
@@ -501,7 +506,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 9,
-        group: 'Side seams',
+        group: 'Left side seam',
         action: 'pin',
         title: 'Pin the left side seam',
         instruction: 'Place the front panel and one back panel right sides together. The fabric\'s "nice" side faces inward. Pin along the left edge every 5 cm.',
@@ -513,7 +518,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 10,
-        group: 'Side seams',
+        group: 'Left side seam',
         action: 'sew',
         title: 'Sew the left side seam',
         instruction: 'Sew along the left edge, 1.5 cm from the cut edge. Start and end with 3–4 backstitches to lock the thread. Remove pins as you reach them.',
@@ -526,7 +531,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 11,
-        group: 'Side seams',
+        group: 'Left side seam',
         action: 'press',
         title: 'Press the left seam open',
         instruction: 'Open the two pieces flat and press the seam allowance open with your iron. This makes the seam lie flat and look professional.',
@@ -536,7 +541,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 12,
-        group: 'Side seams',
+        group: 'Right side seam',
         action: 'pin',
         title: 'Pin the right side seam',
         instruction: 'Pin the front panel to the remaining back panel along the right edge, right sides together.',
@@ -547,7 +552,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 13,
-        group: 'Side seams',
+        group: 'Right side seam',
         action: 'sew',
         title: 'Sew the right side seam',
         instruction: 'Sew the right side seam, leaving the top 18 cm open — this is where the zip will go. Mark the 18 cm point with a pin before you start.',
@@ -560,7 +565,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 14,
-        group: 'Side seams',
+        group: 'Right side seam',
         action: 'press',
         title: 'Press the right seam',
         instruction: 'Press the right seam open, including the unsewn section at the top. Fold and press the seam allowance back on the open section — this preps the zip opening.',
@@ -569,7 +574,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 15,
-        group: 'Waistband',
+        group: 'Attach the waistband',
         action: 'fold',
         title: 'Fold the waistband in half',
         instruction: 'Fold the waistband piece in half lengthwise, wrong sides together. Press the fold firmly. The folded piece is now 3.5 cm tall.',
@@ -580,7 +585,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 16,
-        group: 'Waistband',
+        group: 'Attach the waistband',
         action: 'pin',
         title: 'Pin waistband to skirt top',
         instruction: 'Open the waistband back out. Place it right sides together with the skirt top edge, matching the raw edges. Pin along the top.',
@@ -592,7 +597,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 17,
-        group: 'Waistband',
+        group: 'Attach the waistband',
         action: 'sew',
         title: 'Sew the waistband on',
         instruction: 'Sew the waistband to the skirt top, 1.5 cm from the edge. Sew all the way around.',
@@ -603,7 +608,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 18,
-        group: 'Waistband',
+        group: 'Close the waistband',
         action: 'fold',
         title: 'Fold waistband to inside',
         instruction: 'Fold the waistband over to the inside of the skirt along the original pressed fold line. The folded edge should just cover the seam line.',
@@ -613,7 +618,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 19,
-        group: 'Waistband',
+        group: 'Close the waistband',
         action: 'pin',
         title: 'Pin waistband edge',
         instruction: 'Pin the folded waistband edge to the inside of the skirt, just below the seam line.',
@@ -624,7 +629,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 20,
-        group: 'Waistband',
+        group: 'Close the waistband',
         action: 'sew',
         title: 'Topstitch the waistband',
         instruction: 'From the right side, topstitch 2 mm from the upper folded edge of the waistband all the way around. This secures the inside edge.',
@@ -636,7 +641,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 21,
-        group: 'Hem',
+        group: 'Fold the hem',
         action: 'fold',
         title: 'Fold first hem',
         instruction: 'Turn the skirt wrong side out. Fold the bottom edge up by 1 cm all the way around. Press firmly.',
@@ -648,7 +653,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 22,
-        group: 'Hem',
+        group: 'Fold the hem',
         action: 'fold',
         title: 'Fold second hem',
         instruction: 'Fold the bottom up again by 2.5 cm. Press well. This double fold gives a clean, durable hem with no raw edges.',
@@ -661,7 +666,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 23,
-        group: 'Hem',
+        group: 'Sew the hem',
         action: 'pin',
         title: 'Pin the hem',
         instruction: 'Pin the folded hem in place around the full circumference of the skirt.',
@@ -672,7 +677,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 24,
-        group: 'Hem',
+        group: 'Sew the hem',
         action: 'sew',
         title: 'Sew the hem',
         instruction: 'Sew close to the upper fold of the hem, all the way around. Keep a steady seam allowance of about 2 mm from the fold.',
@@ -866,7 +871,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 13,
-        group: 'Hems',
+        group: 'Sleeve hems',
         action: 'fold',
         title: 'Hem the sleeves',
         instruction: 'Fold each sleeve cuff up 0.5 cm then 1.5 cm. Press and pin.',
@@ -878,7 +883,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 14,
-        group: 'Hems',
+        group: 'Sleeve hems',
         action: 'sew',
         title: 'Sew sleeve hems',
         instruction: 'Sew close to the inner fold on both sleeve cuffs.',
@@ -888,7 +893,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 15,
-        group: 'Hems',
+        group: 'Bottom hem',
         action: 'fold',
         title: 'Fold bottom hem',
         instruction: 'Fold the shirt hem up 0.5 cm then 2.5 cm. Press firmly.',
@@ -900,7 +905,7 @@ export const garmentGuides: GarmentGuide[] = [
       },
       {
         id: 16,
-        group: 'Hems',
+        group: 'Bottom hem',
         action: 'sew',
         title: 'Sew the bottom hem',
         instruction: 'Sew close to the inner fold all the way around the hem.',

@@ -22,7 +22,7 @@ export default function GarmentCard({ garment, href }: Props) {
         <GarmentIllustration name={garment.name} className="w-full h-full" />
       </div>
       <div className="p-4 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col items-start gap-1.5">
           <h3 className="text-label font-semibold text-ink leading-snug">{garment.name}</h3>
           <DifficultyBadge difficulty={garment.difficulty} />
         </div>

@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 
 export const GARMENT_STEPS = [
   {
-    key: 'measurements',
-    label: 'Measure',
-    subSteps: ['Bust', 'Waist', 'Hips', 'Height', 'Inseam'],
+    key: 'size',
+    label: 'Size',
+    subSteps: ['Choose your size', 'Review materials'],
   },
   {
     key: 'guide',
@@ -34,7 +34,7 @@ interface Props {
 }
 
 const STEP_URLS: Record<StepKey, (id: string) => string> = {
-  measurements: (id) => `/garment/${id}/measurements`,
+  size:         (id) => `/garment/${id}/size`,
   guide:        (id) => `/garment/${id}/guide`,
   complete:     (id) => `/garment/${id}/complete`,
 }

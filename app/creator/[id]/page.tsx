@@ -63,7 +63,7 @@ export default function CreatorPage({ params }: { params: Promise<{ id: string }
             <div className="w-px h-8 bg-rim" />
             <div className="text-center">
               <p className="text-heading font-bold text-ink">
-                {patterns.reduce((sum, p) => sum + p.timesMade, 0).toLocaleString()}
+                {patterns.reduce((sum, p) => sum + p.timesMade, 0).toLocaleString('en-US')}
               </p>
               <p className="text-caption text-ink-3">makes</p>
             </div>

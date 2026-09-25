@@ -1,6 +1,7 @@
 export type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
 export type FitType = 'Oversized' | 'Relaxed' | 'Regular' | 'Fitted' | 'Tailored'
 export type GarmentCategory = 'Tops' | 'Bottoms' | 'Dresses' | 'Outerwear'
+export type StandardSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL'
 
 export interface Garment {
   id: string
@@ -12,6 +13,7 @@ export interface Garment {
   isCreator: boolean
   creatorId?: string
   fits?: FitType[]
+  sizes: StandardSize[]
   description: string
 }
 
