@@ -21,6 +21,17 @@ export default function FlowModal() {
     }
   }, [garmentId, isOpen])
 
+  // Lock background scroll while the modal is on screen — it's `fixed`, so without
+  // this the page behind it keeps scrolling under the mouse/touch.
+  useEffect(() => {
+    if (!isOpen) return
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = original
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   const handleClose = () => setExiting(true)

@@ -7,7 +7,6 @@ import { motion } from 'framer-motion'
 import { getGarmentById, tshirtSteps } from '@/lib/data'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import StepTracker from '@/components/ui/StepTracker'
-import SubStepPanel from '@/components/ui/SubStepPanel'
 import { useFlow } from '@/lib/flow-context'
 
 const SewingGuide = dynamic(() => import('@/components/three/SewingGuide'), { ssr: false })
@@ -34,19 +33,7 @@ export default function CompleteStep({ garmentId, onClose }: { garmentId: string
         onClose={onClose}
       />
 
-      <div className="flex-1 flex flex-row overflow-hidden">
-        <SubStepPanel
-          current="complete"
-          activeSubStep={rating > 0 ? 1 : 0}
-          onNext={handleGoHome}
-          onPrev={() => goToStep('guide')}
-          onExit={handleGoHome}
-          isLast
-          garmentName={garment.name}
-        />
-
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto flex flex-col">
+      <div className="flex-1 overflow-y-auto flex flex-col">
             <div className="h-[40vh] relative flex-shrink-0">
               <SewingGuide
                 steps={tshirtSteps}
@@ -127,8 +114,6 @@ export default function CompleteStep({ garmentId, onClose }: { garmentId: string
                 </button>
               </motion.div>
             </div>
-          </div>
-        </div>
       </div>
     </>
   )

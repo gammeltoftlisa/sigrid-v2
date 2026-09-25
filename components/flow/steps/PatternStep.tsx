@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { tshirtPatternPieces, getGarmentById } from '@/lib/data'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import StepTracker from '@/components/ui/StepTracker'
-import SubStepPanel from '@/components/ui/SubStepPanel'
 import { useFlow } from '@/lib/flow-context'
 
 const pieceColors: Record<string, string> = {
@@ -49,25 +48,14 @@ function PatternPieceCard({ piece, index }: { piece: typeof tshirtPatternPieces[
 }
 
 export default function PatternStep({ garmentId, onClose }: { garmentId: string; onClose: () => void }) {
-  const { goToStep } = useFlow()
+  const { completeStep } = useFlow()
   const garment = getGarmentById(garmentId)
 
   return (
     <>
       <StepTracker current="pattern" garmentId={garmentId} garmentName={garment.name} onClose={onClose} />
 
-      <div className="flex-1 flex flex-row overflow-hidden">
-        <SubStepPanel
-          current="pattern"
-          activeSubStep={0}
-          onNext={() => goToStep('materials')}
-          onPrev={() => goToStep('measurements')}
-          onExit={onClose}
-          garmentName={garment.name}
-        />
-
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto">
             <div className="px-5 pt-5 pb-6">
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -127,10 +115,8 @@ export default function PatternStep({ garmentId, onClose }: { garmentId: string;
             </div>
 
             <div className="px-5 pb-8 pt-4">
-              <PrimaryButton onClick={() => goToStep('materials')}>Continue to materials</PrimaryButton>
+              <PrimaryButton onClick={() => completeStep('materials')}>Continue to materials</PrimaryButton>
             </div>
-          </div>
-        </div>
       </div>
     </>
   )
