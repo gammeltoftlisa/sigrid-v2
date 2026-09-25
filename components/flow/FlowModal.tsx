@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import { useFlow } from '@/lib/flow-context'
 import MeasurementsStep from './steps/MeasurementsStep'
 import PatternStep from './steps/PatternStep'
-import MaterialsStep from './steps/MaterialsStep'
 import GuideStep from './steps/GuideStep'
 import CompleteStep from './steps/CompleteStep'
 
@@ -52,7 +51,6 @@ export default function FlowModal() {
     >
       {garmentId && step === 'measurements' && <MeasurementsStep garmentId={garmentId} onClose={handleClose} />}
       {garmentId && step === 'pattern'      && <PatternStep      garmentId={garmentId} onClose={handleClose} />}
-      {garmentId && step === 'materials'    && <MaterialsStep    garmentId={garmentId} onClose={handleClose} />}
       {garmentId && step === 'guide'        && <GuideStep        garmentId={garmentId} onClose={handleClose} />}
       {garmentId && step === 'complete'     && <CompleteStep     garmentId={garmentId} onClose={handleClose} />}
     </motion.div>

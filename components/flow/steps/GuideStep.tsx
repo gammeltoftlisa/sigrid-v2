@@ -89,7 +89,7 @@ function GuideNav({ onPrev, onNext, onPeekNext, isLast, stepIndex, total }: {
 }) {
   const atEnd = stepIndex >= total - 1
   return (
-    <div className="shrink-0 px-4 pt-3 pb-5 border-t border-rim bg-bg">
+    <div className="shrink-0 px-4 pt-3 pb-8 border-t border-rim bg-bg">
       <div className="flex items-center gap-3 mb-2">
         <button
           onClick={onPrev}
@@ -517,7 +517,7 @@ export default function GuideStep({ garmentId, onClose }: { garmentId: string; o
 
   const goBack = () => {
     if (stepIndex === 0) {
-      goToStep('materials')
+      goToStep('pattern')
     } else {
       setDirection(-1)
       setStepIndex((i) => i - 1)

@@ -2,9 +2,9 @@
 
 import { createContext, useContext, useState, useCallback } from 'react'
 
-export type FlowStep = 'measurements' | 'pattern' | 'materials' | 'guide' | 'complete'
+export type FlowStep = 'measurements' | 'pattern' | 'guide' | 'complete'
 
-const STEP_ORDER: FlowStep[] = ['measurements', 'pattern', 'materials', 'guide', 'complete']
+const STEP_ORDER: FlowStep[] = ['measurements', 'pattern', 'guide', 'complete']
 
 interface FlowContextValue {
   garmentId: string | null

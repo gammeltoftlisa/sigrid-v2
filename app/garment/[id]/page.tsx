@@ -4,7 +4,8 @@ import { useState, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getGarmentById, creators } from '@/lib/data'
+import { IconColorSwatch, IconLeaf } from '@tabler/icons-react'
+import { getGarmentById, creators, tshirtFabrics } from '@/lib/data'
 import { useFlow } from '@/lib/flow-context'
 import DifficultyBadge from '@/components/ui/DifficultyBadge'
 import FitBadge from '@/components/ui/FitBadge'
@@ -72,6 +73,7 @@ function FitSlider({ fits, selected, onSelect }: {
 export default function GarmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const garment = getGarmentById(id)
+  const recommendedFabric = tshirtFabrics[0]
   const creator = garment.isCreator && garment.creatorId ? creators.find((c) => c.id === garment.creatorId) : null
   const [selectedFit, setSelectedFit] = useState<FitType>(garment.fits?.[0] ?? 'Regular')
   const [following, setFollowing] = useState(false)
@@ -164,13 +166,32 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
+      {/* Recommended fabric */}
+      <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft">
+        <div className="flex items-center gap-2 mb-3">
+          <IconColorSwatch size={20} className="text-primary" />
+          <h3 className="text-heading font-semibold text-ink">Recommended fabric</h3>
+        </div>
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <p className="text-label font-semibold text-ink">{recommendedFabric.name}</p>
+          {recommendedFabric.isEco && (
+            <span className="flex items-center gap-1 text-[11px] font-semibold bg-success-soft text-success px-2 py-0.5 rounded-full shrink-0">
+              <IconLeaf size={12} />
+              Eco
+            </span>
+          )}
+        </div>
+        <p className="text-caption text-ink-2 mb-3">{recommendedFabric.description}</p>
+        <p className="text-caption text-ink-3">{recommendedFabric.quantityMeters}m needed · Based on your measurements</p>
+      </div>
+
       {/* What's included */}
       <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft">
         <h3 className="text-heading font-semibold text-ink mb-4">What&apos;s included</h3>
         <div className="space-y-3">
           {[
             { icon: '📐', title: 'Custom pattern', desc: 'Generated to your exact measurements' },
-            { icon: '🧵', title: 'Material guide', desc: 'Know exactly what to buy and where' },
+            { icon: '🧵', title: 'Material guide', desc: `Where to buy ${recommendedFabric.name.toLowerCase()} and how much you'll need` },
             { icon: '🎬', title: 'Animated guide', desc: '3D step-by-step sewing instructions' },
           ].map((item) => (
             <div key={item.title} className="flex items-center gap-4">

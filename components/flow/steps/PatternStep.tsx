@@ -115,7 +115,7 @@ export default function PatternStep({ garmentId, onClose }: { garmentId: string;
             </div>
 
             <div className="px-5 pb-8 pt-4">
-              <PrimaryButton onClick={() => completeStep('materials')}>Continue to materials</PrimaryButton>
+              <PrimaryButton onClick={() => completeStep('guide')}>Continue to sewing guide</PrimaryButton>
             </div>
       </div>
     </>
