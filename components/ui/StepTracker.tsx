@@ -10,11 +10,6 @@ export const GARMENT_STEPS = [
     subSteps: ['Bust', 'Waist', 'Hips', 'Height', 'Inseam'],
   },
   {
-    key: 'materials',
-    label: 'Materials',
-    subSteps: ['Choose fabric', 'Check quantity', 'Find a shop'],
-  },
-  {
     key: 'guide',
     label: 'Sewing',
     subSteps: ['Prepare', 'Cut', 'Shoulders', 'Neckline', 'Sleeves', 'Side seams', 'Hems', 'Finish'],
@@ -40,7 +35,6 @@ interface Props {
 
 const STEP_URLS: Record<StepKey, (id: string) => string> = {
   measurements: (id) => `/garment/${id}/measurements`,
-  materials:    (id) => `/garment/${id}/materials`,
   guide:        (id) => `/garment/${id}/guide`,
   complete:     (id) => `/garment/${id}/complete`,
 }
