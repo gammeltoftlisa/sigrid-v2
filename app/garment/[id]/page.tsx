@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconColorSwatch, IconLeaf } from '@tabler/icons-react'
 import { getGarmentById, creators, tshirtFabrics } from '@/lib/data'
-import { useFlow } from '@/lib/flow-context'
 import DifficultyBadge from '@/components/ui/DifficultyBadge'
 import FitBadge from '@/components/ui/FitBadge'
 import PrimaryButton from '@/components/ui/PrimaryButton'
@@ -78,7 +77,6 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const [selectedFit, setSelectedFit] = useState<FitType>(garment.fits?.[0] ?? 'Regular')
   const [following, setFollowing] = useState(false)
   const router = useRouter()
-  const { openFlow } = useFlow()
 
   const backButton = (
     <button
@@ -227,7 +225,9 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         </div>
         <div className="px-5">{infoContent}</div>
         <div className="fixed bottom-0 left-0 right-0 px-5 pb-8 pt-4 bg-gradient-to-t from-bg via-bg to-transparent">
-          <PrimaryButton onClick={() => openFlow(id)}>Start this project — €{garment.price}</PrimaryButton>
+          <Link href={`/garment/${id}/measurements`} onClick={() => sessionStorage.setItem('sigrid_flow_enter', '1')}>
+            <PrimaryButton>Start this project — €{garment.price}</PrimaryButton>
+          </Link>
         </div>
       </div>
 
@@ -256,7 +256,9 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         </div>
         {/* Pinned button — never scrolls away */}
         <div className="shrink-0 px-8 py-6 border-t border-rim">
-          <PrimaryButton onClick={() => openFlow(id)}>Start this project — €{garment.price}</PrimaryButton>
+          <Link href={`/garment/${id}/measurements`} onClick={() => sessionStorage.setItem('sigrid_flow_enter', '1')}>
+            <PrimaryButton>Start this project — €{garment.price}</PrimaryButton>
+          </Link>
         </div>
       </div>
 

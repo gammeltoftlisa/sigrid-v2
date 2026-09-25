@@ -49,7 +49,7 @@ export default function MeasurementsPage({ params }: { params: Promise<{ id: str
 
   const handleConfirm = () => {
     sessionStorage.setItem('sigrid_measurements', JSON.stringify(measurements))
-    router.push(`/garment/${id}/pattern`)
+    router.push(`/garment/${id}/guide`)
   }
 
   return (

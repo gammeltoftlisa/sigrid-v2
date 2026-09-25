@@ -6,10 +6,8 @@ import ProgressBar from '@/components/ui/ProgressBar'
 import DifficultyBadge from '@/components/ui/DifficultyBadge'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import { activeProject, completedProjects } from '@/lib/data'
-import { useFlow } from '@/lib/flow-context'
 
 export default function ProjectsPage() {
-  const { openFlow } = useFlow()
   return (
     <div className="min-h-full bg-bg">
       <div className="px-5 pt-14 pb-6">
@@ -50,7 +48,9 @@ export default function ProjectsPage() {
             </div>
           </div>
           <ProgressBar percent={activeProject.progressPercent} showLabel className="mb-4" />
-          <PrimaryButton onClick={() => openFlow(activeProject.garmentId, 'guide')}>Continue sewing</PrimaryButton>
+          <Link href={`/garment/${activeProject.garmentId}/guide`}>
+            <PrimaryButton>Continue sewing</PrimaryButton>
+          </Link>
         </motion.div>
       </div>
 

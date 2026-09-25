@@ -48,11 +48,14 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
   const [showTip, setShowTip] = useState(false)
   const activeRef = useRef<HTMLDivElement>(null)
 
-  // When completedUntil advances (Mark done pressed), open the new step
+  // When completedUntil advances (Mark done pressed), open the new active step
+  // only if the user isn't already previewing a different step.
   useEffect(() => {
-    setOpenStep(completedUntil)
-    setShowTip(false)
-    activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    if (openStep === completedUntil - 1 || openStep === completedUntil) {
+      setOpenStep(completedUntil)
+      setShowTip(false)
+      activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
   }, [completedUntil])
 
   const toggle = (i: number) => {
@@ -69,9 +72,21 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
 
   return (
     <div className="w-1/3 shrink-0 bg-surface border-r border-rim flex flex-col overflow-hidden">
-      {/* Label */}
+      {/* Label + progress count */}
       <div className="px-3 pt-4 pb-2 shrink-0">
-        <p className="text-[11px] font-bold text-ink-3 uppercase tracking-widest">Steps</p>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-[11px] font-bold text-ink-3 uppercase tracking-widest">Steps</p>
+          <p className="text-[11px] font-bold text-primary tabular-nums">
+            {completedUntil} / {steps.length}
+          </p>
+        </div>
+        {/* Progress bar — advances only when steps are effectively marked done */}
+        <div className="h-0.5 rounded-full bg-rim overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-500"
+            style={{ width: `${(completedUntil / steps.length) * 100}%` }}
+          />
+        </div>
       </div>
 
       {/* Scrollable step list */}
