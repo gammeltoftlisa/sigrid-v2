@@ -75,7 +75,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
       ? 'Sew it again'
       : `Start this project — €${garment.price}`
 
-  const printPattern = () => window.open(`/garment/${id}/pattern?print=true`, '_blank')
+  const printPattern = () => window.open(`/garment/${id}/pattern?print=true${project ? `&size=${project.size}` : ''}`, '_blank')
 
   const backButton = (
     <IconButton label="Back" variant="raised" size="md" onClick={() => router.back()}>
