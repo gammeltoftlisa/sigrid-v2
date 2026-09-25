@@ -4,6 +4,8 @@ import { use, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { tshirtPatternPieces, getGarmentById } from '@/lib/data'
+import IconButton from '@/components/ui/IconButton'
+import { IconChevronLeft } from '@tabler/icons-react'
 
 const pieceColors: Record<string, string> = {
   A: 'var(--sig-primary-soft)',
@@ -65,14 +67,9 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
     <div className="min-h-screen bg-bg flex flex-col">
       {/* Simple header — this is now a standalone printable view, not a flow step */}
       <div className="shrink-0 bg-bg border-b border-rim px-5 py-4 flex items-center gap-3 print:hidden">
-        <button
-          onClick={() => router.back()}
-          className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center hover:bg-rim transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="var(--sig-ink-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <IconButton label="Back" onClick={() => router.back()}>
+          <IconChevronLeft size={16} />
+        </IconButton>
         <p className="text-label font-bold text-ink">{garment.name} — Pattern pieces</p>
       </div>
 
@@ -130,7 +127,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
         <div className="px-5 mb-8 print:hidden">
           <button
             onClick={() => window.print()}
-            className="w-full flex items-center justify-center gap-2 bg-surface border border-rim py-4 rounded-full text-label font-semibold text-ink shadow-soft"
+            className="w-full flex items-center justify-center gap-2 bg-surface border border-rim py-4 rounded-full text-label font-semibold text-ink shadow-soft hover:bg-surface-2 active:scale-[0.97] transition duration-150"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M6 9V2H18V9M6 18H4C2.9 18 2 17.1 2 16V11C2 9.9 2.9 9 4 9H20C21.1 9 22 9.9 22 11V16C22 17.1 21.1 18 20 18H18M6 14H18V22H6V14Z"

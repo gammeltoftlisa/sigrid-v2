@@ -106,7 +106,12 @@ export default function TabBar() {
         {tabs.map((tab) => {
           const active = pathname === tab.href || pathname.startsWith(tab.href + '/')
           return (
-            <Link key={tab.href} href={tab.href} className="flex flex-col items-center gap-1 flex-1 py-1">
+            <Link
+              key={tab.href}
+              href={tab.href}
+              aria-current={active ? 'page' : undefined}
+              className={`flex flex-col items-center gap-1 flex-1 py-1 rounded-xl transition duration-150 active:scale-90 ${active ? '' : 'hover:bg-surface-2'}`}
+            >
               <motion.div
                 animate={{ scale: active ? 1.08 : 1 }}
                 transition={{ duration: 0.2 }}

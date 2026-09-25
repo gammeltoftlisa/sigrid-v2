@@ -64,7 +64,7 @@ export default function ExplorePage() {
               key={cat}
               onClick={() => setCategory(cat)}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-label font-medium transition-colors duration-200 ${
-                category === cat ? 'bg-primary text-surface' : 'bg-surface-2 text-ink-2'
+                category === cat ? 'bg-primary text-surface' : 'bg-surface-2 text-ink-2 hover:bg-rim hover:text-ink'
               }`}
             >
               {cat}
@@ -77,7 +77,7 @@ export default function ExplorePage() {
               key={d}
               onClick={() => setDifficulty(d)}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-label font-medium transition-colors duration-200 ${
-                difficulty === d ? 'bg-ink text-surface' : 'bg-surface-2 text-ink-2'
+                difficulty === d ? 'bg-primary text-surface' : 'bg-surface-2 text-ink-2 hover:bg-rim hover:text-ink'
               }`}
             >
               {d}

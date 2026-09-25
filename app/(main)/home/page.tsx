@@ -8,6 +8,7 @@ import PatternCard from '@/components/ui/PatternCard'
 import ProgressBar from '@/components/ui/ProgressBar'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import { garments, creatorPatterns, activeProject } from '@/lib/data'
+import { TAP, textLink } from '@/components/ui/interaction'
 
 const SHOW_ACTIVE = true
 
@@ -70,9 +71,7 @@ export default function HomePage() {
               </div>
             </div>
             <ProgressBar percent={activeProject.progressPercent} showLabel />
-            <Link href={`/garment/${activeProject.garmentId}/guide`} className="block mt-4">
-              <PrimaryButton>Continue sewing</PrimaryButton>
-            </Link>
+            <PrimaryButton href={`/garment/${activeProject.garmentId}`} className="mt-4">Continue sewing</PrimaryButton>
           </motion.div>
         </div>
       )}
@@ -99,9 +98,7 @@ export default function HomePage() {
                 </svg>
               </div>
             </div>
-            <Link href="/explore">
-              <PrimaryButton>Browse patterns</PrimaryButton>
-            </Link>
+            <PrimaryButton href="/explore">Browse patterns</PrimaryButton>
           </motion.div>
         </div>
       )}
@@ -120,11 +117,11 @@ export default function HomePage() {
             <motion.button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              whileTap={{ scale: 0.95 }}
+              whileTap={TAP}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-label font-medium transition-colors duration-200 ${
                 activeCategory === cat
                   ? 'bg-primary text-surface'
-                  : 'bg-surface-2 text-ink-2'
+                  : 'bg-surface-2 text-ink-2 hover:bg-rim hover:text-ink'
               }`}
             >
               {cat}
@@ -151,7 +148,7 @@ export default function HomePage() {
         <div className="mb-8">
           <div className="px-5 flex items-center justify-between mb-4">
             <h2 className="text-heading font-semibold text-ink">New from creators</h2>
-            <Link href="/explore" className="text-label font-semibold text-primary">See all</Link>
+            <Link href="/explore" className={`text-label ${textLink}`}>See all</Link>
           </div>
           <div className="flex gap-4 overflow-x-auto px-5 pb-2">
             {creatorPatterns.slice(0, 4).map((pattern) => (

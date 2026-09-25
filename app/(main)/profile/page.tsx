@@ -7,12 +7,16 @@ import SizePicker from '@/components/ui/SizePicker'
 import { allSizes, loadSavedSize, saveSize, sizeLabel } from '@/lib/sizes'
 import type { StandardSize } from '@/lib/types'
 import { creators } from '@/lib/data'
+import { TAP, cardInteractive } from '@/components/ui/interaction'
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <motion.button
+      role="switch"
+      aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative w-12 h-7 rounded-full transition-colors duration-300 ${checked ? 'bg-primary' : 'bg-rim'}`}
+      whileTap={TAP}
+      className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${checked ? 'bg-primary hover:bg-primary-deep' : 'bg-rim hover:bg-ink-3/40'}`}
     >
       <motion.div
         animate={{ x: checked ? 20 : 2 }}
@@ -97,8 +101,8 @@ export default function ProfilePage() {
       {/* Payment */}
       <div className="px-5 mb-6">
         <h2 className="text-heading font-semibold text-ink mb-4">Subscription</h2>
-        <Link href="/payment">
-          <div className="bg-surface rounded-3xl p-5 shadow-soft flex items-center justify-between">
+        <Link href="/payment" className="block rounded-3xl">
+          <div className={`bg-surface rounded-3xl p-5 shadow-soft flex items-center justify-between ${cardInteractive}`}>
             <div>
               <p className="text-label font-medium text-ink">Beta access</p>
               <p className="text-caption text-ink-3">Payment coming soon</p>
@@ -115,8 +119,8 @@ export default function ProfilePage() {
         <h2 className="text-heading font-semibold text-ink mb-4">Creators I follow</h2>
         <div className="flex flex-col gap-3">
           {followedCreators.map((creator) => (
-            <Link key={creator.id} href={`/creator/${creator.id}`}>
-              <div className="bg-surface rounded-2xl p-4 shadow-soft flex items-center gap-3">
+            <Link key={creator.id} href={`/creator/${creator.id}`} className="block rounded-2xl">
+              <div className={`bg-surface rounded-2xl p-4 shadow-soft flex items-center gap-3 ${cardInteractive}`}>
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-surface font-bold"
                   style={{ backgroundColor: creator.avatarColor }}
@@ -140,7 +144,7 @@ export default function ProfilePage() {
 
       {/* Sign out */}
       <div className="px-5 pb-8">
-        <button className="w-full py-4 rounded-full text-danger text-label font-semibold">
+        <button className="w-full py-4 rounded-full text-danger text-label font-semibold hover:bg-danger-soft active:scale-[0.97] transition duration-150">
           Sign out
         </button>
       </div>

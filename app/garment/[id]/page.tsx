@@ -1,72 +1,30 @@
 'use client'
 
-import { useState, use } from 'react'
+import { useState, useEffect, useMemo, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { IconColorSwatch, IconLeaf } from '@tabler/icons-react'
-import { getGarmentById, creators, tshirtFabrics } from '@/lib/data'
+import { motion } from 'framer-motion'
+import { IconColorSwatch, IconLeaf, IconPrinter, IconRoute, IconClock, IconShirt, IconCircleCheck, IconNeedleThread } from '@tabler/icons-react'
+import { getGarmentById, getGarmentGuide, creators, standardSizes, tshirtFabrics } from '@/lib/data'
+import { groupIntoJourneys } from '@/lib/journeys'
+import { loadProject, saveProject, type ProjectState } from '@/lib/projects'
+import { loadSavedSize, sizeLabel } from '@/lib/sizes'
+import { TOOLS } from '@/components/sewing/tools'
+import SizeSheet from '@/components/garment/SizeSheet'
 import DifficultyBadge from '@/components/ui/DifficultyBadge'
-import FitBadge from '@/components/ui/FitBadge'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 import GarmentIllustration from '@/components/ui/GarmentIllustration'
-import type { FitType } from '@/lib/types'
+import type { GuidePiece, StandardSize, UserMeasurements } from '@/lib/types'
+import IconButton from '@/components/ui/IconButton'
+import { IconChevronLeft } from '@tabler/icons-react'
+import { TAP } from '@/components/ui/interaction'
 
-const fitPositions: FitType[] = ['Relaxed', 'Regular', 'Fitted', 'Tailored']
+const pieceName = (p: GuidePiece) =>
+  p.name ?? p.id.charAt(0).toUpperCase() + p.id.slice(1).replace(/-/g, ' ')
 
-function FitSlider({ fits, selected, onSelect }: {
-  fits: FitType[]
-  selected: FitType
-  onSelect: (f: FitType) => void
-}) {
-  const idx = fitPositions.indexOf(selected)
-  const pct = (idx / (fitPositions.length - 1)) * 100
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <span className="text-caption text-ink-3">Relaxed</span>
-        <span className="text-caption text-ink-3">Tailored</span>
-      </div>
-      {/* Track */}
-      <div
-        className="relative h-2 bg-surface-2 rounded-full cursor-pointer"
-        onClick={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect()
-          const ratio = (e.clientX - rect.left) / rect.width
-          const idx = Math.round(ratio * (fitPositions.length - 1))
-          const clamped = Math.max(0, Math.min(fitPositions.length - 1, idx))
-          if (fits.includes(fitPositions[clamped])) {
-            onSelect(fitPositions[clamped])
-          }
-        }}
-      >
-        <div
-          className="absolute top-0 left-0 h-full bg-primary rounded-full"
-          style={{ width: `${pct}%` }}
-        />
-        <motion.div
-          animate={{ left: `${pct}%` }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary shadow-card border-2 border-surface"
-        />
-      </div>
-      {/* Labels */}
-      <div className="flex justify-between">
-        {fitPositions.map((f) => (
-          <button
-            key={f}
-            onClick={() => fits.includes(f) && onSelect(f)}
-            className={`text-[11px] font-medium transition-colors ${
-              f === selected ? 'text-primary font-semibold' : fits.includes(f) ? 'text-ink-3' : 'text-ink-3 opacity-30'
-            }`}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
+const pieceDims = (p: GuidePiece, m: UserMeasurements) => {
+  const d = typeof p.dims === 'function' ? p.dims(m) : p.dims
+  return `${Math.max(d.topWidth, d.bottomWidth)} × ${d.height} cm`
 }
 
 export default function GarmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -74,19 +32,55 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const garment = getGarmentById(id)
   const recommendedFabric = tshirtFabrics[0]
   const creator = garment.isCreator && garment.creatorId ? creators.find((c) => c.id === garment.creatorId) : null
-  const [selectedFit, setSelectedFit] = useState<FitType>(garment.fits?.[0] ?? 'Regular')
   const [following, setFollowing] = useState(false)
   const router = useRouter()
+  const guide = getGarmentGuide(id)
+  const journeys = useMemo(() => (guide ? groupIntoJourneys(guide.steps) : []), [guide])
+  const tools = useMemo(
+    () => (guide ? [...new Set(guide.steps.flatMap((s) => (s.tool ? [s.tool] : [])))] : []),
+    [guide],
+  )
+  const totalSteps = guide?.steps.length ?? 0
+
+  // Project state lives in the browser, so read it after mount
+  const [project, setProject] = useState<ProjectState | null>(null)
+  const [profileSize, setProfileSize] = useState<StandardSize | null>(null)
+  const [sizeSheetOpen, setSizeSheetOpen] = useState(false)
+  useEffect(() => {
+    setProject(loadProject(id))
+    setProfileSize(loadSavedSize())
+  }, [id])
+
+  const nextJourney = project ? journeys.find((j) => j.stepIndices.includes(project.completedUntil)) : undefined
+  const finished = !!project && totalSteps > 0 && project.completedUntil >= totalSteps
+  const inProgress = !!project && !finished
+
+  const enterGuide = () => {
+    sessionStorage.setItem('sigrid_flow_enter', '1')
+    router.push(`/garment/${id}/guide`)
+  }
+
+  const startProject = (size: StandardSize) => {
+    const next = { size, completedUntil: 0 }
+    saveProject(id, next)
+    setProject(next)
+    setSizeSheetOpen(false)
+    enterGuide()
+  }
+
+  const onCta = () => (inProgress ? enterGuide() : setSizeSheetOpen(true))
+  const ctaLabel = inProgress
+    ? `Continue sewing · ${sizeLabel(project!.size)}`
+    : finished
+      ? 'Sew it again'
+      : `Start this project — €${garment.price}`
+
+  const printPattern = () => window.open(`/garment/${id}/pattern?print=true`, '_blank')
 
   const backButton = (
-    <button
-      onClick={() => router.back()}
-      className="w-10 h-10 rounded-full bg-surface shadow-soft flex items-center justify-center"
-    >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M15 18L9 12L15 6" stroke="var(--sig-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
+    <IconButton label="Back" variant="raised" size="md" onClick={() => router.back()}>
+          <IconChevronLeft size={18} />
+        </IconButton>
   )
 
   const infoContent = (
@@ -97,8 +91,14 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
           <h1 className="text-title font-bold text-ink mb-2">{garment.name}</h1>
           <div className="flex items-center gap-2 flex-wrap">
             <DifficultyBadge difficulty={garment.difficulty} size="md" />
-            <FitBadge fit={selectedFit} size="md" />
-            <span className="text-caption text-ink-3">⏱ {garment.estimatedTime}</span>
+            <span className="flex items-center gap-1 text-caption text-ink-3">
+              <IconClock size={14} />
+              {garment.estimatedTime}
+            </span>
+            <span className="flex items-center gap-1 text-caption text-ink-3">
+              <IconShirt size={14} />
+              {garment.sizes[0]}–{garment.sizes[garment.sizes.length - 1]}
+            </span>
           </div>
         </div>
         <div className="text-right">
@@ -107,6 +107,34 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       <p className="text-body text-ink-2 mb-6 leading-relaxed">{garment.description}</p>
+
+      {/* Your project: size and progress once started */}
+      {project && (
+        <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft border border-primary/30">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              {finished
+                ? <IconCircleCheck size={20} className="text-success" />
+                : <IconNeedleThread size={20} className="text-primary" />}
+              <h3 className="text-heading font-semibold text-ink">{finished ? 'Finished' : 'Your project'}</h3>
+            </div>
+            <span className="text-caption font-semibold text-ink-2 bg-surface-2 border border-rim rounded-full px-2.5 py-0.5">
+              {sizeLabel(project.size)}
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-rim overflow-hidden mb-2">
+            <div
+              className={`h-full rounded-full ${finished ? 'bg-success' : 'bg-primary'}`}
+              style={{ width: `${totalSteps ? (Math.min(project.completedUntil, totalSteps) / totalSteps) * 100 : 0}%` }}
+            />
+          </div>
+          <p className="text-caption text-ink-2">
+            {finished
+              ? `All ${totalSteps} steps done. Nice work!`
+              : `${project.completedUntil} of ${totalSteps} steps done${nextJourney ? ` · Next up: ${nextJourney.title}` : ''}`}
+          </p>
+        </div>
+      )}
 
       {/* Creator section */}
       {creator && (
@@ -129,7 +157,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             <p className="text-caption text-ink-3">{creator.followerCount} followers</p>
           </div>
           <motion.button
-            whileTap={{ scale: 0.95 }}
+            whileTap={TAP}
             onClick={() => setFollowing((f) => !f)}
             className={`px-4 py-2 rounded-full text-label font-semibold transition-colors duration-200 ${
               following ? 'bg-surface-2 text-ink-2' : 'bg-primary text-surface'
@@ -140,35 +168,11 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* Fit selector (Sigrid base garments) */}
-      {!garment.isCreator && garment.fits && garment.fits.length > 1 && (
-        <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft">
-          <h3 className="text-heading font-semibold text-ink mb-2">Choose your fit</h3>
-          <p className="text-caption text-ink-3 mb-5">Drag to adjust how the garment sits on your body</p>
-          <div className="flex items-end gap-4 mb-5">
-            <div className="w-24 h-24">
-              <GarmentIllustration
-                name={garment.name}
-                className="w-full h-full"
-                color={fitPositions.indexOf(selectedFit) > 1 ? 'var(--sig-primary-deep)' : 'var(--sig-primary)'}
-              />
-            </div>
-            <div className="flex-1">
-              <FitSlider
-                fits={garment.fits}
-                selected={selectedFit}
-                onSelect={setSelectedFit}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Recommended fabric */}
+      {/* Materials */}
       <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft">
         <div className="flex items-center gap-2 mb-3">
           <IconColorSwatch size={20} className="text-primary" />
-          <h3 className="text-heading font-semibold text-ink">Recommended fabric</h3>
+          <h3 className="text-heading font-semibold text-ink">Materials</h3>
         </div>
         <div className="flex items-start justify-between gap-3 mb-1">
           <p className="text-label font-semibold text-ink">{recommendedFabric.name}</p>
@@ -179,29 +183,97 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             </span>
           )}
         </div>
-        <p className="text-caption text-ink-2 mb-3">{recommendedFabric.description}</p>
-        <p className="text-caption text-ink-3">{recommendedFabric.quantityMeters}m needed · Varies slightly by size</p>
+        <p className="text-caption text-ink-2 mb-2">{recommendedFabric.description}</p>
+        <p className="text-caption text-ink-3">
+          {recommendedFabric.quantityMeters} m needed{project ? ` for ${sizeLabel(project.size)}` : ' · varies slightly by size'}
+        </p>
+
+        {tools.length > 0 && (
+          <>
+            <h4 className="text-label font-semibold text-ink mt-5 mb-3">What you&apos;ll need</h4>
+            <ul className="grid grid-cols-2 gap-2">
+              {tools.map((t) => {
+                const { label, Icon } = TOOLS[t]
+                return (
+                  <li key={t} className="flex items-center gap-2 bg-surface-2 rounded-xl px-3 py-2">
+                    <Icon size={16} className="text-ink-3 shrink-0" />
+                    <span className="text-caption text-ink-2">{label}</span>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )}
+      </div>
+      {/* Pattern */}
+      <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft">
+        <div className="flex items-center justify-between gap-3 mb-1">
+          <div className="flex items-center gap-2">
+            <IconPrinter size={20} className="text-primary" />
+            <h3 className="text-heading font-semibold text-ink">Pattern</h3>
+          </div>
+          {project && (
+            <span className="text-caption font-semibold text-ink-2 bg-surface-2 border border-rim rounded-full px-2.5 py-0.5">
+              {sizeLabel(project.size)}
+            </span>
+          )}
+        </div>
+        <p className="text-caption text-ink-3 mb-3">
+          Available in sizes {garment.sizes[0]}–{garment.sizes[garment.sizes.length - 1]}
+        </p>
+        {guide && guide.pieces.length > 0 && (
+          <ul className="flex flex-col divide-y divide-rim-soft mb-4">
+            {guide.pieces.map((p) => (
+              <li key={p.id} className="flex items-center gap-3 py-2">
+                <span className="w-7 h-7 rounded-full bg-primary-soft text-primary text-caption font-bold flex items-center justify-center shrink-0">
+                  {p.label}
+                </span>
+                <span className="flex-1 text-label text-ink">{pieceName(p)}</span>
+                {project && (
+                  <span className="text-caption text-ink-3 tabular-nums">{pieceDims(p, standardSizes[project.size])}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {project ? (
+          <>
+            <p className="text-caption text-ink-2 mb-3">Print at 100% scale so the pieces come out the right size.</p>
+            <button
+              onClick={printPattern}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-rim text-label font-semibold text-ink-2 hover:bg-surface-2 active:scale-[0.97] transition"
+            >
+              <IconPrinter size={16} />
+              Print PDF in {sizeLabel(project.size)}
+            </button>
+          </>
+        ) : (
+          <p className="text-caption text-ink-3">The printable PDF unlocks when you start the project and choose your size.</p>
+        )}
       </div>
 
-      {/* What's included */}
-      <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft">
-        <h3 className="text-heading font-semibold text-ink mb-4">What&apos;s included</h3>
-        <div className="space-y-3">
-          {[
-            { icon: '📐', title: 'Pattern in your size', desc: `Available in sizes ${garment.sizes[0]}–${garment.sizes[garment.sizes.length - 1]}` },
-            { icon: '🧵', title: 'Material guide', desc: `Where to buy ${recommendedFabric.name.toLowerCase()} and how much you'll need` },
-            { icon: '🎬', title: 'Animated guide', desc: '3D step-by-step sewing instructions' },
-          ].map((item) => (
-            <div key={item.title} className="flex items-center gap-4">
-              <span className="text-2xl">{item.icon}</span>
-              <div>
-                <p className="text-label font-semibold text-ink">{item.title}</p>
-                <p className="text-caption text-ink-3">{item.desc}</p>
-              </div>
-            </div>
-          ))}
+      {/* Journey preview */}
+      {journeys.length > 0 && (
+        <div className="bg-surface rounded-3xl p-5 mb-6 shadow-soft">
+          <div className="flex items-center gap-2 mb-1">
+            <IconRoute size={20} className="text-primary" />
+            <h3 className="text-heading font-semibold text-ink">Your journey</h3>
+          </div>
+          <p className="text-caption text-ink-3 mb-4">{totalSteps} steps in {journeys.length} short journeys</p>
+          <ol className="flex flex-col gap-2">
+            {journeys.map((j, i) => (
+              <li key={j.key} className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-surface-2 border border-rim text-[11px] font-bold text-ink-3 flex items-center justify-center shrink-0">
+                  {i + 1}
+                </span>
+                <span className="flex-1 text-label text-ink-2">{j.title}</span>
+                <span className="text-caption text-ink-3 tabular-nums">{j.stepIndices.length} steps</span>
+              </li>
+            ))}
+          </ol>
         </div>
-      </div>
+      )}
+
     </>
   )
 
@@ -220,14 +292,17 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             <span className="text-ink font-medium">{garment.name}</span>
           </nav>
         </div>
-        <div className="mx-5 mb-6 bg-surface rounded-3xl overflow-hidden shadow-soft p-8 aspect-square flex items-center justify-center">
+        <div className="mx-5 mb-6 bg-surface rounded-3xl overflow-hidden shadow-soft p-8 aspect-[4/3] flex items-center justify-center">
           <GarmentIllustration name={garment.name} className="w-full h-full max-w-56" />
         </div>
         <div className="px-5">{infoContent}</div>
         <div className="fixed bottom-0 left-0 right-0 px-5 pb-8 pt-4 bg-gradient-to-t from-bg via-bg to-transparent">
-          <Link href={`/garment/${id}/size`} onClick={() => sessionStorage.setItem('sigrid_flow_enter', '1')}>
-            <PrimaryButton>Start this project — €{garment.price}</PrimaryButton>
-          </Link>
+          <PrimaryButton onClick={onCta}>{ctaLabel}</PrimaryButton>
+          {inProgress && (
+            <p className="text-caption text-ink-3 text-center mt-2">
+              {project!.completedUntil} of {totalSteps} steps done
+            </p>
+          )}
         </div>
       </div>
 
@@ -256,12 +331,23 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         </div>
         {/* Pinned button — never scrolls away */}
         <div className="shrink-0 px-8 py-6 border-t border-rim">
-          <Link href={`/garment/${id}/size`} onClick={() => sessionStorage.setItem('sigrid_flow_enter', '1')}>
-            <PrimaryButton>Start this project — €{garment.price}</PrimaryButton>
-          </Link>
+          <PrimaryButton onClick={onCta}>{ctaLabel}</PrimaryButton>
+          {inProgress && (
+            <p className="text-caption text-ink-3 text-center mt-2">
+              {project!.completedUntil} of {totalSteps} steps done
+            </p>
+          )}
         </div>
       </div>
 
+
+      <SizeSheet
+        garment={garment}
+        open={sizeSheetOpen}
+        onClose={() => setSizeSheetOpen(false)}
+        initialSize={project?.size ?? profileSize}
+        onConfirm={startProject}
+      />
     </div>
   )
 }

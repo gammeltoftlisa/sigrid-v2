@@ -16,7 +16,7 @@ export default function GarmentCard({ garment, href }: Props) {
     <motion.div
       whileTap={{ scale: 0.97 }}
       transition={{ duration: 0.15 }}
-      className="bg-surface rounded-3xl overflow-hidden shadow-soft border border-rim-soft flex flex-col"
+      className="bg-surface rounded-3xl overflow-hidden shadow-soft border border-rim-soft flex flex-col hover:shadow-card hover:-translate-y-0.5 transition duration-200 ease-out"
     >
       <div className="bg-surface-2 h-44 flex items-center justify-center p-6">
         <GarmentIllustration name={garment.name} className="w-full h-full" />

@@ -8,6 +8,7 @@ import SecondaryButton from '@/components/ui/SecondaryButton'
 import SizePicker from '@/components/ui/SizePicker'
 import { allSizes, saveSize } from '@/lib/sizes'
 import type { StandardSize } from '@/lib/types'
+import { textLink } from '@/components/ui/interaction'
 
 function ProgressDots({ total, current }: { total: number; current: number }) {
   return (
@@ -152,13 +153,13 @@ function Screen4({ onNext }: { onNext: () => void }) {
       </div>
 
       <div className="flex flex-col gap-3 mb-6">
-        <button className="w-full flex items-center justify-center gap-3 bg-ink text-surface py-4 rounded-full text-label font-semibold">
+        <button className="w-full flex items-center justify-center gap-3 bg-ink text-surface py-4 rounded-full text-label font-semibold hover:bg-ink/85 active:scale-[0.97] transition duration-150">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
             <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
           </svg>
           Continue with Apple
         </button>
-        <button className="w-full flex items-center justify-center gap-3 bg-surface border border-rim py-4 rounded-full text-label font-semibold text-ink">
+        <button className="w-full flex items-center justify-center gap-3 bg-surface border border-rim py-4 rounded-full text-label font-semibold text-ink hover:bg-surface-2 active:scale-[0.97] transition duration-150">
           <svg width="20" height="20" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -204,7 +205,7 @@ function Screen4({ onNext }: { onNext: () => void }) {
         <PrimaryButton onClick={onNext}>Create account</PrimaryButton>
         <p className="text-center text-caption text-ink-3">
           Already have an account?{' '}
-          <button className="text-primary font-semibold">Sign in</button>
+          <button className={textLink}>Sign in</button>
         </p>
       </div>
     </div>
