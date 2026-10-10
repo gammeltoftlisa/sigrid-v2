@@ -115,8 +115,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
         <FlowHeader garmentName={garment.name} onClose={() => setExiting(true)} />
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
           <IconNeedleThread size={44} stroke={1.5} className="text-ink-3" />
-          <h2 className="text-heading font-bold text-ink">Guide coming soon</h2>
-          <p className="text-body text-ink-2">The step-by-step guide for this garment is still being crafted.</p>
+          <h2 className="text-heading font-bold text-ink">This guide is still being written</h2>
+          <p className="text-body text-ink-2">We’re writing the steps for this garment carefully. They’ll appear here when they’re ready.</p>
           <button onClick={() => setExiting(true)} className={`mt-2 text-label ${textLink}`}>
             Go back
           </button>
@@ -178,7 +178,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
       transition={{ type: 'spring', stiffness: 320, damping: 32 }}
       onAnimationComplete={() => { if (exiting) router.push(`/garment/${id}`) }}
     >
-      <FlowHeader garmentName={garment.name} onClose={() => setExiting(true)}>
+      <FlowHeader garmentName={garment.name} garmentId={id} onClose={() => setExiting(true)}>
         {size && (
           <div className="flex items-center gap-1 shrink-0">
             <button

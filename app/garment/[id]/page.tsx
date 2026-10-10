@@ -14,14 +14,7 @@ import {
   IconShirt,
 } from '@tabler/icons-react'
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
+import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -87,7 +80,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   }
 
   const onCta = () => (inProgress ? enterGuide() : setSizeSheetOpen(true))
-  const ctaLabel = inProgress ? 'Continue sewing' : finished ? 'Sew it again' : `Start this project · €${garment.price}`
+  const ctaLabel = inProgress ? 'Continue sewing' : finished ? 'Sew it again' : `Start sewing · €${garment.price}`
   const sizeRange = `${garment.sizes[0]}–${garment.sizes[garment.sizes.length - 1]}`
 
   const printHref = `/garment/${id}/pattern?print=true${project ? `&size=${project.size}` : ''}`
@@ -112,17 +105,13 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
       <div className="md:sticky md:top-0 md:flex md:h-svh md:flex-col">
         <div className="flex items-center gap-2 px-4 pt-4 sm:px-6 md:pt-6">
           <BackButton />
-          <Breadcrumb className="min-w-0">
-            <BreadcrumbList className="flex-nowrap">
-              <BreadcrumbItem>
-                <BreadcrumbLink render={<Link href="/home" />}>Garments</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem className="min-w-0">
-                <BreadcrumbPage className="truncate">{garment.name}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+          <PageBreadcrumbs
+            items={[
+              { label: 'Home', href: '/home' },
+              ...(garment.isCreator ? [{ label: 'Explore', href: '/explore' }] : []),
+              { label: garment.name },
+            ]}
+          />
         </div>
         <GarmentImage
           name={garment.name}
@@ -132,7 +121,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="flex flex-col">
-        <div className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-8 px-4 pt-6 pb-32 sm:px-6 md:pt-16 md:pb-0">
+        <div className="flex w-full flex-1 flex-col gap-8 px-4 pt-6 pb-32 sm:px-6 md:px-12 md:pt-16 md:pb-0">
           <header className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-4">
               <h1 className="text-2xl font-semibold tracking-tight">{garment.name}</h1>
@@ -147,10 +136,10 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
           {project && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">{finished ? 'You finished this' : 'Your project'}</CardTitle>
+                <CardTitle className="text-base">{finished ? 'Finished' : 'Your project'}</CardTitle>
                 <CardDescription className="tabular-nums">
                   {finished
-                    ? `All ${totalSteps} steps done in ${sizeLabel(project.size)}.`
+                    ? `You sewed this in ${sizeLabel(project.size)}. Well done.`
                     : `${done} of ${totalSteps} steps done${nextJourney ? ` · Next: ${nextJourney.title}` : ''}`}
                 </CardDescription>
                 {finished && (
@@ -243,12 +232,12 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
                 Print pattern in {sizeLabel(project.size)}
               </Button>
             ) : (
-              <p className="text-sm text-muted-foreground">The printable pattern unlocks when you choose your size.</p>
+              <p className="text-sm text-muted-foreground">Your printable pattern is ready as soon as you choose a size.</p>
             )}
           </PageSection>
 
           {journeys.length > 0 && (
-            <PageSection title="How it goes" description={`${totalSteps} steps in ${journeys.length} short parts`}>
+            <PageSection title="How it goes" description={`${totalSteps} steps in ${journeys.length} short parts. Stop after any step, your progress is saved.`}>
               <ol className="flex flex-col gap-2">
                 {journeys.map((j, i) => (
                   <li key={j.key} className="flex items-center gap-3">
@@ -265,7 +254,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             </PageSection>
           )}
 
-          <div className="sticky bottom-0 -mx-6 mt-auto hidden border-t bg-background px-6 py-4 md:block">{cta}</div>
+          <div className="sticky bottom-0 -mx-12 mt-auto hidden border-t bg-background px-12 py-4 md:block">{cta}</div>
         </div>
 
         {/* Phones: action stays reachable at the bottom */}

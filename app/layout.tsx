@@ -11,7 +11,7 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 
 export const metadata: Metadata = {
   title: 'Sigrid – Sewing for everyone',
-  description: 'A digital sewing platform that guides you from inspiration to finished garment, step by step.',
+  description: 'Sew your own clothes, one calm step at a time. Patterns in your size, with every step explained.',
 }
 
 export const viewport: Viewport = {

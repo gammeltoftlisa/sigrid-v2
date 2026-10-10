@@ -31,7 +31,7 @@ function ProjectRow({ summary }: { summary: ProjectSummary }) {
           </p>
           {nextStep && (
             <p className="text-sm">
-              <span className="text-muted-foreground">Next:</span> {nextStep.title}
+              <span className="text-muted-foreground">Next step:</span> {nextStep.title}
             </p>
           )}
         </div>
@@ -73,8 +73,8 @@ export default function ProjectsPage() {
   const done = projects?.filter((p) => p.finished) ?? []
 
   return (
-    <PageContainer className="max-w-3xl">
-      <PageHeader title="Projects" description="Everything you’re sewing, saved on this device." />
+    <PageContainer>
+      <PageHeader breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Projects' }]} title="Projects" description="What you’re making and what you’ve made. Your progress is saved on this device after every step." />
 
       {projects === null ? (
         <div className="grid gap-4 md:grid-cols-2">
@@ -87,12 +87,12 @@ export default function ProjectsPage() {
             <EmptyMedia variant="icon">
               <IconNeedleThread />
             </EmptyMedia>
-            <EmptyTitle>No projects yet</EmptyTitle>
-            <EmptyDescription>Pick a garment and choose your size. Your progress is saved here as you sew.</EmptyDescription>
+            <EmptyTitle>Nothing on the sewing table yet</EmptyTitle>
+            <EmptyDescription>Choose a garment and your size. We save your progress after every step, so you can stop whenever you like.</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button size="lg" render={<Link href="/home" />}>
-              Browse garments
+              Choose a garment
             </Button>
           </EmptyContent>
         </Empty>
@@ -118,7 +118,7 @@ export default function ProjectsPage() {
           )}
           <section className="flex flex-col items-start gap-3">
             <h2 className="text-[1.375rem] leading-tight">Ready for the next one?</h2>
-            <p className="text-sm text-muted-foreground">Find a pattern from an independent creator.</p>
+            <p className="text-sm text-muted-foreground">Find your next pattern from an independent maker.</p>
             <Button variant="outline" render={<Link href="/explore" />}>
               Explore patterns
             </Button>

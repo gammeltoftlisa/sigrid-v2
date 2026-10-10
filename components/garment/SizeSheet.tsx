@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { IconAlertTriangle, IconBulb, IconColorSwatch } from '@tabler/icons-react'
+import { IconBulb, IconColorSwatch } from '@tabler/icons-react'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { SizePicker } from '@/components/patterns/size-picker'
+import { StatusMessage } from '@/components/patterns/status-message'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { standardSizes, tshirtFabrics } from '@/lib/data'
 import { sizeLabel } from '@/lib/sizes'
@@ -53,7 +53,7 @@ export default function SizeSheet({ garment, open, onClose, initialSize, onConfi
   const title = isChange ? 'Change size' : 'Choose your size'
   const description = isChange
     ? `You’re sewing ${garment.name} in ${sizeLabel(progress.size)}.`
-    : 'Your pattern is made in this size. You can change it later, but that restarts the project.'
+    : 'Your pattern is drafted in this size. You can change it later, though that starts the steps again.'
 
   const confirmLabel = !size
     ? 'Choose a size to continue'
@@ -85,7 +85,7 @@ export default function SizeSheet({ garment, open, onClose, initialSize, onConfi
           ))}
         </dl>
       ) : (
-        <p className="text-sm text-muted-foreground">Select a size to see its body measurements.</p>
+        <p className="text-sm text-muted-foreground">Choose a size to see its body measurements.</p>
       )}
 
       <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
@@ -105,14 +105,10 @@ export default function SizeSheet({ garment, open, onClose, initialSize, onConfi
       </ul>
 
       {willReset && (
-        <Alert role="alert">
-          <IconAlertTriangle className="text-warning" />
-          <AlertTitle>This restarts your project</AlertTitle>
-          <AlertDescription>
-            You’ve done {progress.done} of {progress.total} steps in {sizeLabel(progress.size)}. Your pattern pieces change
-            size, so you’ll start again from the first step.
-          </AlertDescription>
-        </Alert>
+        <StatusMessage status="warning" title="This starts the steps again">
+          You’ve done {progress.done} of {progress.total} steps in {sizeLabel(progress.size)}. A new size means new pattern
+          pieces, so you’ll begin again from the first step.
+        </StatusMessage>
       )}
     </div>
   )

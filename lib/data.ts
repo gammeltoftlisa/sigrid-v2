@@ -22,7 +22,7 @@ export const garments: Garment[] = [
     isCreator: false,
     fits: ['Relaxed', 'Regular', 'Fitted'],
     sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-    description: 'The perfect first project. Learn the fundamentals of sewing with this timeless wardrobe staple.',
+    description: 'A good first garment. You’ll learn the basics, cutting, seams and hems, on something you’ll wear every week.',
   },
   {
     id: 'aline-skirt',
@@ -34,7 +34,7 @@ export const garments: Garment[] = [
     isCreator: false,
     fits: ['Relaxed', 'Regular', 'Fitted'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    description: 'A flattering and simple skirt shape, perfect for beginners building their first wardrobe.',
+    description: 'A simple, easy-to-wear shape with only three pieces. A calm way to learn waistbands and hems.',
   },
   {
     id: 'straight-trousers',
@@ -46,7 +46,7 @@ export const garments: Garment[] = [
     isCreator: false,
     fits: ['Relaxed', 'Regular', 'Fitted'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    description: 'Classic straight-leg trousers that work for every occasion. A great next step after your first projects.',
+    description: 'Straight-leg trousers that go with almost everything. A good next step once you’ve made a top or a skirt.',
   },
   {
     id: 'oversized-hoodie',
@@ -58,7 +58,7 @@ export const garments: Garment[] = [
     isCreator: false,
     fits: ['Oversized', 'Relaxed'],
     sizes: ['S', 'M', 'L', 'XL'],
-    description: 'Cosy and versatile, this hoodie is a wardrobe essential. Learn drawstrings, cuffs, and kangaroo pockets.',
+    description: 'A soft, roomy hoodie. You’ll learn cuffs, a hood and a front pocket, one part at a time.',
   },
   {
     id: 'slip-dress',
@@ -70,7 +70,7 @@ export const garments: Garment[] = [
     isCreator: false,
     fits: ['Relaxed', 'Regular', 'Fitted'],
     sizes: ['XS', 'S', 'M', 'L'],
-    description: 'Elegant and effortless. This bias-cut slip dress teaches you to work with silky fabrics.',
+    description: 'A simple bias-cut dress that drapes well. It teaches you to handle silky fabrics with patience.',
   },
   {
     id: 'tailored-blazer',
@@ -82,7 +82,7 @@ export const garments: Garment[] = [
     isCreator: false,
     fits: ['Regular', 'Fitted'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    description: 'The pinnacle of garment construction. Master lapels, lining, and structured tailoring.',
+    description: 'A tailored jacket with lapels and a lining. Slow and rewarding, best after a few other makes.',
   },
 ]
 
@@ -308,8 +308,8 @@ export const tshirtSteps: SewingStep[] = [
   },
   {
     id: 12,
-    title: 'Your t-shirt is finished!',
-    description: 'You made this from scratch. Try it on, admire your work, and celebrate — you\'re a maker now.',
+    title: 'Your t-shirt is finished',
+    description: 'You made this from scratch. Try it on and take a moment. You sewed every seam yourself.',
     highlight: 'all',
     camera: { position: [0, 0.5, 4.0], target: [0, 0, 0] },
   },
@@ -338,7 +338,7 @@ export const tshirtFabrics: FabricOption[] = [
   },
   {
     name: 'Viscose Jersey',
-    description: 'Drapey and silky feel. A step up in difficulty — slippery to cut.',
+    description: 'Drapey and silky. A little slippery to cut, so pin closely and go slowly.',
     difficulty: 'Medium',
     quantityMeters: 2.0,
   },
@@ -527,7 +527,7 @@ export const garmentGuides: GarmentGuide[] = [
         annotation: { type: 'sew-line', edge: 'left', amount: 1.5 },
         tool: 'needle',
         measurement: '1.5 cm from edge',
-        tip: 'Sew slowly and steadily. Speed is not your friend when you\'re learning.',
+        tip: 'Sew slowly and steadily. Slow seams are neater seams, and you can always stop mid-way.',
       },
       {
         id: 11,
@@ -686,7 +686,7 @@ export const garmentGuides: GarmentGuide[] = [
         annotation: { type: 'sew-line', edge: 'bottom', amount: 0.2 },
         tool: 'needle',
         measurement: '2 mm from folded edge',
-        tip: 'Go slowly on the hem — uneven hem stitching is very visible on the finished garment.',
+        tip: 'Take your time on the hem. If a section wanders, unpick just that part and sew it again.',
       },
       {
         id: 25,

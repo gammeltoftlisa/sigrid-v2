@@ -18,7 +18,7 @@ import type { Difficulty, GarmentCategory } from '@/lib/types'
 
 const categories = ['All', 'Tops', 'Bottoms', 'Dresses', 'Outerwear'] as const satisfies readonly (GarmentCategory | 'All')[]
 const difficulties: { value: Difficulty | 'All'; label: string }[] = [
-  { value: 'All', label: 'Any level' },
+  { value: 'All', label: 'All levels' },
   { value: 'Beginner', label: 'Beginner' },
   { value: 'Intermediate', label: 'Intermediate' },
   { value: 'Advanced', label: 'Advanced' },
@@ -49,7 +49,7 @@ export default function ExplorePage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Explore" description="Patterns from independent creators, drafted in your size." />
+      <PageHeader breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Explore' }]} title="Explore" description="Patterns by independent makers, ready in your size." />
 
       <div className="flex flex-col gap-3">
         <InputGroup className="h-11">
@@ -123,8 +123,8 @@ export default function ExplorePage() {
               <EmptyMedia variant="icon">
                 <IconZoomQuestion />
               </EmptyMedia>
-              <EmptyTitle>No patterns match</EmptyTitle>
-              <EmptyDescription>Try another word, or fewer filters.</EmptyDescription>
+              <EmptyTitle>Nothing matches yet</EmptyTitle>
+              <EmptyDescription>Try a different word, or clear a filter to see more.</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button variant="outline" onClick={clearFilters}>
@@ -133,7 +133,7 @@ export default function ExplorePage() {
             </EmptyContent>
           </Empty>
         ) : (
-          <div key={`${category}-${difficulty}`} className="tile-grid grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 xl:grid-cols-4">
+          <div key={`${category}-${difficulty}`} className="tile-grid grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {filtered.map((p) => (
               <GarmentCard
                 key={p.id}

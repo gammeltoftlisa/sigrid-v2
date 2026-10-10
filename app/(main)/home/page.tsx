@@ -39,13 +39,13 @@ function ContinuePanel({ summary }: { summary: ProjectSummary }) {
     >
       <div className="flex flex-col gap-6 p-6 md:p-10">
         <div className="flex flex-col gap-2">
-          <p className="eyebrow text-hero-muted">Continue where you left off</p>
+          <p className="eyebrow text-hero-muted">Your project</p>
           <h2 id="continue-title" className="text-3xl md:text-4xl">
             {garment.name}
           </h2>
           {nextStep && (
             <p className="text-base text-hero-muted">
-              Next: <span className="text-hero-foreground">{nextStep.title}</span>
+              Next step: <span className="text-hero-foreground">{nextStep.title}</span>
             </p>
           )}
         </div>
@@ -87,16 +87,21 @@ export default function HomePage() {
         </Link>
       </div>
       <PageHeader
+        breadcrumbs={[{ label: 'Home' }]}
         title={`${hello}, Emma`}
-        description={current ? 'Pick up where you left off, or start something new.' : 'Choose a garment and we’ll guide you through every step.'}
+        description={
+          current
+            ? `Welcome back. Your ${current.garment.name.toLowerCase()} is right where you left it.`
+            : 'What would you like to make? Every pattern comes in your size, with each step explained.'
+        }
       />
 
       {current && <ContinuePanel summary={current} />}
 
-      <PageSection title={current ? 'Start something new' : 'Choose a garment'}>
+      <PageSection title={current ? 'Start something new' : 'Choose your first garment'}>
         <CategoryTabs label="Filter by category" options={categories} value={category} onValueChange={setCategory} />
         {filtered.length > 0 ? (
-          <div key={category} className="tile-grid grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 xl:grid-cols-4">
+          <div key={category} className="tile-grid grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {filtered.map((g) => (
               <GarmentCard
                 key={g.id}
@@ -110,12 +115,12 @@ export default function HomePage() {
             ))}
           </div>
         ) : (
-          <p className="py-8 text-sm text-muted-foreground">Nothing in {category.toLowerCase()} yet.</p>
+          <p className="py-8 text-sm text-muted-foreground">No {category.toLowerCase()} yet. More patterns are on the way.</p>
         )}
       </PageSection>
 
       <PageSection
-        title="New from creators"
+        title="From independent pattern makers"
         action={
           <Button variant="link" className="px-0" render={<Link href="/explore" />}>
             See all

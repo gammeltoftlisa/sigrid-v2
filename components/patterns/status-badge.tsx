@@ -2,17 +2,19 @@ import { cn } from "cn"
 
 import { Badge } from "@/components/ui/badge"
 
-type Status = "success" | "warning" | "info" | "neutral"
+type Status = "success" | "error" | "warning" | "info" | "neutral"
 
 const statusClasses: Record<Status, string> = {
-  success: "bg-success/10 text-success dark:bg-success/20",
-  warning: "bg-warning/15 text-foreground dark:bg-warning/20",
-  info: "bg-info/10 text-info dark:bg-info/20",
+  // Colours come from the brand layer via data-status (tint, deep text, glowing dot)
+  success: "",
+  error: "",
+  warning: "",
+  info: "",
   neutral: "bg-muted text-muted-foreground",
 }
 
 /**
- * Small label for system state (saved, in progress, needs attention).
+ * Small label for system state: saved, finished, needs attention, failed.
  * Status colours are functional only — never use them for decoration.
  */
 function StatusBadge({
