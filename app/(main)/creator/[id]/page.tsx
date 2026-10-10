@@ -9,6 +9,7 @@ import { CreatorAvatar } from '@/components/patterns/creator-avatar'
 import { GarmentCard } from '@/components/patterns/garment-card'
 import { PageSection } from '@/components/patterns/page-section'
 import { BackButton, PageContainer } from '@/components/patterns/page-header'
+import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
 import { getCreatorById, getPatternsByCreator } from '@/lib/data'
 
 export default function CreatorPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,9 +26,10 @@ export default function CreatorPage({ params }: { params: Promise<{ id: string }
   ]
 
   return (
-    <PageContainer className="max-w-4xl">
-      <div className="pt-6 md:pt-10">
+    <PageContainer>
+      <div className="flex min-w-0 items-center gap-2 pt-6 md:pt-10">
         <BackButton />
+        <PageBreadcrumbs items={[{ label: 'Home', href: '/home' }, { label: 'Explore', href: '/explore' }, { label: creator.handle }]} />
       </div>
 
       <section className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
@@ -69,9 +71,9 @@ export default function CreatorPage({ params }: { params: Promise<{ id: string }
 
       <PageSection title="Patterns">
         {patterns.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">No patterns yet.</p>
+          <p className="py-8 text-sm text-muted-foreground">No patterns published yet.</p>
         ) : (
-          <div className="tile-grid grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 xl:grid-cols-4">
+          <div className="tile-grid grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {patterns.map((p) => (
               <GarmentCard
                 key={p.id}

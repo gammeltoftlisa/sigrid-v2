@@ -1,10 +1,10 @@
-import { IconCheck, IconInfoCircle } from '@tabler/icons-react'
+import { IconCheck } from '@tabler/icons-react'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
+import { StatusMessage } from '@/components/patterns/status-message'
 
 const plans = [
   {
@@ -12,29 +12,30 @@ const plans = [
     name: 'Pay per project',
     price: '€7–15',
     period: 'per garment',
-    description: 'Good for getting started',
-    features: ['One pattern at a time', 'Full step-by-step sewing guide', 'Patterns in sizes XS–XXL', 'Material guide'],
+    description: 'Pay once for each garment you make',
+    features: ['One pattern at a time', 'Full step-by-step sewing guide', 'Patterns in sizes XS–XXL', 'Fabric and tools list'],
   },
   {
     id: 'subscription',
     name: 'Monthly subscription',
     price: 'Price to be decided',
     period: '',
-    description: 'For people who sew a lot',
+    description: 'For when sewing becomes a habit',
     features: ['Unlimited patterns', 'Full step-by-step sewing guide', 'Priority support', 'Early access to new features'],
   },
 ]
 
 export default function PaymentPage() {
   return (
-    <PageContainer className="max-w-3xl">
-      <PageHeader back="/profile" title="Plans" description="Sigrid is free during the beta. Paid plans are coming later." />
+    <PageContainer>
+      <PageHeader
+        back="/profile"
+        breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Profile', href: '/profile' }, { label: 'Plans' }]}
+        title="Plans" description="Sigrid is free while we’re in beta. This is what we’re planning, and nothing changes without telling you first." />
 
-      <Alert>
-        <IconInfoCircle />
-        <AlertTitle>You’re in the beta</AlertTitle>
-        <AlertDescription>Everything is free while we build. No card needed.</AlertDescription>
-      </Alert>
+      <StatusMessage status="info" title="Free during the beta">
+        No card and no trial that runs out. We’ll tell you well before anything changes.
+      </StatusMessage>
 
       <div className="grid gap-4 md:grid-cols-2">
         {plans.map((plan) => (
@@ -62,7 +63,7 @@ export default function PaymentPage() {
             </CardContent>
             <CardFooter className="mt-auto">
               <Button variant="outline" className="w-full" disabled>
-                Not available yet
+                Coming later
               </Button>
             </CardFooter>
           </Card>

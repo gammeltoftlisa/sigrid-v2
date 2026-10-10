@@ -22,13 +22,14 @@ export function SizePicker({
   label?: string
 }) {
   return (
+    <div className="@container w-full">
     <ToggleGroup
       aria-label={label}
       variant="outline"
       spacing={2}
       value={value ? [value] : []}
       onValueChange={(next) => next[0] && onValueChange(next[0] as StandardSize)}
-      className="grid w-full grid-cols-3"
+      className="grid w-full grid-cols-3 @xl:grid-cols-6"
     >
       {sizes.map((s) => (
         <ToggleGroupItem
@@ -46,5 +47,6 @@ export function SizePicker({
         </ToggleGroupItem>
       ))}
     </ToggleGroup>
+    </div>
   )
 }

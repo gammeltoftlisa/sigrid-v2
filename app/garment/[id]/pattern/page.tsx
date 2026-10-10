@@ -9,6 +9,7 @@ import { allSizes, sizeLabel } from '@/lib/sizes'
 import IconButton from '@/components/legacy/IconButton'
 import PrimaryButton from '@/components/legacy/PrimaryButton'
 import { textLink } from '@/components/legacy/interaction'
+import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
 import type { GuidePiece, PieceDims, StandardSize } from '@/lib/types'
 
 // ── Geometry (all in cm) ──────────────────────────────────────────────────────
@@ -136,7 +137,13 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
       <IconButton label="Back" onClick={() => router.back()}>
         <IconChevronLeft size={16} />
       </IconButton>
-      <p className="text-label font-bold text-ink">{garment.name} — Pattern</p>
+      <PageBreadcrumbs
+        items={[
+          { label: 'Home', href: '/home' },
+          { label: garment.name, href: `/garment/${id}` },
+          { label: 'Pattern' },
+        ]}
+      />
     </div>
   )
 
@@ -175,13 +182,13 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
       {header}
 
       {/* ── Screen view ── */}
-      <div className="print:hidden max-w-3xl mx-auto px-5 pt-6 pb-10">
+      <div className="print:hidden px-5 md:px-12 pt-6 pb-10">
         <h1 className="text-title font-bold text-ink mb-1">Your pattern, {sizeLabel(size)}</h1>
         <p className="text-body text-ink-2 mb-6">
           {layouts.length} pieces at full size, spread over {totalPages} A4 pages.
         </p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 mb-6">
           {layouts.map((l) => (
             <div key={l.piece.id} className="bg-surface rounded-(--radius) p-4 border border-rim">
               <div className="h-32 mb-3 rounded-2xl bg-surface-2/60 flex items-center justify-center p-3">

@@ -10,8 +10,10 @@ import { GarmentArt } from '@/components/garment/GarmentArt'
 import { TAP_ICON } from '@/components/legacy/interaction'
 import type { Garment } from '@/lib/types'
 
-const CONFETTI_COLORS = ['#BF8B5E', '#4E7D4F', '#D4903A', '#C5574A', '#C4A882']
-const RATING_COPY = ['', "That's a start!", 'Getting there!', 'Good work!', 'Brilliant!', 'Perfect result!']
+// Fabric colourways, so the moment feels like Sigrid rather than a party popper
+const CONFETTI_COLORS = ['#D8C9B0', '#B8876A', '#7C8264', '#C7A19C', '#3F4B5F']
+// A thank-you, not a grade: every make counts
+const RATING_COPY = ['', 'Thanks for telling us. The next one gets easier.', 'Thanks. Every make teaches something.', 'Good to hear.', 'Lovely. That’s a real achievement.', 'Wonderful. Enjoy wearing it.']
 
 type ConfettiPiece = { x: number; rotate: number; spin: number; duration: number; delay: number }
 
@@ -106,7 +108,7 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
 
               <div className="px-6 pt-6 pb-4">
                 <h2 id="done-title" className="text-title font-bold text-ink mb-1">You made this.</h2>
-                <p className="text-body text-ink-2 mb-6">{garment.name} is finished. Add it to your wardrobe.</p>
+                <p className="text-body text-ink-2 mb-6">{garment.name} is finished, and you sewed every seam. Take a moment to enjoy it.</p>
 
                 {/* Rating */}
                 <h3 className="text-label font-semibold text-ink mb-2">How did it go?</h3>
@@ -138,11 +140,11 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
                 <p className="text-center mt-1 h-5 text-caption text-ink-2">{RATING_COPY[rating]}</p>
 
                 {/* Photo */}
-                <h3 className="text-label font-semibold text-ink mt-5 mb-2">Show it off</h3>
+                <h3 className="text-label font-semibold text-ink mt-5 mb-2">Keep a record</h3>
                 <button className="w-full border-2 border-dashed border-rim rounded-3xl h-32 flex flex-col items-center justify-center gap-2 bg-surface hover:bg-surface-2 hover:border-primary/40 active:scale-[0.97] transition duration-150">
                   <IconCamera size={28} className="text-ink-3" stroke={1.5} />
-                  <p className="text-label font-semibold text-ink">Upload a photo</p>
-                  <p className="text-caption text-ink-3 -mt-1.5">Show the community your creation</p>
+                  <p className="text-label font-semibold text-ink">Add a photo</p>
+                  <p className="text-caption text-ink-3 -mt-1.5">Remember what you made, and how far you’ve come</p>
                 </button>
               </div>
             </div>

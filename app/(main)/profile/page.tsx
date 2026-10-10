@@ -41,12 +41,12 @@ export default function ProfilePage() {
   const selectSize = (s: StandardSize) => {
     setPicked(s)
     saveSize(s)
-    toast.success(`Your size is now ${sizeLabel(s)}`)
+    toast.success(`Saved. New patterns start in ${sizeLabel(s)}.`)
   }
 
   return (
-    <PageContainer className="max-w-2xl">
-      <PageHeader title="Profile" />
+    <PageContainer>
+      <PageHeader breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Profile' }]} title="Profile" />
 
       <div className="flex items-center gap-4">
         <Avatar className="size-16">
@@ -62,8 +62,8 @@ export default function ProfilePage() {
         title="My size"
         description={
           size
-            ? `New patterns start in ${sizeLabel(size)}. You can still pick another size per garment.`
-            : 'Pick your usual size and we’ll pre-select it for every pattern.'
+            ? `New patterns start in ${sizeLabel(size)}. You can still choose another size for each garment.`
+            : 'Choose the size you usually buy and we’ll start every pattern in it. You can change it anytime.'
         }
       >
         <SizePicker sizes={allSizes} value={size} onValueChange={selectSize} label="My usual size" />
@@ -75,7 +75,7 @@ export default function ProfilePage() {
             <Field orientation="horizontal">
               <div className="flex flex-1 flex-col gap-0.5">
                 <FieldLabel htmlFor="notifications">Push notifications</FieldLabel>
-                <FieldDescription>Sewing tips and reminders</FieldDescription>
+                <FieldDescription>Gentle reminders and the occasional sewing tip</FieldDescription>
               </div>
               <Switch id="notifications" checked={notifications} onCheckedChange={setNotifications} />
             </Field>
@@ -91,7 +91,7 @@ export default function ProfilePage() {
           <Card className="transition-colors group-hover:bg-muted/50">
             <CardHeader>
               <CardTitle className="text-base">Beta access</CardTitle>
-              <CardDescription>Everything is free while we build. See upcoming plans.</CardDescription>
+              <CardDescription>Everything is free while we’re in beta. See what we’re planning.</CardDescription>
               <div className="col-start-2 row-span-2 row-start-1 flex items-center gap-2 self-center">
                 <span className="eyebrow text-muted-foreground">Free in beta</span>
                 <IconChevronRight className="size-4 text-muted-foreground" aria-hidden />
@@ -135,10 +135,10 @@ export default function ProfilePage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Sign out?</AlertDialogTitle>
-            <AlertDialogDescription>Your projects stay saved on this device.</AlertDialogDescription>
+            <AlertDialogDescription>Your projects and progress stay saved on this device.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Stay signed in</AlertDialogCancel>
             <AlertDialogAction variant="destructive">Sign out</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

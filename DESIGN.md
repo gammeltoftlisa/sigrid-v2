@@ -48,7 +48,7 @@ Base UI note: triggers compose with `render={<Button … />}`, **not** `asChild`
 | `muted-foreground` | `#5A5149` | Secondary text (5.8:1 on muted) |
 | `border` / `input` | `#D8CEBF` / `#C9BDAB` | Hairlines, field borders |
 | `celebrate` | `#9C6B4E` clay | Tiny accents only (the wordmark dot). Never large areas |
-| `destructive` / `success` / `warning` / `info` | `#9E3328` / `#465F44` / `#7D5B15` / `#4B5E70` | State only, always with text or an icon |
+| `success` / `destructive` / `warning` / `info` | text `#007542` / `#BB2518` / `#9C5600` / `#225EC7` · accent (`-solid`) `#14D47A` / `#FF4A3D` / `#FFB21F` / `#4C95FF` | State only, always with text or an icon. Deep tone for text and lines (AA), bright accent for icons, dots and glows, on soft baby-pastel backgrounds. Use `StatusBadge` and `StatusMessage` |
 
 - Only semantic token utilities (`bg-primary`, `text-muted-foreground`, `border-border`, `bg-muted`…). No raw colours, no `bg-white` / `text-black`.
 - The page is almost colourless on purpose: espresso on sand. Colour is never decoration.
@@ -76,6 +76,7 @@ One typeface for headings and text. Normal case for headings; uppercase only for
 ## 4. Layout, shape and surfaces
 
 - **Mobile first** (375px), then `sm` / `md` / `lg`. Screens use `PageContainer` (adds generous section spacing) and `PageHeader`.
+- **Full width:** every screen's content fills the space beside the sidebar. Don't cap pages with `max-w-*`; keep long running text readable with `max-w-prose` on the paragraph itself. Grids add columns as space grows.
 - **Square edges:** `--radius` is 2px. Don't add `rounded-xl` / `rounded-full` to surfaces or buttons (avatars and the size-tile grid are the only round-ish things).
 - **Hairlines, not shadows:** cards and panels are flat with a 1px `border`. No `shadow-*`, no gradients, no textures.
 - **Product tiles** (`GarmentCard`) have no box: a portrait (4:5) image panel on `muted`, then name (small caps), an optional creator line, one quiet detail line (`Beginner · 3–4 hours`) and the price. Grids use `gap-x-4 gap-y-8`.
@@ -112,7 +113,9 @@ One typeface for headings and text. Normal case for headings; uppercase only for
 | Step navigation / progress | `StepList` pattern |
 | Screen top bar | `AppHeader` pattern |
 | Section with heading | `PageSection` pattern |
-| Persistent notice / tip | `Alert` (tip = `IconBulb`) |
+| Where am I | `PageBreadcrumbs` on every screen (via `PageHeader breadcrumbs`): Home first, current page last |
+| Report a state (saved, failed, needs attention, info) | `StatusMessage` pattern; `StatusBadge` for short labels |
+| Persistent neutral notice / tip | `Alert` (tip = `IconBulb`) |
 | Quick confirmation | `toast()` from `sonner` |
 | Short task (desktop / mobile) | `Dialog` / `Drawer` |
 | Side panel | `Sheet` |
@@ -168,12 +171,33 @@ Never show a garment as a bare outline in an empty box.
 - Icon-only buttons have `aria-label`. Meaningful images have `alt`; decorative ones `alt=""`.
 - One `h1` per screen; headings in order.
 
-## 10. Writing
+## 10. Voice & tone
 
-- Sentence case, plain words, short sentences. Address the user as "you".
-- Buttons: verb first, 1–3 words ("Start sewing", "Save measurements"). Never "OK", "Submit", "Click here".
-- Errors say what happened and what to do ("Check your connection and try again.").
-- Calm and plain: no jokes, slang or exclamation marks. Short sentences, one idea each.
+**Sigrid sounds like a calm, experienced friend at the sewing table.** Emma (24) has never sewn, is afraid of
+making mistakes and wasting fabric, and needs to feel progress. Every sentence should leave her calmer and clearer
+than before she read it.
+
+| Principle | Means | Example |
+| --- | --- | --- |
+| Calm, not cheerful | No exclamation marks, no hype, no emoji | "Shoulders done." not "Amazing job!!" |
+| Reassure with facts | Name the worry, then the way out | "If something goes wrong, most seams can be unpicked and sewn again." |
+| One thing at a time | Short sentences, one action each, numbers with units | "Pin every 5 cm. Sew 1.5 cm from the edge." |
+| Quietly proud | Acknowledge progress plainly, never grade her | "You sewed every seam yourself." |
+| Honest | Say what happens to her progress, data and money | "Nothing changes without telling you first." |
+| Body-neutral | Sizes and measurements, never judgements | "Made in your size", never "flattering" or "slimming" |
+| Scandinavian restraint | Understated, sentence case, plain words | "Choose a garment" not "Discover your next obsession" |
+
+**Words**
+- Use: make, sew, piece, seam, step, part, your size, choose, saved.
+- Avoid: simply, just (as in "just sew…"), easy, perfect, flawless, flattering, oops, error, failed, "you forgot".
+- Buttons: verb first, 1–3 words, describe the result: "Start sewing", "Save my size", "Stay signed in".
+
+**Situations**
+- *Empty states*: say what will appear here and the one next step ("Nothing on the sewing table yet. Choose a garment…").
+- *Errors*: what happened, that nothing is lost, what to do ("We couldn’t save that. Your progress is safe; try again.").
+- *Destructive actions*: say exactly what will be lost and offer a calm way out ("Stay signed in", "Keep M / 38").
+- *Celebration*: one quiet moment when a garment is finished. No confetti language elsewhere.
+- *Instructions*: imperative, one action per sentence, the "why" in a tip when it helps.
 
 ## 11. Before you call UI work done
 
@@ -183,3 +207,4 @@ Never show a garment as a bare outline in an empty box.
 - [ ] Looks right at 375px and desktop, light and dark
 - [ ] Keyboard works, focus visible, Accessibility panel clean
 - [ ] Progress state only changes on explicit user action
+- [ ] Copy follows the voice: calm, specific, reassuring, no exclamation marks or hype

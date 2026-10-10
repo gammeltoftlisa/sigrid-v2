@@ -29,6 +29,10 @@
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-success: var(--success);
+  --color-success-solid: var(--success-solid);
+  --color-destructive-solid: var(--destructive-solid);
+  --color-warning-solid: var(--warning-solid);
+  --color-info-solid: var(--info-solid);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
@@ -72,14 +76,22 @@
   --muted-foreground: #5A5149;
   --accent: #E5DDD1;
   --accent-foreground: #2A2420;
-  --destructive: #9E3328;
-  /* Status colours: functional only, never decoration. */
-  --success: #465F44;
+  /* Status colours: functional only, never decoration.
+     Two tones each: the base token is deep and vivid for text and lines (AA on sand and on
+     its own tint); `-solid` is the bright accent for icons, dots and glows. */
+  --destructive: #BB2518;
+  --destructive-solid: #FF4A3D;
+  --success: #007542;
+  --success-solid: #14D47A;
   --success-foreground: #FFFFFF;
-  --warning: #7D5B15;
-  --warning-foreground: #2A2420;
-  --info: #4B5E70;
+  --warning: #9C5600;
+  --warning-solid: #FFB21F;
+  --warning-foreground: #FFFFFF;
+  --info: #225EC7;
+  --info-solid: #4C95FF;
   --info-foreground: #FFFFFF;
+  /* Near-white base for soft status tints */
+  --status-base: #FFFDFA;
   --border: #D8CEBF;
   --input: #C9BDAB;
   --ring: #2A2420;
@@ -237,13 +249,59 @@
 }
 :root .group\/button.bg-destructive\/10:hover { background: color-mix(in oklch, var(--destructive) 6%, transparent); }
 
-/* Badges become plain small caps text */
-:root [data-slot="badge"] {
+/* Badges become plain small caps text (status badges keep their colour, see below) */
+:root [data-slot="badge"]:not([data-status]) {
   border: 0;
   background: transparent;
   padding-inline: 0;
   color: var(--muted-foreground);
 }
+
+/* ─── Status: bright, clean and precise ─────────────────────────────────────────
+   One recipe for badges, messages and toasts: a clean tint of the bright accent,
+   deep vivid text, and a glossy accent (dot or icon chip) with a soft glow. */
+[data-status="success"] { --status: var(--success); --status-solid: var(--success-solid); }
+[data-status="error"] { --status: var(--destructive); --status-solid: var(--destructive-solid); }
+[data-status="warning"] { --status: var(--warning); --status-solid: var(--warning-solid); }
+[data-status="info"] { --status: var(--info); --status-solid: var(--info-solid); }
+
+:root [data-slot="badge"][data-status] { border: 0; padding-inline: 0.5rem; border-radius: var(--radius); }
+:root [data-slot="badge"][data-status]:not([data-status="neutral"]) {
+  color: var(--status);
+  background: color-mix(in oklch, var(--status-solid) 12%, var(--status-base));
+}
+/* Badges without an icon get a small glowing dot */
+:root [data-slot="badge"][data-status]:not([data-status="neutral"]):not(:has(svg))::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--status-solid);
+  margin-right: 0.25rem;
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--status-solid) 22%, transparent), 0 0 8px color-mix(in oklch, var(--status-solid) 70%, transparent);
+}
+
+.status-message {
+  /* Baby pastel: barely-there tint, whisper border */
+  background: linear-gradient(180deg, color-mix(in oklch, var(--status-solid) 9%, var(--status-base)) 0%, color-mix(in oklch, var(--status-solid) 5%, var(--status-base)) 100%);
+  border: 1px solid color-mix(in oklch, var(--status-solid) 20%, transparent);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 8px 24px -18px color-mix(in oklch, var(--status-solid) 50%, transparent);
+}
+.status-chip {
+  /* Soft pastel tile with the icon in the status colour */
+  color: var(--status);
+  background: linear-gradient(180deg, color-mix(in oklch, var(--status-solid) 14%, var(--status-base)) 0%, color-mix(in oklch, var(--status-solid) 24%, var(--status-base)) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 4px 12px -6px color-mix(in oklch, var(--status-solid) 70%, transparent);
+}
+
+/* Toasts: same accents, square, hairline */
+[data-sonner-toast] { border-radius: var(--radius) !important; }
+[data-sonner-toast][data-type="success"] [data-icon] { color: var(--success-solid); }
+[data-sonner-toast][data-type="error"] [data-icon] { color: var(--destructive-solid); }
+[data-sonner-toast][data-type="warning"] [data-icon] { color: var(--warning-solid); }
+[data-sonner-toast][data-type="info"] [data-icon] { color: var(--info-solid); }
 
 /* Filter chips become text tabs with an underline */
 :root [data-slot="toggle-group-item"]:not([data-shape="tile"]) {
@@ -296,6 +354,19 @@
 :root [data-slot="progress-track"] { height: 2px; border-radius: 0; background: var(--stitch-track, var(--border)); }
 :root [data-slot="progress-indicator"] { border-radius: 0; background: var(--stitch, var(--foreground)); }
 
+/* Breadcrumbs: quiet small caps, the current page in ink */
+:root [data-slot="breadcrumb-list"] {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  gap: 0.5rem;
+}
+:root [data-slot="breadcrumb-page"] { color: var(--foreground); }
+:root [data-slot="breadcrumb-separator"] { color: var(--border); }
+:root [data-slot="breadcrumb-separator"] > svg { width: 0.75rem; height: 0.75rem; }
+
 /* Navigation: text-only, small caps, underline for the current page */
 :root .nav-icon { display: none; }
 :root .nav-link {
@@ -305,7 +376,8 @@
   letter-spacing: 0.12em;
   font-size: 0.75rem;
 }
-:root aside:has(.nav-link) { border-right-color: transparent; }
+/* A single hairline separates the sidebar from the page */
+:root aside:has(.nav-link) { border-right: 1px solid var(--border); }
 
 /* Horizontal rows (filters, carousels): keep the page gutter when scrolled, and fade
    the trailing edge on phones so it's clear there's more */

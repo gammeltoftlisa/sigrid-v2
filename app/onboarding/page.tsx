@@ -14,9 +14,9 @@ import { allSizes, saveSize } from '@/lib/sizes'
 import type { StandardSize } from '@/lib/types'
 
 const intro: { icon: Icon; title: string; body: string }[] = [
-  { icon: IconNeedleThread, title: 'Anyone can sew', body: 'Sigrid guides you from idea to finished garment, step by step.' },
-  { icon: IconRuler2, title: 'Made for your body', body: 'Tell us your size once and every pattern is ready in it.' },
-  { icon: IconRoute, title: 'We guide every stitch', body: 'Short, clear steps show exactly what to do next. No experience needed.' },
+  { icon: IconNeedleThread, title: 'Anyone can sew', body: 'No experience needed. We take you from the first cut to a finished garment, one small step at a time.' },
+  { icon: IconRuler2, title: 'Made in your size', body: 'Choose your size once and every pattern is ready in it. No guessing, no resizing.' },
+  { icon: IconRoute, title: 'Calm, clear steps', body: 'Each step shows exactly what to do and where. If something goes wrong, most seams can be unpicked and sewn again.' },
 ]
 const ACCOUNT = intro.length
 const SIZE = ACCOUNT + 1
@@ -110,7 +110,7 @@ export default function OnboardingPage() {
           >
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
-              <p className="text-sm text-muted-foreground">Save your projects and pick up on any device.</p>
+              <p className="text-sm text-muted-foreground">So your progress is never lost. We only use your email to sign you in.</p>
             </div>
             <div className="flex flex-col gap-2">
               <Button type="button" size="lg" variant="outline" className="w-full" onClick={next}>
@@ -161,7 +161,7 @@ export default function OnboardingPage() {
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl font-semibold tracking-tight">What’s your size?</h1>
               <p className="text-sm text-muted-foreground">
-                We’ll use it as the starting point for every pattern. You can change it any time.
+                Choose the size you usually buy. Between two? Pick the larger one, it’s easier to take in. You can change this anytime.
               </p>
             </div>
             <SizePicker sizes={allSizes} value={size} onValueChange={setSize} label="Your usual size" />
