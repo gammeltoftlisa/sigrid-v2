@@ -8,7 +8,7 @@ import {
 } from '@tabler/icons-react'
 import type { SewingStep2D } from '@/lib/types'
 import { groupIntoJourneys, type JourneyKind } from '@/lib/journeys'
-import { StatusDot, progressStateOf, stepRowClass, stepTextClass, type ProgressState } from '@/components/ui/progress'
+import { StatusDot, progressStateOf, stepRowClass, stepTextClass, type ProgressState } from '@/components/legacy/progress'
 import { TOOLS } from './tools'
 import { ACTION_COLORS, ACTION_LABELS } from './actions'
 
@@ -148,7 +148,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
               className="overflow-hidden md:hidden"
             >
               <div className="px-2.5 pb-3">
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full mb-2 inline-block ${ACTION_COLORS[s.action]}`}>
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-(--radius) mb-2 inline-block ${ACTION_COLORS[s.action]}`}>
                   {ACTION_LABELS[s.action]}
                 </span>
 
@@ -156,13 +156,13 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
 
                 <div className="flex flex-wrap gap-1 mb-2">
                   {s.measurement && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-surface/70 text-primary-deep px-1.5 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-surface/70 text-primary-deep px-1.5 py-0.5 rounded-(--radius)">
                       <IconRuler2 size={12} />
                       {s.measurement}
                     </span>
                   )}
                   {s.tool && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-surface/70 text-ink-2 px-1.5 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-surface/70 text-ink-2 px-1.5 py-0.5 rounded-(--radius)">
                       {(() => { const T = TOOLS[s.tool].Icon; return <T size={12} /> })()}
                       {TOOLS[s.tool].short}
                     </span>
@@ -171,7 +171,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
                     <button
                       onClick={(e) => { e.stopPropagation(); setShowTip((v) => !v) }}
                       aria-pressed={showTip}
-                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-full transition-colors duration-150 ${
+                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-(--radius) transition-colors duration-150 ${
                         showTip ? 'bg-warn text-surface' : 'bg-warn-soft text-warn hover:bg-warn hover:text-surface'
                       }`}
                     >
@@ -294,7 +294,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
             onClick={onPrev}
             disabled={viewStep === 0}
             aria-label="Previous step"
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-2 hover:bg-surface-2 active:scale-90 transition duration-150 disabled:opacity-40 disabled:pointer-events-none"
+            className="w-11 h-11 rounded-lg flex items-center justify-center text-ink-2 hover:bg-surface-2 active:scale-90 transition duration-150 disabled:opacity-40 disabled:pointer-events-none"
           >
             <IconChevronLeft size={16} stroke={2.5} />
           </button>
@@ -304,7 +304,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
             // so the main button takes you back to the one you're on instead.
             <button
               onClick={() => onPreview(completedUntil)}
-              className="flex-1 h-9 rounded-lg border border-rim bg-surface text-ink text-sm font-bold hover:bg-surface-2 active:scale-[0.97] transition duration-150 inline-flex items-center justify-center gap-1.5"
+              className="flex-1 h-11 rounded-lg border border-rim bg-surface text-ink text-xs font-medium uppercase tracking-[0.1em] hover:bg-surface-2 active:scale-[0.97] transition duration-150 inline-flex items-center justify-center gap-1.5"
             >
               <IconArrowBackUp size={15} />
               Back to step {completedUntil + 1}
@@ -312,7 +312,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
           ) : (
             <button
               onClick={onNext}
-              className="flex-1 h-9 rounded-lg bg-primary text-surface text-sm font-bold hover:bg-primary-deep active:scale-[0.97] transition duration-150 inline-flex items-center justify-center gap-1.5"
+              className="flex-1 h-11 rounded-lg bg-primary text-surface text-xs font-medium uppercase tracking-[0.1em] hover:bg-primary-deep active:scale-[0.97] transition duration-150 inline-flex items-center justify-center gap-1.5"
             >
               {allDone ? <IconConfetti size={15} /> : <IconCheck size={15} stroke={3} />}
               {allDone ? 'View summary' : isLast ? 'Finish' : 'Mark done'}
@@ -323,7 +323,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
             onClick={() => !isLast && onPreview(Math.min(viewStep + 1, steps.length - 1))}
             disabled={viewStep >= steps.length - 1}
             aria-label="Next step"
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-ink-2 hover:bg-surface-2 active:scale-90 transition duration-150 disabled:opacity-40 disabled:pointer-events-none"
+            className="w-11 h-11 rounded-lg flex items-center justify-center text-ink-2 hover:bg-surface-2 active:scale-90 transition duration-150 disabled:opacity-40 disabled:pointer-events-none"
           >
             <IconChevronRight size={16} stroke={2.5} />
           </button>

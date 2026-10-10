@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconX, IconCamera, IconShare, IconStar, IconStarFilled } from '@tabler/icons-react'
-import PrimaryButton from '@/components/ui/PrimaryButton'
-import SecondaryButton from '@/components/ui/SecondaryButton'
-import IconButton from '@/components/ui/IconButton'
-import GarmentIllustration from '@/components/ui/GarmentIllustration'
-import { TAP_ICON } from '@/components/ui/interaction'
+import PrimaryButton from '@/components/legacy/PrimaryButton'
+import SecondaryButton from '@/components/legacy/SecondaryButton'
+import IconButton from '@/components/legacy/IconButton'
+import { GarmentArt } from '@/components/garment/GarmentArt'
+import { TAP_ICON } from '@/components/legacy/interaction'
 import type { Garment } from '@/lib/types'
 
 const CONFETTI_COLORS = ['#BF8B5E', '#4E7D4F', '#D4903A', '#C5574A', '#C4A882']
@@ -86,9 +86,9 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
                   initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: 'spring', stiffness: 240, damping: 16, delay: 0.15 }}
-                  className="w-40 h-40 rounded-full bg-primary-soft flex items-center justify-center p-8 shadow-soft"
+                  className="w-40 h-40 rounded-(--radius) bg-muted flex items-center justify-center p-8"
                 >
-                  <GarmentIllustration name={garment.name} className="w-full h-full" />
+                  <GarmentArt name={garment.name} className="w-full h-full" />
                 </motion.div>
                 <div className="absolute inset-0 pointer-events-none">
                   {confetti.map((c, i) => (

@@ -1,153 +1,148 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState } from 'react'
 import Link from 'next/link'
-import SizePicker from '@/components/ui/SizePicker'
+import { IconCertificate, IconChevronRight, IconLogout } from '@tabler/icons-react'
+import { toast } from 'sonner'
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
+import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { CreatorAvatar } from '@/components/patterns/creator-avatar'
+import { PageContainer, PageHeader } from '@/components/patterns/page-header'
+import { PageSection } from '@/components/patterns/page-section'
+import { SizePicker } from '@/components/patterns/size-picker'
+import { useMounted } from '@/hooks/use-mounted'
+import { creators } from '@/lib/data'
 import { allSizes, loadSavedSize, saveSize, sizeLabel } from '@/lib/sizes'
 import type { StandardSize } from '@/lib/types'
-import { creators } from '@/lib/data'
-import { TAP, cardInteractive } from '@/components/ui/interaction'
-
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <motion.button
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      whileTap={TAP}
-      className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${checked ? 'bg-primary hover:bg-primary-deep' : 'bg-rim hover:bg-ink-3/40'}`}
-    >
-      <motion.div
-        animate={{ x: checked ? 20 : 2 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="absolute top-[3px] w-[22px] h-[22px] bg-surface rounded-full shadow-soft"
-      />
-    </motion.button>
-  )
-}
 
 export default function ProfilePage() {
   const [notifications, setNotifications] = useState(true)
-  const [followedCreators] = useState(creators.slice(0, 2))
+  const [picked, setPicked] = useState<StandardSize | null>(null)
+  const mounted = useMounted()
+  const size = picked ?? (mounted ? loadSavedSize() : null)
+  const followed = creators.slice(0, 2)
 
-  const [size, setSize] = useState<StandardSize | null>(null)
-
-  useEffect(() => setSize(loadSavedSize()), [])
-
-  const handleSelectSize = (s: StandardSize) => {
-    setSize(s)
+  const selectSize = (s: StandardSize) => {
+    setPicked(s)
     saveSize(s)
+    toast.success(`Your size is now ${sizeLabel(s)}`)
   }
 
   return (
-    <div className="min-h-full bg-bg">
-      <div className="px-5 pt-14 pb-6">
-        <motion.h1
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-display font-bold text-ink"
-        >
-          Profile
-        </motion.h1>
-      </div>
+    <PageContainer className="max-w-2xl">
+      <PageHeader title="Profile" />
 
-      {/* User card */}
-      <div className="px-5 mb-6">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-surface rounded-3xl p-5 shadow-soft flex items-center gap-4"
-        >
-          <div className="w-16 h-16 rounded-full bg-primary-soft flex items-center justify-center text-[28px] font-bold text-primary">
-            E
-          </div>
-          <div>
-            <h2 className="text-heading font-semibold text-ink">Emma</h2>
-            <p className="text-caption text-ink-3">emma@example.com</p>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Size */}
-      <div className="px-5 mb-6">
-        <h2 className="text-heading font-semibold text-ink mb-4">My size</h2>
-        <div className="bg-surface rounded-3xl p-5 shadow-soft">
-          <p className="text-caption text-ink-3 mb-4">
-            {size
-              ? `Patterns start in ${sizeLabel(size)}. You can still pick another size per garment.`
-              : 'Pick your usual size and we\'ll pre-select it for every pattern.'}
-          </p>
-          <SizePicker sizes={allSizes} selected={size} onSelect={handleSelectSize} />
+      <div className="flex items-center gap-4">
+        <Avatar className="size-16">
+          <AvatarFallback className="text-xl">E</AvatarFallback>
+        </Avatar>
+        <div className="flex min-w-0 flex-col">
+          <p className="text-lg font-semibold">Emma</p>
+          <p className="truncate text-sm text-muted-foreground">emma@example.com</p>
         </div>
       </div>
 
-      {/* Preferences */}
-      <div className="px-5 mb-6">
-        <h2 className="text-heading font-semibold text-ink mb-4">Preferences</h2>
-        <div className="bg-surface rounded-3xl shadow-soft overflow-hidden divide-y divide-rim-soft">
-          {/* Notifications */}
-          <div className="flex items-center justify-between px-5 py-4">
-            <div>
-              <p className="text-label font-medium text-ink">Push notifications</p>
-              <p className="text-caption text-ink-3">Sewing tips and reminders</p>
-            </div>
-            <Toggle checked={notifications} onChange={setNotifications} />
-          </div>
-        </div>
-      </div>
+      <PageSection
+        title="My size"
+        description={
+          size
+            ? `New patterns start in ${sizeLabel(size)}. You can still pick another size per garment.`
+            : 'Pick your usual size and we’ll pre-select it for every pattern.'
+        }
+      >
+        <SizePicker sizes={allSizes} value={size} onValueChange={selectSize} label="My usual size" />
+      </PageSection>
 
-      {/* Payment */}
-      <div className="px-5 mb-6">
-        <h2 className="text-heading font-semibold text-ink mb-4">Subscription</h2>
-        <Link href="/payment" className="block rounded-3xl">
-          <div className={`bg-surface rounded-3xl p-5 shadow-soft flex items-center justify-between ${cardInteractive}`}>
-            <div>
-              <p className="text-label font-medium text-ink">Beta access</p>
-              <p className="text-caption text-ink-3">Payment coming soon</p>
-            </div>
-            <span className="text-[12px] font-semibold bg-warn-soft text-warn px-2.5 py-1 rounded-full">
-              Coming soon
-            </span>
-          </div>
-        </Link>
-      </div>
-
-      {/* Creators I follow */}
-      <div className="px-5 mb-6">
-        <h2 className="text-heading font-semibold text-ink mb-4">Creators I follow</h2>
-        <div className="flex flex-col gap-3">
-          {followedCreators.map((creator) => (
-            <Link key={creator.id} href={`/creator/${creator.id}`} className="block rounded-2xl">
-              <div className={`bg-surface rounded-2xl p-4 shadow-soft flex items-center gap-3 ${cardInteractive}`}>
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-surface font-bold"
-                  style={{ backgroundColor: creator.avatarColor }}
-                >
-                  {creator.name[0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-label font-semibold text-ink">{creator.handle}</p>
-                  <p className="text-caption text-ink-3">{creator.followerCount} followers</p>
-                </div>
-                {creator.isCertified && (
-                  <span className="text-[10px] font-semibold bg-primary-soft text-primary px-2 py-0.5 rounded-full">
-                    ✓ Certified
-                  </span>
-                )}
+      <PageSection title="Preferences">
+        <Card>
+          <CardContent>
+            <Field orientation="horizontal">
+              <div className="flex flex-1 flex-col gap-0.5">
+                <FieldLabel htmlFor="notifications">Push notifications</FieldLabel>
+                <FieldDescription>Sewing tips and reminders</FieldDescription>
               </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+              <Switch id="notifications" checked={notifications} onCheckedChange={setNotifications} />
+            </Field>
+          </CardContent>
+        </Card>
+      </PageSection>
 
-      {/* Sign out */}
-      <div className="px-5 pb-8">
-        <button className="w-full py-4 rounded-full text-danger text-label font-semibold hover:bg-danger-soft active:scale-[0.97] transition duration-150">
+      <PageSection title="Subscription">
+        <Link
+          href="/payment"
+          className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <Card className="transition-colors group-hover:bg-muted/50">
+            <CardHeader>
+              <CardTitle className="text-base">Beta access</CardTitle>
+              <CardDescription>Everything is free while we build. See upcoming plans.</CardDescription>
+              <div className="col-start-2 row-span-2 row-start-1 flex items-center gap-2 self-center">
+                <span className="eyebrow text-muted-foreground">Free in beta</span>
+                <IconChevronRight className="size-4 text-muted-foreground" aria-hidden />
+              </div>
+            </CardHeader>
+          </Card>
+        </Link>
+      </PageSection>
+
+      <PageSection title="Creators you follow">
+        <Card className="py-0">
+          <ul>
+            {followed.map((c, i) => (
+              <li key={c.id}>
+                {i > 0 && <Separator />}
+                <Link
+                  href={`/creator/${c.id}`}
+                  className="flex items-center gap-3 px-4 py-3 outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted"
+                >
+                  <CreatorAvatar creator={c} size="lg" />
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-sm font-medium">{c.handle}</span>
+                    <span className="text-sm text-muted-foreground">{c.followerCount} followers</span>
+                  </span>
+                  {c.isCertified && (
+                    <IconCertificate className="size-4 text-muted-foreground" aria-label="Certified creator" />
+                  )}
+                  <IconChevronRight className="size-4 text-muted-foreground" aria-hidden />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </PageSection>
+
+      <AlertDialog>
+        <AlertDialogTrigger render={<Button variant="destructive" size="lg" className="w-full sm:w-auto sm:self-start" />}>
+          <IconLogout data-icon="inline-start" />
           Sign out
-        </button>
-      </div>
-    </div>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>Your projects stay saved on this device.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive">Sign out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </PageContainer>
   )
 }

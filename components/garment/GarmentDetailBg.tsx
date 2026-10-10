@@ -1,46 +1,35 @@
-import { getGarmentById } from '@/lib/data'
-import GarmentIllustration from '@/components/ui/GarmentIllustration'
-import DifficultyBadge from '@/components/ui/DifficultyBadge'
+import { IconClock } from '@tabler/icons-react'
 
+import { DifficultyBadge } from '@/components/patterns/difficulty-badge'
+import { GarmentImage } from '@/components/garment/GarmentArt'
+import { getGarmentById } from '@/lib/data'
+
+/** Static look-alike of the garment page, shown (inert) behind the sewing guide sheet. */
 export default function GarmentDetailBg({ garmentId }: { garmentId: string }) {
   const garment = getGarmentById(garmentId)
 
   return (
-    <div className="bg-bg md:flex md:h-screen md:overflow-hidden min-h-screen">
-      {/* Mobile: stacked */}
-      <div className="md:hidden px-5 pt-14 pb-4">
-        <div className="w-10 h-10 rounded-full bg-surface shadow-soft" />
-      </div>
-      <div className="md:hidden mx-5 mb-6 bg-surface rounded-3xl overflow-hidden shadow-soft p-8 aspect-square flex items-center justify-center">
-        <GarmentIllustration name={garment.name} className="w-full h-full max-w-56" />
-      </div>
-      <div className="md:hidden px-5">
-        <h1 className="text-title font-bold text-ink mb-2">{garment.name}</h1>
-        <div className="flex items-center gap-2 mb-3">
-          <DifficultyBadge difficulty={garment.difficulty} size="md" />
+    <div aria-hidden inert className="min-h-svh md:grid md:grid-cols-2">
+      <div className="md:flex md:h-svh md:flex-col">
+        <div className="px-4 pt-4 sm:px-6 md:pt-6">
+          <div className="size-9 rounded-lg" />
         </div>
-        <p className="text-body text-ink-2 leading-relaxed">{garment.description}</p>
+        <GarmentImage
+          name={garment.name}
+          className="mx-4 mt-4 aspect-[4/5] p-10 sm:mx-6 md:m-0 md:mt-6 md:aspect-auto md:flex-1 md:p-16"
+          artClassName="max-w-72 md:max-w-sm"
+        />
       </div>
-
-      {/* Desktop: two-column */}
-      <div className="hidden md:flex md:w-1/2 md:h-screen md:flex-col md:bg-surface md:border-r md:border-rim">
-        <div className="px-6 pt-8 pb-4">
-          <div className="w-10 h-10 rounded-full bg-bg shadow-soft" />
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-3 px-4 pt-6 sm:px-6 md:pt-16">
+        <h1 className="text-2xl font-semibold tracking-tight">{garment.name}</h1>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <DifficultyBadge difficulty={garment.difficulty} />
+          <span className="inline-flex items-center gap-1">
+            <IconClock className="size-4" />
+            {garment.estimatedTime}
+          </span>
         </div>
-        <div className="flex-1 flex items-center justify-center p-10">
-          <GarmentIllustration name={garment.name} className="w-full max-w-xs" />
-        </div>
-      </div>
-      <div className="hidden md:flex md:w-1/2 md:flex-col md:overflow-hidden">
-        <div className="px-8 pt-10">
-          <p className="text-caption text-ink-3 mb-6">All garments › {garment.name}</p>
-          <h1 className="text-title font-bold text-ink mb-2">{garment.name}</h1>
-          <div className="flex items-center gap-2 mb-4">
-            <DifficultyBadge difficulty={garment.difficulty} size="md" />
-            <span className="text-caption text-ink-3">⏱ {garment.estimatedTime}</span>
-          </div>
-          <p className="text-body text-ink-2 leading-relaxed">{garment.description}</p>
-        </div>
+        <p className="text-base leading-relaxed text-muted-foreground">{garment.description}</p>
       </div>
     </div>
   )
