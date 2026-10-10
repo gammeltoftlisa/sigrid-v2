@@ -2,15 +2,24 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import GarmentCard from '@/components/ui/GarmentCard'
-import PatternCard from '@/components/ui/PatternCard'
-import ProgressBar from '@/components/ui/ProgressBar'
-import PrimaryButton from '@/components/ui/PrimaryButton'
-import { garments, creatorPatterns, activeProject } from '@/lib/data'
-import { TAP, textLink } from '@/components/ui/interaction'
+import { IconArrowRight } from '@tabler/icons-react'
 
-const SHOW_ACTIVE = true
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { CategoryTabs } from '@/components/patterns/category-tabs'
+import { GarmentCard } from '@/components/patterns/garment-card'
+import { PageContainer, PageHeader } from '@/components/patterns/page-header'
+import { PageSection } from '@/components/patterns/page-section'
+import { Wordmark } from '@/components/patterns/wordmark'
+import { GarmentImage } from '@/components/garment/GarmentArt'
+import { useMounted } from '@/hooks/use-mounted'
+import { creatorPatterns, creators, garments, getGarmentGuide } from '@/lib/data'
+import { listProjects, type ProjectSummary } from '@/lib/project-summary'
+import { sizeLabel } from '@/lib/sizes'
+import type { GarmentCategory } from '@/lib/types'
+
+const categories = ['All', 'Tops', 'Bottoms', 'Dresses', 'Outerwear'] as const satisfies readonly (GarmentCategory | 'All')[]
 
 function greeting() {
   const h = new Date().getHours()
@@ -19,146 +28,114 @@ function greeting() {
   return 'Good evening'
 }
 
-export default function HomePage() {
-  const [activeCategory, setActiveCategory] = useState('All')
-  const categories = ['All', 'Tops', 'Bottoms', 'Dresses', 'Outerwear']
+/** The one thing Emma most likely wants: pick up where she stopped. */
+function ContinuePanel({ summary }: { summary: ProjectSummary }) {
+  const { garment, project, totalSteps, percent } = summary
+  const nextStep = getGarmentGuide(garment.id)?.steps[project.completedUntil]
+  return (
+    <section
+      aria-labelledby="continue-title"
+      className="grid overflow-hidden rounded-(--radius) bg-hero text-hero-foreground sm:grid-cols-[1fr_14rem] md:grid-cols-[1fr_18rem]"
+    >
+      <div className="flex flex-col gap-6 p-6 md:p-10">
+        <div className="flex flex-col gap-2">
+          <p className="eyebrow text-hero-muted">Continue where you left off</p>
+          <h2 id="continue-title" className="text-3xl md:text-4xl">
+            {garment.name}
+          </h2>
+          {nextStep && (
+            <p className="text-base text-hero-muted">
+              Next: <span className="text-hero-foreground">{nextStep.title}</span>
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <Progress value={percent} aria-label={`${garment.name} progress`} />
+          <p className="text-sm text-hero-muted tabular-nums">
+            {Math.min(project.completedUntil, totalSteps)} of {totalSteps} steps · {sizeLabel(project.size)}
+          </p>
+        </div>
+        <Button size="lg" className="w-full sm:w-auto sm:self-start" render={<Link href={`/garment/${garment.id}/guide`} />}>
+          Continue sewing
+          <IconArrowRight data-icon="inline-end" />
+        </Button>
+      </div>
+      <GarmentImage name={garment.name} className="hidden p-8 sm:flex" artClassName="max-w-48" />
+    </section>
+  )
+}
 
-  const filteredGarments =
-    activeCategory === 'All'
-      ? garments
-      : garments.filter((g) => g.category === activeCategory)
+export default function HomePage() {
+  const [category, setCategory] = useState<(typeof categories)[number]>('All')
+  // Projects live in localStorage, and the greeting depends on the local clock
+  const mounted = useMounted()
+  const projects = mounted ? listProjects() : []
+  const current = projects.find((p) => !p.finished) ?? null
+  const startedIds = new Set(projects.filter((p) => !p.finished).map((p) => p.garment.id))
+  const hello = mounted ? greeting() : 'Hello'
+
+  const filtered = category === 'All' ? garments : garments.filter((g) => g.category === category)
 
   return (
-    <div className="min-h-full bg-bg">
-      {/* Header */}
-      <div className="px-5 pt-14 pb-6">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <h1 className="text-display font-bold text-ink">
-            {greeting()}, Emma 👋
-          </h1>
-          <p className="text-body text-ink-2 mt-1">
-            {SHOW_ACTIVE ? 'Welcome back.' : 'Ready to make something?'}
-          </p>
-        </motion.div>
+    <PageContainer>
+      <div className="-mb-6 flex items-center justify-between pt-5 md:hidden">
+        <Wordmark />
+        <Link href="/profile" aria-label="Your profile" className="rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+          <Avatar className="size-9">
+            <AvatarFallback>E</AvatarFallback>
+          </Avatar>
+        </Link>
       </div>
+      <PageHeader
+        title={`${hello}, Emma`}
+        description={current ? 'Pick up where you left off, or start something new.' : 'Choose a garment and we’ll guide you through every step.'}
+      />
 
-      {/* Active project card */}
-      {SHOW_ACTIVE && (
-        <div className="px-5 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="bg-surface rounded-3xl p-5 shadow-card"
-          >
-            <p className="text-caption font-semibold text-ink-3 uppercase tracking-wide mb-3">
-              Continue where you left off
-            </p>
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-heading font-semibold text-ink">{activeProject.garmentName}</h2>
-                <p className="text-caption text-ink-3 mt-0.5">Step 5 of 12</p>
-              </div>
-              <div className="w-14 h-14 bg-primary-soft rounded-2xl flex items-center justify-center">
-                <svg width="28" height="28" viewBox="0 0 120 120" fill="none">
-                  <path d="M28 30 L20 52 L37 54 L37 96 L83 96 L83 54 L100 52 L92 30 L75 38 Q60 44 45 38 Z"
-                    fill="var(--sig-primary)" fillOpacity="0.3" stroke="var(--sig-primary)" strokeWidth="3" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-            <ProgressBar percent={activeProject.progressPercent} showLabel />
-            <PrimaryButton href={`/garment/${activeProject.garmentId}`} className="mt-4">Continue sewing</PrimaryButton>
-          </motion.div>
-        </div>
-      )}
+      {current && <ContinuePanel summary={current} />}
 
-      {/* Empty state CTA (new user) */}
-      {!SHOW_ACTIVE && (
-        <div className="px-5 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="bg-primary-soft rounded-3xl p-6 shadow-soft"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-heading font-semibold text-ink mb-1">Start your first project</h2>
-                <p className="text-body text-ink-2">Pick a garment and we&apos;ll guide you through every step.</p>
-              </div>
-              <div className="w-20 h-20 flex-shrink-0">
-                <svg viewBox="0 0 200 200" fill="none">
-                  <circle cx="100" cy="100" r="90" fill="var(--sig-primary)" fillOpacity="0.2" />
-                  <path d="M60 80 L80 65 L120 65 L140 80 L140 150 L60 150 Z"
-                    fill="var(--sig-primary)" fillOpacity="0.4" stroke="var(--sig-primary)" strokeWidth="2" />
-                </svg>
-              </div>
-            </div>
-            <PrimaryButton href="/explore">Browse patterns</PrimaryButton>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Garment library */}
-      <div className="px-5 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-heading font-semibold text-ink">
-            {SHOW_ACTIVE ? 'Start something new' : 'Choose a garment'}
-          </h2>
-        </div>
-
-        {/* Category filter */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
-          {categories.map((cat) => (
-            <motion.button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              whileTap={TAP}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-label font-medium transition-colors duration-200 ${
-                activeCategory === cat
-                  ? 'bg-primary text-surface'
-                  : 'bg-surface-2 text-ink-2 hover:bg-rim hover:text-ink'
-              }`}
-            >
-              {cat}
-            </motion.button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          {filteredGarments.map((garment, i) => (
-            <motion.div
-              key={garment.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: i * 0.06 }}
-            >
-              <GarmentCard garment={garment} href={`/garment/${garment.id}`} />
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Creator patterns (returning user) */}
-      {SHOW_ACTIVE && (
-        <div className="mb-8">
-          <div className="px-5 flex items-center justify-between mb-4">
-            <h2 className="text-heading font-semibold text-ink">New from creators</h2>
-            <Link href="/explore" className={`text-label ${textLink}`}>See all</Link>
-          </div>
-          <div className="flex gap-4 overflow-x-auto px-5 pb-2">
-            {creatorPatterns.slice(0, 4).map((pattern) => (
-              <div key={pattern.id} className="w-48 flex-shrink-0">
-                <PatternCard pattern={pattern} />
-              </div>
+      <PageSection title={current ? 'Start something new' : 'Choose a garment'}>
+        <CategoryTabs label="Filter by category" options={categories} value={category} onValueChange={setCategory} />
+        {filtered.length > 0 ? (
+          <div key={category} className="tile-grid grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 xl:grid-cols-4">
+            {filtered.map((g) => (
+              <GarmentCard
+                key={g.id}
+                href={`/garment/${g.id}`}
+                name={g.name}
+                difficulty={g.difficulty}
+                time={g.estimatedTime}
+                price={g.price}
+                tag={startedIds.has(g.id) ? 'In progress' : undefined}
+              />
             ))}
           </div>
+        ) : (
+          <p className="py-8 text-sm text-muted-foreground">Nothing in {category.toLowerCase()} yet.</p>
+        )}
+      </PageSection>
+
+      <PageSection
+        title="New from creators"
+        action={
+          <Button variant="link" className="px-0" render={<Link href="/explore" />}>
+            See all
+          </Button>
+        }
+      >
+        <div className="scroll-row tile-grid -mx-4 flex snap-x gap-4 overflow-x-auto px-4 sm:-mx-0 sm:px-0">
+          {creatorPatterns.slice(0, 4).map((p) => (
+            <GarmentCard
+              key={p.id}
+              className="w-44 shrink-0 snap-start sm:w-52"
+              href={`/garment/${p.garmentId}`}
+              name={p.name}
+              difficulty={p.difficulty}
+              byline={creators.find((c) => c.id === p.creatorId)?.handle}
+              price={p.price}
+            />
+          ))}
         </div>
-      )}
-    </div>
+      </PageSection>
+    </PageContainer>
   )
 }

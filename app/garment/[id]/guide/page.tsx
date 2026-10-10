@@ -4,7 +4,7 @@ import { useState, use, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconPrinter, IconChevronDown, IconNeedleThread } from '@tabler/icons-react'
-import { textLink } from '@/components/ui/interaction'
+import { textLink } from '@/components/legacy/interaction'
 import { getGarmentById, getGarmentGuide, standardSizes } from '@/lib/data'
 import type { StandardSize, UserMeasurements } from '@/lib/types'
 import { loadProject, saveProject } from '@/lib/projects'
@@ -12,12 +12,12 @@ import { sizeLabel } from '@/lib/sizes'
 import SizeSheet from '@/components/garment/SizeSheet'
 import PatternCanvas from '@/components/sewing/PatternCanvas'
 import GuideSidePanel from '@/components/sewing/GuideSidePanel'
-import FlowHeader from '@/components/ui/FlowHeader'
-import GarmentIllustration from '@/components/ui/GarmentIllustration'
+import FlowHeader from '@/components/legacy/FlowHeader'
+import { GarmentArt } from '@/components/garment/GarmentArt'
 import CompletionDialog from '@/components/sewing/CompletionDialog'
 import StepInstruction from '@/components/sewing/StepInstruction'
 import { groupIntoJourneys } from '@/lib/journeys'
-import { progressStateOf } from '@/components/ui/progress'
+import { progressStateOf } from '@/components/legacy/progress'
 
 const DEFAULT_MEASUREMENTS: UserMeasurements = {
   bust: 88, waist: 70, hips: 96, height: 168, inseam: 78,
@@ -184,7 +184,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
             <button
               onClick={() => setSizeSheetOpen(true)}
               aria-label={`Size ${sizeLabel(size)}. Change size`}
-              className="inline-flex items-center gap-1 h-7 pl-2.5 pr-2 rounded-full border border-rim bg-surface text-caption font-semibold text-ink-2 hover:bg-surface-2 active:scale-90 transition duration-150"
+              className="inline-flex items-center gap-1 h-7 pl-2.5 pr-2 rounded-(--radius) border border-rim bg-surface text-caption font-semibold text-ink-2 hover:bg-surface-2 active:scale-90 transition duration-150"
             >
               {sizeLabel(size)}
               <IconChevronDown size={12} />
@@ -193,7 +193,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
               onClick={printPattern}
               aria-label="Print pattern"
               title="Print pattern"
-              className="w-7 h-7 rounded-full border border-rim bg-surface text-ink-2 flex items-center justify-center hover:bg-surface-2 active:scale-90 transition duration-150"
+              className="w-7 h-7 rounded-(--radius) border border-rim bg-surface text-ink-2 flex items-center justify-center hover:bg-surface-2 active:scale-90 transition duration-150"
             >
               <IconPrinter size={14} />
             </button>
@@ -238,8 +238,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                   animate={{ opacity: 1, scale: 1 }}
                   className="w-full h-full flex flex-col items-center justify-center gap-4 bg-surface-2 rounded-3xl text-center px-6"
                 >
-                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-primary-soft flex items-center justify-center p-6 md:p-8">
-                    <GarmentIllustration name={garment.name} className="w-full h-full" />
+                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-(--radius) bg-muted flex items-center justify-center p-6 md:p-8">
+                    <GarmentArt name={garment.name} className="w-full h-full" />
                   </div>
                   <div>
                     <p className="text-heading font-bold text-ink">All {steps.length} steps done</p>
@@ -280,7 +280,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                     transition={{ duration: 0.25 }}
                   >
                     <motion.div
-                      className="w-20 h-20 rounded-full bg-success flex items-center justify-center shadow-modal"
+                      className="w-20 h-20 rounded-full bg-success flex items-center justify-center"
                       initial={{ scale: 0.6 }} animate={{ scale: 1 }} exit={{ scale: 1.3 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                     >

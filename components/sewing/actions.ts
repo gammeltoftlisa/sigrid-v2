@@ -1,13 +1,14 @@
-// Colour + label per kind of step, shared by the step list and the instruction panel
+// Tag style + label per kind of step, shared by the step list and the instruction panel.
+// Tags are neutral on purpose: the label carries the meaning, colour is reserved for state.
 export const ACTION_COLORS: Record<string, string> = {
-  cut:     'bg-[#FDE8E6] text-[#C5574A]',
-  sew:     'bg-primary-soft text-primary-deep',
-  fold:    'bg-surface-2 text-ink-2',
-  pin:     'bg-[#E3EEE3] text-[#4E7D4F]',
-  press:   'bg-warn-soft text-warn',
-  mark:    'bg-surface-2 text-ink-2',
-  prepare: 'bg-surface-2 text-ink-2',
-  attach:  'bg-primary-soft text-primary-deep',
+  cut:     'bg-secondary text-secondary-foreground',
+  sew:     'bg-secondary text-secondary-foreground',
+  fold:    'bg-secondary text-secondary-foreground',
+  pin:     'bg-secondary text-secondary-foreground',
+  press:   'bg-secondary text-secondary-foreground',
+  mark:    'bg-secondary text-secondary-foreground',
+  prepare: 'bg-secondary text-secondary-foreground',
+  attach:  'bg-secondary text-secondary-foreground',
 }
 
 export const ACTION_LABELS: Record<string, string> = {

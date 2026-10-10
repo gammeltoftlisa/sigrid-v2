@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist } from 'next/font/google'
+import { Albert_Sans, Geist_Mono } from 'next/font/google'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { Toaster } from '@/components/ui/sonner'
+import { MotionProvider } from '@/components/motion-provider'
 import './globals.css'
 
-const geist = Geist({
-  variable: '--font-geist',
-  subsets: ['latin'],
-})
+// Brand typeface for headings and text; mono only for code
+const albertSans = Albert_Sans({ variable: '--font-albert', subsets: ['latin'] })
+const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Sigrid – Sewing for everyone',
@@ -15,9 +17,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: '#F9F7F4',
+  themeColor: '#EFE9E0',
 }
 
 export default function RootLayout({
@@ -26,8 +26,15 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${geist.variable} h-full`}>
-      <body className="h-full bg-bg font-[var(--font-geist)] antialiased">{children}</body>
+    <html lang="en" className={`${albertSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <body className="min-h-full bg-background font-sans text-foreground">
+        <MotionProvider>
+          <TooltipProvider>
+            {children}
+            <Toaster position="bottom-center" />
+          </TooltipProvider>
+        </MotionProvider>
+      </body>
     </html>
   )
 }

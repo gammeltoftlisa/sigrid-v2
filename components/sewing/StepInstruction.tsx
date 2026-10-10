@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { IconBulb, IconRuler2, IconCircleCheck } from '@tabler/icons-react'
 import type { SewingStep2D } from '@/lib/types'
-import type { ProgressState } from '@/components/ui/progress'
+import type { ProgressState } from '@/components/legacy/progress'
 import { ACTION_COLORS, ACTION_LABELS } from './actions'
 import { TOOLS } from './tools'
 
@@ -36,7 +36,7 @@ export default function StepInstruction({ step, index, journeyTitle, numberInJou
         exit={{ opacity: 0, y: -4 }}
         transition={{ duration: 0.18, ease: 'easeOut' }}
         className={`rounded-3xl border px-6 py-5 ${
-          state === 'active' ? 'bg-surface border-primary/30 shadow-soft' : 'bg-surface-2/40 border-rim-soft'
+          state === 'active' ? 'bg-surface border-primary/40' : 'bg-surface-2/40 border-rim-soft'
         }`}
       >
         <div className="flex items-center justify-between gap-3 mb-2">
@@ -57,7 +57,7 @@ export default function StepInstruction({ step, index, journeyTitle, numberInJou
         </div>
 
         <div className="flex items-center gap-2.5 mb-2">
-          <span className={`text-[12px] font-bold px-2 py-0.5 rounded-full ${ACTION_COLORS[step.action]}`}>
+          <span className={`text-[12px] font-bold px-2 py-0.5 rounded-(--radius) ${ACTION_COLORS[step.action]}`}>
             {ACTION_LABELS[step.action]}
           </span>
           <h2 className={`text-heading font-bold leading-tight ${state === 'done' ? 'text-ink-2' : 'text-ink'}`}>
@@ -70,13 +70,13 @@ export default function StepInstruction({ step, index, journeyTitle, numberInJou
         {(step.measurement || tool) && (
           <div className="flex flex-wrap gap-2 mt-4">
             {step.measurement && (
-              <span className="inline-flex items-center gap-1.5 text-label font-semibold bg-primary-soft text-primary-deep px-3 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1.5 text-label font-semibold bg-primary-soft text-primary-deep px-3 py-1 rounded-(--radius)">
                 <IconRuler2 size={16} />
                 {step.measurement}
               </span>
             )}
             {tool && (
-              <span className="inline-flex items-center gap-1.5 text-label font-medium bg-surface-2 text-ink-2 px-3 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1.5 text-label font-medium bg-surface-2 text-ink-2 px-3 py-1 rounded-(--radius)">
                 <tool.Icon size={16} />
                 {tool.label}
               </span>

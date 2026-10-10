@@ -6,9 +6,9 @@ import { IconChevronLeft, IconPrinter } from '@tabler/icons-react'
 import { getGarmentById, getGarmentGuide, standardSizes } from '@/lib/data'
 import { loadProject } from '@/lib/projects'
 import { allSizes, sizeLabel } from '@/lib/sizes'
-import IconButton from '@/components/ui/IconButton'
-import PrimaryButton from '@/components/ui/PrimaryButton'
-import { textLink } from '@/components/ui/interaction'
+import IconButton from '@/components/legacy/IconButton'
+import PrimaryButton from '@/components/legacy/PrimaryButton'
+import { textLink } from '@/components/legacy/interaction'
 import type { GuidePiece, PieceDims, StandardSize } from '@/lib/types'
 
 // ── Geometry (all in cm) ──────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
           {layouts.map((l) => (
-            <div key={l.piece.id} className="bg-surface rounded-3xl p-4 shadow-soft border border-rim-soft">
+            <div key={l.piece.id} className="bg-surface rounded-(--radius) p-4 border border-rim">
               <div className="h-32 mb-3 rounded-2xl bg-surface-2/60 flex items-center justify-center p-3">
                 <svg viewBox={`0 0 ${l.w} ${l.h}`} className="h-full max-w-full">
                   <PieceDrawing layout={l} preview />
@@ -197,7 +197,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
           ))}
         </div>
 
-        <div className="bg-surface rounded-3xl p-5 shadow-soft mb-6">
+        <div className="bg-surface rounded-(--radius) p-5 border border-rim mb-6">
           <h2 className="text-heading font-semibold text-ink mb-3">How to print</h2>
           <ol className="space-y-2.5">
             {[
@@ -207,7 +207,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
               'Cut along the solid line. The dashed line is where you stitch.',
             ].map((text, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-primary-soft text-primary text-[12px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                <span className="w-6 h-6 border border-rim text-ink text-[12px] font-medium flex items-center justify-center shrink-0 mt-0.5">
                   {i + 1}
                 </span>
                 <p className="text-label text-ink-2">{text}</p>
