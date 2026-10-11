@@ -46,7 +46,7 @@ export function GarmentCard({
         artClassName="max-w-40 transition-transform duration-500 ease-out group-hover/tile:scale-[1.04]"
       >
         {tag && (
-          <span className="eyebrow absolute top-3 left-3 bg-background/85 px-2 py-1 text-foreground backdrop-blur-sm">{tag}</span>
+          <span className="eyebrow absolute top-3 left-3 bg-foreground px-2 py-1 text-inverse-foreground">{tag}</span>
         )}
       </GarmentImage>
       <CardHeader className="gap-1">

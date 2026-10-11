@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { IconSearch, IconZoomQuestion } from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
@@ -12,7 +11,7 @@ import { CategoryTabs } from '@/components/patterns/category-tabs'
 import { CreatorAvatar } from '@/components/patterns/creator-avatar'
 import { GarmentCard } from '@/components/patterns/garment-card'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
-import { PageSection } from '@/components/patterns/page-section'
+import { Panel, PanelRow } from '@/components/patterns/panel'
 import { creatorPatterns, creators } from '@/lib/data'
 import type { Difficulty, GarmentCategory } from '@/lib/types'
 
@@ -47,106 +46,105 @@ export default function ExplorePage() {
     setDifficulty('All')
   }
 
+  const creatorRows = creators.map((c) => (
+    <PanelRow
+      key={c.id}
+      href={`/creator/${c.id}`}
+      leading={<CreatorAvatar creator={c} />}
+      title={c.handle}
+      detail={`${c.followerCount} followers${c.isCertified ? ' · Certified' : ''}`}
+    />
+  ))
+
   return (
     <PageContainer>
       <PageHeader breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Explore' }]} title="Explore" description="Patterns by independent makers, ready in your size." />
 
-      <div className="flex flex-col gap-3">
-        <InputGroup className="h-11">
-          <InputGroupAddon>
-            <IconSearch />
-          </InputGroupAddon>
-          <InputGroupInput
-            type="search"
-            aria-label="Search patterns or creators"
-            placeholder="Search patterns or creators"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </InputGroup>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CategoryTabs label="Filter by category" options={categories} value={category} onValueChange={setCategory} />
-          <Select
-            items={difficulties}
-            value={difficulty}
-            onValueChange={(v) => setDifficulty(v as Difficulty | 'All')}
+      <div className="grid gap-6 lg:grid-cols-[21rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)]">
+        <div className="flex flex-col gap-6 lg:sticky lg:top-20 lg:self-start">
+          <Panel
+            label="Find a pattern"
+            meta={`${filtered.length} / ${creatorPatterns.length}`}
+            footer={
+              filtering ? (
+                <Button variant="outline" className="w-full" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              ) : undefined
+            }
           >
-            <SelectTrigger aria-label="Difficulty" className="h-9 w-full sm:w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {difficulties.map((d) => (
-                <SelectItem key={d.value} value={d.value}>
-                  {d.label}
-                </SelectItem>
+            <InputGroup className="h-11 bg-background">
+              <InputGroupAddon>
+                <IconSearch />
+              </InputGroupAddon>
+              <InputGroupInput
+                type="search"
+                aria-label="Search patterns or creators"
+                placeholder="Search patterns or creators"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </InputGroup>
+            <Select items={difficulties} value={difficulty} onValueChange={(v) => setDifficulty(v as Difficulty | 'All')}>
+              <SelectTrigger aria-label="Difficulty" className="h-11 w-full bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {difficulties.map((d) => (
+                  <SelectItem key={d.value} value={d.value}>
+                    {d.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Panel>
+
+          <Panel label="Featured creators" meta={creators.length} className="hidden lg:flex">
+            {creatorRows}
+          </Panel>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b">
+            <CategoryTabs label="Filter by category" options={categories} value={category} onValueChange={setCategory} />
+          </div>
+
+          {filtered.length === 0 ? (
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <IconZoomQuestion />
+                </EmptyMedia>
+                <EmptyTitle>Nothing matches yet</EmptyTitle>
+                <EmptyDescription>Try a different word, or clear a filter to see more.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              </EmptyContent>
+            </Empty>
+          ) : (
+            <div key={`${category}-${difficulty}`} className="tile-grid grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 2xl:grid-cols-4">
+              {filtered.map((p) => (
+                <GarmentCard
+                  key={p.id}
+                  href={`/garment/${p.garmentId}`}
+                  name={p.name}
+                  difficulty={p.difficulty}
+                  byline={creators.find((c) => c.id === p.creatorId)?.handle}
+                  price={p.price}
+                />
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+          )}
+
+          {/* Phones and tablets: makers after the patterns */}
+          <Panel label="Featured creators" meta={creators.length} className="lg:hidden">
+            {creatorRows}
+          </Panel>
         </div>
       </div>
-
-      {!filtering && (
-        <PageSection title="Featured creators">
-          <ul className="scroll-row -mx-4 flex gap-6 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-            {creators.map((c) => (
-              <li key={c.id} className="shrink-0">
-                <Link
-                  href={`/creator/${c.id}`}
-                  className="group flex w-40 flex-col gap-3 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                >
-                  <CreatorAvatar creator={c} size="lg" className="size-16 text-lg" />
-                  <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate text-sm font-medium group-hover:underline group-hover:underline-offset-4">{c.handle}</span>
-                    <span className="text-sm text-muted-foreground">{c.followerCount} followers</span>
-                    {c.isCertified && <span className="eyebrow mt-1 text-muted-foreground">Certified</span>}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </PageSection>
-      )}
-
-      <PageSection
-        title={filtering ? `${filtered.length} ${filtered.length === 1 ? 'pattern' : 'patterns'}` : 'All patterns'}
-        action={
-          filtering && filtered.length > 0 ? (
-            <Button variant="link" className="px-0" onClick={clearFilters}>
-              Clear filters
-            </Button>
-          ) : undefined
-        }
-      >
-        {filtered.length === 0 ? (
-          <Empty className="border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <IconZoomQuestion />
-              </EmptyMedia>
-              <EmptyTitle>Nothing matches yet</EmptyTitle>
-              <EmptyDescription>Try a different word, or clear a filter to see more.</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button variant="outline" onClick={clearFilters}>
-                Clear filters
-              </Button>
-            </EmptyContent>
-          </Empty>
-        ) : (
-          <div key={`${category}-${difficulty}`} className="tile-grid grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {filtered.map((p) => (
-              <GarmentCard
-                key={p.id}
-                href={`/garment/${p.garmentId}`}
-                name={p.name}
-                difficulty={p.difficulty}
-                byline={creators.find((c) => c.id === p.creatorId)?.handle}
-                price={p.price}
-              />
-            ))}
-          </div>
-        )}
-      </PageSection>
     </PageContainer>
   )
 }

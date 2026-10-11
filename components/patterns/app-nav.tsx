@@ -8,7 +8,7 @@ import { cn } from 'cn'
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
-import { Wordmark } from '@/components/patterns/wordmark'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const items: { href: string; label: string; icon: Icon }[] = [
   { href: '/home', label: 'Home', icon: IconHome },
@@ -28,7 +28,7 @@ export function AppTabBar() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-backdrop-filter:bg-background/85 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 bg-inverse pb-[env(safe-area-inset-bottom)] text-inverse-foreground md:hidden"
     >
       <ul className="mx-auto flex max-w-md">
         {items.map(({ href, label, icon: ItemIcon }) => {
@@ -39,15 +39,15 @@ export function AppTabBar() {
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'relative flex h-16 flex-col items-center justify-center gap-1.5 text-xs font-medium tracking-[0.08em] uppercase outline-none transition-colors focus-visible:bg-muted',
-                  active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                  'relative flex h-16 flex-col items-center justify-center gap-1.5 text-xs font-medium tracking-[0.08em] uppercase outline-none transition-colors focus-visible:bg-inverse-foreground/10',
+                  active ? 'text-inverse-foreground' : 'text-inverse-muted hover:text-inverse-foreground',
                 )}
               >
                 {active && (
                   <motion.span
                     layoutId="tabbar-marker"
                     aria-hidden
-                    className="absolute inset-x-6 top-0 h-px bg-foreground"
+                    className="absolute inset-x-6 top-0 h-0.5 bg-brand-on-dark"
                     transition={{ type: 'spring', stiffness: 420, damping: 38 }}
                   />
                 )}
@@ -62,58 +62,74 @@ export function AppTabBar() {
   )
 }
 
-/** md and up: left sidebar with the same destinations. */
+/** md and up: a slim icon rail with the same destinations; names show as tooltips. */
 export function AppSidebar() {
   const isActive = useActive()
   return (
-    <aside className="sticky top-0 hidden h-svh w-60 shrink-0 flex-col gap-6 border-r px-3 py-6 md:flex">
-      <Link href="/home" aria-label="Sigrid home" className="self-start rounded-md px-3 outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-        <Wordmark />
+    <aside className="sticky top-0 hidden h-svh w-18 shrink-0 flex-col items-center gap-8 bg-inverse py-6 text-inverse-foreground md:flex">
+      <Link href="/home" aria-label="Sigrid home" className="rounded-md px-1 outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+        <span aria-hidden className="relative inline-block font-heading text-[1.6rem] leading-none tracking-[-0.02em]">
+          s
+          <span className="absolute -top-0.5 -right-1.5 size-1.5 rounded-full bg-brand-on-dark" />
+        </span>
       </Link>
       <nav aria-label="Main">
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col items-center gap-2">
           {items.map(({ href, label, icon: ItemIcon }) => {
             const active = isActive(href)
             return (
               <li key={href}>
-                <Link
-                  href={href}
-                  aria-current={active ? 'page' : undefined}
-                  className={cn(
-                    'nav-link flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
-                    active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-                  )}
-                >
-                  <ItemIcon className="nav-icon size-5" aria-hidden />
-                  <span className="relative">
-                    {label}
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Link
+                        href={href}
+                        aria-label={label}
+                        aria-current={active ? 'page' : undefined}
+                        className={cn(
+                          'nav-link relative flex size-11 items-center justify-center rounded-(--radius) outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50',
+                          active ? 'text-inverse-foreground' : 'text-inverse-muted hover:bg-inverse-foreground/8 hover:text-inverse-foreground',
+                        )}
+                      />
+                    }
+                  >
                     {active && (
                       <motion.span
                         layoutId="sidebar-marker"
                         aria-hidden
-                        className="absolute inset-x-0 -bottom-1.5 h-px bg-foreground"
+                        className="absolute inset-0 rounded-(--radius) bg-inverse-foreground/12"
                         transition={{ type: 'spring', stiffness: 420, damping: 38 }}
                       />
                     )}
-                  </span>
-                </Link>
+                    <ItemIcon className="relative size-5" stroke={active ? 1.75 : 1.4} aria-hidden />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={10}>
+                    {label}
+                  </TooltipContent>
+                </Tooltip>
               </li>
             )
           })}
         </ul>
       </nav>
-      <Link
-        href="/profile"
-        className="mt-auto flex items-center gap-3 border-t px-3 pt-5 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-      >
-        <Avatar className="size-9">
-          <AvatarFallback>E</AvatarFallback>
-        </Avatar>
-        <span className="flex min-w-0 flex-col">
-          <span className="truncate text-sm font-medium">Emma</span>
-          <span className="eyebrow text-muted-foreground">Free beta</span>
-        </span>
-      </Link>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Link
+              href="/profile"
+              aria-label="Emma, free beta"
+              className="mt-auto rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+          }
+        >
+          <Avatar className="size-9 after:border-inverse-foreground/20">
+            <AvatarFallback className="bg-inverse-foreground/10 text-inverse-foreground">E</AvatarFallback>
+          </Avatar>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={10}>
+          Emma · Free beta
+        </TooltipContent>
+      </Tooltip>
     </aside>
   )
 }

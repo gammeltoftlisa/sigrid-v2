@@ -1,9 +1,9 @@
 import { cn } from 'cn'
 
-/** "sigrid" wordmark: lowercase brand sans, with the i's dot as a pin head in the clay accent. */
+/** "sigrid" wordmark: lowercase brand sans, with the i's dot as a pin head in the espresso accent. */
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <span aria-label="Sigrid" className={cn('relative inline-block font-heading text-[1.6em] leading-none tracking-[-0.02em] text-foreground', className)}>
+    <span aria-label="Sigrid" className={cn('relative inline-block font-heading text-[1.6em] leading-none tracking-[-0.02em]', className)}>
       <span aria-hidden>
         s
         <span className="relative">

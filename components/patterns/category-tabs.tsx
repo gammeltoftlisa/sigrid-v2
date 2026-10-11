@@ -38,7 +38,7 @@ export function CategoryTabs<T extends string>({
             <motion.span
               layoutId={underline}
               aria-hidden
-              className="absolute inset-x-0 -bottom-px h-px bg-foreground"
+              className="absolute inset-x-0 -bottom-px h-0.5 bg-brand"
               transition={{ type: 'spring', stiffness: 420, damping: 38 }}
             />
           )}
