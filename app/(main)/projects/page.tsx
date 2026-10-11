@@ -10,7 +10,7 @@ import { PageContainer, PageHeader } from '@/components/patterns/page-header'
 import { PageSection } from '@/components/patterns/page-section'
 import { ProjectPanel } from '@/components/patterns/project-panel'
 import { useMounted } from '@/hooks/use-mounted'
-import { listProjects } from '@/lib/project-summary'
+import { listProjects, projectPanelData } from '@/lib/project-summary'
 
 export default function ProjectsPage() {
   // Projects are saved in this browser, so they're only known after mount
@@ -49,7 +49,7 @@ export default function ProjectsPage() {
             <PageSection title="In progress">
               <div className="tile-grid grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
                 {active.map((p) => (
-                  <ProjectPanel key={p.garment.id} garment={p.garment} size={p.project.size} completedUntil={p.project.completedUntil} label="In progress" />
+                  <ProjectPanel key={p.garment.id} {...projectPanelData(p.garment, p.project.size, p.project.completedUntil)} label="In progress" />
                 ))}
               </div>
             </PageSection>
@@ -58,7 +58,7 @@ export default function ProjectsPage() {
             <PageSection title="Finished">
               <div className="tile-grid grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
                 {done.map((p) => (
-                  <ProjectPanel key={p.garment.id} garment={p.garment} size={p.project.size} completedUntil={p.project.completedUntil} label="Finished" />
+                  <ProjectPanel key={p.garment.id} {...projectPanelData(p.garment, p.project.size, p.project.completedUntil)} label="Finished" />
                 ))}
               </div>
             </PageSection>

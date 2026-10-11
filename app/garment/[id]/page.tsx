@@ -24,6 +24,7 @@ import { TOOLS } from '@/components/sewing/tools'
 import { creators, getGarmentById, getGarmentGuide, standardSizes, tshirtFabrics } from '@/lib/data'
 import { groupIntoJourneys } from '@/lib/journeys'
 import { loadProject, saveProject, type ProjectState } from '@/lib/projects'
+import { projectPanelData } from '@/lib/project-summary'
 import { loadSavedSize, sizeLabel } from '@/lib/sizes'
 import type { GuidePiece, StandardSize, UserMeasurements } from '@/lib/types'
 
@@ -143,9 +144,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
 
             {project ? (
               <ProjectPanel
-                garment={garment}
-                size={project.size}
-                completedUntil={project.completedUntil}
+                {...projectPanelData(garment, project.size, project.completedUntil)}
                 showImage={false}
                 showAction={false}
                 label={finished ? 'Finished' : 'Your project'}
