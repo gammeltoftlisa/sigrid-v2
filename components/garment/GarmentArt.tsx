@@ -57,45 +57,8 @@ function shapeFor(name: string): Shape {
   return SHAPES.default
 }
 
-/** Scandinavian fabric colourways: undyed, earthy and muted, chosen to sit together in a grid. */
-const COLOURWAYS = {
-  oat: '#D8C9B0',
-  clay: '#B8876A',
-  olive: '#7C8264',
-  charcoal: '#4B4845',
-  rose: '#C7A19C',
-  navy: '#3F4B5F',
-  sage: '#A2AC95',
-  rust: '#9F6249',
-  ecru: '#E4D9C6',
-  denim: '#5C6F85',
-  stone: '#9B948A',
-}
-type Colourway = keyof typeof COLOURWAYS
-
-const BY_GARMENT: Record<string, Colourway> = {
-  'classic t-shirt': 'oat',
-  'a-line skirt': 'clay',
-  'straight trousers': 'olive',
-  'oversized hoodie': 'charcoal',
-  'slip dress': 'rose',
-  'tailored blazer': 'navy',
-  'linen co-ord set': 'ecru',
-  'studio wrap dress': 'sage',
-  'utility cargo trousers': 'stone',
-  'peasant blouse': 'ecru',
-  'cocoon coat': 'rust',
-  'wide-leg culottes': 'denim',
-}
-
-export function garmentTone(name: string): string {
-  const key = BY_GARMENT[name.toLowerCase()]
-  if (key) return COLOURWAYS[key]
-  const all = Object.values(COLOURWAYS)
-  let h = 0
-  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0
-  return all[h % all.length]
-}
+/** Every garment is drawn in the same undyed linen, so the grid reads as one collection */
+const HOUSE_TONE = '#C9BDAA'
 
 function mix(hex: string, target: string, amount: number) {
   const p = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
@@ -107,7 +70,7 @@ function mix(hex: string, target: string, amount: number) {
 export function GarmentArt({ name, className }: { name: string; className?: string }) {
   const id = useId().replace(/:/g, '')
   const shape = shapeFor(name)
-  const tone = garmentTone(name)
+  const tone = HOUSE_TONE
   const light = mix(tone, '#ffffff', 0.22)
   const shade = mix(tone, '#000000', 0.14)
   const seam = mix(tone, '#000000', 0.38)
@@ -139,7 +102,7 @@ export function GarmentArt({ name, className }: { name: string; className?: stri
   )
 }
 
-/** Studio backdrop tinted to the garment's fabric, with the garment art centred. */
+/** Flat studio backdrop in the card's linen, with the garment art centred. */
 export function GarmentImage({
   name,
   className,
@@ -151,14 +114,8 @@ export function GarmentImage({
   artClassName?: string
   children?: React.ReactNode
 }) {
-  const tone = garmentTone(name)
   return (
-    <div
-      className={cn('garment-image relative flex items-center justify-center overflow-hidden', className)}
-      style={{
-        backgroundImage: `radial-gradient(120% 90% at 50% 20%, ${mix(tone, '#F7F3EC', 0.86)} 0%, ${mix(tone, '#E9E1D5', 0.78)} 70%, ${mix(tone, '#E2D8CA', 0.72)} 100%)`,
-      }}
-    >
+    <div className={cn('garment-image relative flex items-center justify-center overflow-hidden bg-muted', className)}>
       <GarmentArt name={name} className={cn('size-full', artClassName)} />
       {children}
     </div>

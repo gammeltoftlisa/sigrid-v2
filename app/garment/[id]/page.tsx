@@ -5,25 +5,18 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   IconArrowRight,
-  IconCertificate,
   IconCheck,
-  IconCircleCheck,
-  IconLeaf,
   IconPlus,
   IconPrinter,
   IconShirt,
 } from '@tabler/icons-react'
 
 import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
+import { Panel, PanelRow, StepDot } from '@/components/patterns/panel'
+import { ProjectPanel } from '@/components/patterns/project-panel'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
 import { CreatorAvatar } from '@/components/patterns/creator-avatar'
-import { MaterialItem } from '@/components/patterns/material-item'
 import { BackButton } from '@/components/patterns/page-header'
-import { PageSection } from '@/components/patterns/page-section'
-import { StatusBadge } from '@/components/patterns/status-badge'
 import { GarmentImage } from '@/components/garment/GarmentArt'
 import SizeSheet from '@/components/garment/SizeSheet'
 import { useMounted } from '@/hooks/use-mounted'
@@ -62,7 +55,6 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const [sizeSheetOpen, setSizeSheetOpen] = useState(false)
 
   const done = project ? Math.min(project.completedUntil, totalSteps) : 0
-  const nextJourney = project ? journeys.find((j) => j.stepIndices.includes(project.completedUntil)) : undefined
   const finished = !!project && totalSteps > 0 && done >= totalSteps
   const inProgress = !!project && !finished
 
@@ -100,166 +92,163 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   )
 
   return (
-    <div className="min-h-svh md:grid md:grid-cols-2">
-      {/* Illustration: top of the page on phones, sticky left half from md */}
-      <div className="md:sticky md:top-0 md:flex md:h-svh md:flex-col">
-        <div className="flex items-center gap-2 px-4 pt-4 sm:px-6 md:pt-6">
-          <BackButton />
-          <PageBreadcrumbs
-            items={[
-              { label: 'Home', href: '/home' },
-              ...(garment.isCreator ? [{ label: 'Explore', href: '/explore' }] : []),
-              { label: garment.name },
-            ]}
-          />
-        </div>
-        <GarmentImage
-          name={garment.name}
-          className="mx-4 mt-4 aspect-[4/5] p-10 sm:mx-6 md:m-0 md:mt-6 md:aspect-auto md:flex-1 md:p-16"
-          artClassName="max-w-72 md:max-w-sm"
+    <main className="min-h-svh">
+      {/* Top bar, like the sewing guide's: where you are, and quick actions */}
+      <div className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/85 sm:px-6">
+        <BackButton />
+        <PageBreadcrumbs
+          items={[
+            { label: 'Home', href: '/home' },
+            ...(garment.isCreator ? [{ label: 'Explore', href: '/explore' }] : []),
+            { label: garment.name },
+          ]}
         />
+        {project && (
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <span className="eyebrow hidden border px-2 py-1 text-muted-foreground sm:inline">{sizeLabel(project.size)}</span>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label={`Print pattern in ${sizeLabel(project.size)}`}
+              render={<a href={printHref} target="_blank" rel="noopener" />}
+            >
+              <IconPrinter />
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col">
-        <div className="flex w-full flex-1 flex-col gap-8 px-4 pt-6 pb-32 sm:px-6 md:px-12 md:pt-16 md:pb-0">
-          <header className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-4">
-              <h1 className="text-2xl font-semibold tracking-tight">{garment.name}</h1>
-              <p className="text-2xl font-semibold tracking-tight tabular-nums">€{garment.price}</p>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {garment.difficulty} · {garment.estimatedTime} · Sizes {sizeRange}
-            </p>
-            <p className="max-w-prose text-base leading-relaxed text-muted-foreground">{garment.description}</p>
-          </header>
-
-          {project && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{finished ? 'Finished' : 'Your project'}</CardTitle>
-                <CardDescription className="tabular-nums">
-                  {finished
-                    ? `You sewed this in ${sizeLabel(project.size)}. Well done.`
-                    : `${done} of ${totalSteps} steps done${nextJourney ? ` · Next: ${nextJourney.title}` : ''}`}
-                </CardDescription>
-                {finished && (
-                  <StatusBadge status="success" className="col-start-2 row-span-2 row-start-1 self-start justify-self-end">
-                    <IconCircleCheck data-icon="inline-start" />
-                    Finished
-                  </StatusBadge>
-                )}
-              </CardHeader>
-              {!finished && (
-                <CardContent>
-                  <Progress value={totalSteps ? (done / totalSteps) * 100 : 0} aria-label="Project progress" />
-                </CardContent>
-              )}
-            </Card>
-          )}
-
-          {creator && (
-            <Card>
-              <CardContent className="flex items-center gap-3">
-                <CreatorAvatar creator={creator} size="lg" />
-                <Link href={`/creator/${creator.id}`} className="flex min-w-0 flex-1 flex-col hover:underline">
-                  <span className="flex items-center gap-1 truncate text-sm font-medium">
-                    {creator.handle}
-                    {creator.isCertified && <IconCertificate className="size-4 text-muted-foreground" aria-label="Certified" />}
-                  </span>
-                  <span className="text-sm text-muted-foreground">{creator.followerCount} followers</span>
-                </Link>
-                <Button variant={following ? 'outline' : 'secondary'} aria-pressed={following} onClick={() => setFollowing((f) => !f)}>
-                  {following ? <IconCheck data-icon="inline-start" /> : <IconPlus data-icon="inline-start" />}
-                  {following ? 'Following' : 'Follow'}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          <PageSection title="What you’ll need">
-            <div className="flex flex-col">
-              <MaterialItem
-                id="fabric"
-                icon={IconShirt}
-                name={fabric.name}
-                detail={fabric.description}
-                quantity={`${fabric.quantityMeters} m`}
-              />
-              {fabric.isEco && (
-                <span className="ml-12 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <IconLeaf className="size-3.5" aria-hidden /> Lower-impact choice
-                </span>
-              )}
-              {tools.map((t) => (
-                <div key={t}>
-                  <Separator />
-                  <MaterialItem id={t} icon={TOOLS[t].Icon} name={TOOLS[t].label} />
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Fabric amount {project ? `is for ${sizeLabel(project.size)}` : 'varies slightly by size'}.
-            </p>
-          </PageSection>
-
-          <PageSection
-            title="Pattern"
-            description={project ? `Drafted in ${sizeLabel(project.size)}. Print at 100% scale.` : `Available in sizes ${sizeRange}.`}
-          >
-            {guide && guide.pieces.length > 0 && (
-              <ul className="flex flex-col">
-                {guide.pieces.map((p, i) => (
-                  <li key={p.id}>
-                    {i > 0 && <Separator />}
-                    <div className="flex items-center gap-3 py-2.5">
-                      <span className="flex size-7 shrink-0 items-center justify-center border text-xs font-medium">
-                        {p.label}
-                      </span>
-                      <span className="flex-1 text-sm">{pieceName(p)}</span>
-                      {project && (
-                        <span className="text-sm text-muted-foreground tabular-nums">
-                          {pieceDims(p, standardSizes[project.size])}
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {project ? (
-              <Button variant="outline" className="self-start" render={<a href={printHref} target="_blank" rel="noopener" />}>
-                <IconPrinter data-icon="inline-start" />
-                Print pattern in {sizeLabel(project.size)}
-              </Button>
-            ) : (
-              <p className="text-sm text-muted-foreground">Your printable pattern is ready as soon as you choose a size.</p>
-            )}
-          </PageSection>
-
-          {journeys.length > 0 && (
-            <PageSection title="How it goes" description={`${totalSteps} steps in ${journeys.length} short parts. Stop after any step, your progress is saved.`}>
-              <ol className="flex flex-col gap-2">
-                {journeys.map((j, i) => (
-                  <li key={j.key} className="flex items-center gap-3">
-                    <span className="w-6 shrink-0 text-sm text-muted-foreground tabular-nums">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="flex-1 text-sm">{j.title}</span>
-                    <span className="text-sm text-muted-foreground tabular-nums">
-                      {j.stepIndices.length} {j.stepIndices.length === 1 ? 'step' : 'steps'}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </PageSection>
-          )}
-
-          <div className="sticky bottom-0 -mx-12 mt-auto hidden border-t bg-background px-12 py-4 md:block">{cta}</div>
+      <div className="md:grid md:grid-cols-2">
+        {/* Garment image: top of the page on phones, sticky left half from md */}
+        <div className="md:sticky md:top-14 md:h-[calc(100svh-3.5rem)]">
+          <GarmentImage
+            name={garment.name}
+            className="mx-4 mt-4 aspect-[4/5] p-10 sm:mx-6 md:m-0 md:aspect-auto md:h-full md:p-16"
+            artClassName="max-w-72 md:max-w-sm"
+          />
         </div>
 
-        {/* Phones: action stays reachable at the bottom */}
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur supports-backdrop-filter:bg-background/80 md:hidden">
-          {cta}
+        <div className="flex flex-col">
+          <div className="flex w-full flex-1 flex-col gap-4 px-4 pt-6 pb-32 sm:px-6 md:px-10 md:pt-10 md:pb-0">
+            <header className="flex flex-col gap-3 pb-4">
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="text-2xl font-semibold tracking-tight">{garment.name}</h1>
+                <p className="text-2xl font-semibold tracking-tight tabular-nums">€{garment.price}</p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {garment.difficulty} · {garment.estimatedTime} · Sizes {sizeRange}
+              </p>
+              <p className="max-w-prose text-base leading-relaxed text-muted-foreground">{garment.description}</p>
+            </header>
+
+            {project ? (
+              <ProjectPanel
+                garment={garment}
+                size={project.size}
+                completedUntil={project.completedUntil}
+                showImage={false}
+                showAction={false}
+                label={finished ? 'Finished' : 'Your project'}
+              />
+            ) : (
+              journeys.length > 0 && (
+                <Panel label="How it goes" meta={`${totalSteps} steps`}>
+                  {journeys.map((j, i) => (
+                    <PanelRow
+                      key={j.key}
+                      leading={<StepDot state="upcoming">{i + 1}</StepDot>}
+                      title={j.title}
+                      meta={`${j.stepIndices.length} ${j.stepIndices.length === 1 ? 'step' : 'steps'}`}
+                    />
+                  ))}
+                  <p className="px-1 pt-1 text-xs text-muted-foreground">Stop after any step, your progress is saved.</p>
+                </Panel>
+              )
+            )}
+
+            {creator && (
+              <Panel label="Pattern maker">
+                <PanelRow
+                  leading={<CreatorAvatar creator={creator} />}
+                  title={
+                    <Link href={`/creator/${creator.id}`} className="hover:underline hover:underline-offset-4">
+                      {creator.handle}
+                    </Link>
+                  }
+                  detail={`${creator.followerCount} followers${creator.isCertified ? ' · Certified' : ''}`}
+                  trailing={
+                    <Button size="sm" variant={following ? 'outline' : 'secondary'} aria-pressed={following} onClick={() => setFollowing((f) => !f)}>
+                      {following ? <IconCheck data-icon="inline-start" /> : <IconPlus data-icon="inline-start" />}
+                      {following ? 'Following' : 'Follow'}
+                    </Button>
+                  }
+                />
+              </Panel>
+            )}
+
+            <Panel label="What you’ll need" meta={`${tools.length + 1} items`}>
+              <PanelRow
+                leading={
+                  <StepDot state="upcoming">
+                    <IconShirt className="size-3.5" />
+                  </StepDot>
+                }
+                title={fabric.name}
+                detail={`${fabric.description}${fabric.isEco ? ' Lower-impact choice.' : ''}`}
+                meta={`${fabric.quantityMeters} m`}
+              />
+              {tools.map((t) => {
+                const ToolIcon = TOOLS[t].Icon
+                return (
+                  <PanelRow
+                    key={t}
+                    leading={
+                      <StepDot state="upcoming">
+                        <ToolIcon className="size-3.5" />
+                      </StepDot>
+                    }
+                    title={TOOLS[t].label}
+                  />
+                )
+              })}
+              <p className="px-1 pt-1 text-xs text-muted-foreground">
+                Fabric amount {project ? `is for ${sizeLabel(project.size)}` : 'varies slightly by size'}.
+              </p>
+            </Panel>
+
+            {guide && guide.pieces.length > 0 && (
+              <Panel
+                label="Pattern"
+                meta={`${guide.pieces.length} pieces`}
+                footer={
+                  project ? (
+                    <Button variant="outline" className="w-full" render={<a href={printHref} target="_blank" rel="noopener" />}>
+                      <IconPrinter data-icon="inline-start" />
+                      Print pattern in {sizeLabel(project.size)}
+                    </Button>
+                  ) : (
+                    <p className="px-1 text-sm text-muted-foreground">Your printable pattern is ready as soon as you choose a size.</p>
+                  )
+                }
+              >
+                {guide.pieces.map((p) => (
+                  <PanelRow
+                    key={p.id}
+                    leading={<StepDot state="upcoming">{p.label}</StepDot>}
+                    title={pieceName(p)}
+                    meta={project ? pieceDims(p, standardSizes[project.size]) : undefined}
+                  />
+                ))}
+              </Panel>
+            )}
+
+            <div className="sticky bottom-0 -mx-10 mt-auto hidden border-t bg-background px-10 py-4 md:block">{cta}</div>
+          </div>
+
+          {/* Phones: action stays reachable at the bottom */}
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur supports-backdrop-filter:bg-background/80 md:hidden">
+            {cta}
+          </div>
         </div>
       </div>
 
@@ -270,6 +259,6 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         initialSize={project?.size ?? profileSize}
         onConfirm={startProject}
       />
-    </div>
+    </main>
   )
 }

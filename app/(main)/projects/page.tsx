@@ -1,69 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import { IconCircleCheck, IconNeedleThread } from '@tabler/icons-react'
+import { IconNeedleThread } from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
 import { PageSection } from '@/components/patterns/page-section'
-import { StatusBadge } from '@/components/patterns/status-badge'
-import { GarmentImage } from '@/components/garment/GarmentArt'
+import { ProjectPanel } from '@/components/patterns/project-panel'
 import { useMounted } from '@/hooks/use-mounted'
-import { getGarmentGuide } from '@/lib/data'
-import { listProjects, type ProjectSummary } from '@/lib/project-summary'
-import { sizeLabel } from '@/lib/sizes'
-
-function ProjectRow({ summary }: { summary: ProjectSummary }) {
-  const { garment, project, totalSteps, finished, percent } = summary
-  const done = Math.min(project.completedUntil, totalSteps)
-  const nextStep = finished ? undefined : getGarmentGuide(garment.id)?.steps[project.completedUntil]
-  return (
-    <article className="grid grid-cols-[6.5rem_1fr] gap-4 border-b pb-6 sm:grid-cols-[8rem_1fr] sm:gap-6">
-      <GarmentImage name={garment.name} className="aspect-[4/5] p-3" />
-      <div className="flex min-w-0 flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-xs font-medium tracking-[0.12em] uppercase">{garment.name}</h3>
-          <p className="text-sm text-muted-foreground tabular-nums">
-            {sizeLabel(project.size)} · {done} of {totalSteps} steps
-          </p>
-          {nextStep && (
-            <p className="text-sm">
-              <span className="text-muted-foreground">Next step:</span> {nextStep.title}
-            </p>
-          )}
-        </div>
-        {finished ? (
-          <StatusBadge status="success" className="self-start">
-            <IconCircleCheck data-icon="inline-start" />
-            Finished
-          </StatusBadge>
-        ) : (
-          <div className="flex items-center gap-3">
-            <Progress value={percent} aria-label={`${garment.name} progress`} className="flex-1" />
-            <span className="text-xs text-muted-foreground tabular-nums">{percent}%</span>
-          </div>
-        )}
-        <div className="mt-auto flex flex-wrap gap-2">
-          {finished ? (
-            <Button variant="outline" render={<Link href={`/garment/${garment.id}`} />}>
-              View garment
-            </Button>
-          ) : (
-            <>
-              <Button render={<Link href={`/garment/${garment.id}/guide`} />}>Continue</Button>
-              <Button variant="ghost" render={<Link href={`/garment/${garment.id}`} />}>
-                Details
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-    </article>
-  )
-}
+import { listProjects } from '@/lib/project-summary'
 
 export default function ProjectsPage() {
   // Projects are saved in this browser, so they're only known after mount
@@ -100,18 +47,18 @@ export default function ProjectsPage() {
         <>
           {active.length > 0 && (
             <PageSection title="In progress">
-              <div className="flex flex-col gap-6">
+              <div className="tile-grid grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
                 {active.map((p) => (
-                  <ProjectRow key={p.garment.id} summary={p} />
+                  <ProjectPanel key={p.garment.id} garment={p.garment} size={p.project.size} completedUntil={p.project.completedUntil} label="In progress" />
                 ))}
               </div>
             </PageSection>
           )}
           {done.length > 0 && (
             <PageSection title="Finished">
-              <div className="flex flex-col gap-6">
+              <div className="tile-grid grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
                 {done.map((p) => (
-                  <ProjectRow key={p.garment.id} summary={p} />
+                  <ProjectPanel key={p.garment.id} garment={p.garment} size={p.project.size} completedUntil={p.project.completedUntil} label="Finished" />
                 ))}
               </div>
             </PageSection>

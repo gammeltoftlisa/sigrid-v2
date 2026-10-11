@@ -1,9 +1,6 @@
-import { IconCheck } from '@tabler/icons-react'
-
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
+import { Panel, PanelRow, StepDot } from '@/components/patterns/panel'
 import { StatusMessage } from '@/components/patterns/status-message'
 
 const plans = [
@@ -37,36 +34,29 @@ export default function PaymentPage() {
         No card and no trial that runs out. We’ll tell you well before anything changes.
       </StatusMessage>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="tile-grid grid gap-4 md:grid-cols-2">
         {plans.map((plan) => (
-          <Card key={plan.id}>
-            <CardHeader>
-              <CardTitle className="text-base">{plan.name}</CardTitle>
-              <CardDescription>{plan.description}</CardDescription>
-              <Badge variant="secondary" className="col-start-2 row-span-2 row-start-1 self-start justify-self-end">
-                Coming soon
-              </Badge>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <p className="flex items-baseline gap-1">
-                <span className="text-2xl font-semibold tracking-tight">{plan.price}</span>
-                {plan.period && <span className="text-sm text-muted-foreground">{plan.period}</span>}
-              </p>
-              <ul className="flex flex-col gap-2 text-sm">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2">
-                    <IconCheck className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter className="mt-auto">
+          <Panel
+            key={plan.id}
+            label={plan.name}
+            meta="Coming soon"
+            footer={
               <Button variant="outline" className="w-full" disabled>
                 Coming later
               </Button>
-            </CardFooter>
-          </Card>
+            }
+          >
+            <div className="flex flex-col gap-1 px-1 pb-2">
+              <p className="flex items-baseline gap-1.5">
+                <span className="text-2xl font-semibold tracking-tight">{plan.price}</span>
+                {plan.period && <span className="text-sm text-muted-foreground">{plan.period}</span>}
+              </p>
+              <p className="text-sm text-muted-foreground">{plan.description}</p>
+            </div>
+            {plan.features.map((f) => (
+              <PanelRow key={f} state="done" leading={<StepDot state="done" />} title={<span className="text-foreground">{f}</span>} />
+            ))}
+          </Panel>
         ))}
       </div>
     </PageContainer>

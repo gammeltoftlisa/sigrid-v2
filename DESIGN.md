@@ -47,8 +47,11 @@ Base UI note: triggers compose with `render={<Button … />}`, **not** `asChild`
 | `foreground` / `primary` | `#2A2420` espresso | Text, main buttons, selected states, progress |
 | `muted-foreground` | `#5A5149` | Secondary text (5.8:1 on muted) |
 | `border` / `input` | `#D8CEBF` / `#C9BDAB` | Hairlines, field borders |
-| `celebrate` | `#9C6B4E` clay | Tiny accents only (the wordmark dot). Never large areas |
-| `success` / `destructive` / `warning` / `info` | text `#007542` / `#BB2518` / `#9C5600` / `#225EC7` · accent (`-solid`) `#14D47A` / `#FF4A3D` / `#FFB21F` / `#4C95FF` | State only, always with text or an icon. Deep tone for text and lines (AA), bright accent for icons, dots and glows, on soft baby-pastel backgrounds. Use `StatusBadge` and `StatusMessage` |
+| `brand` / `celebrate` | `#2A2420` espresso | Accent lines: progress hairlines, tab underlines, the wordmark dot. **No orange or clay accents anywhere** |
+| `brand-ink` | `#675B50` taupe | Quiet accent text on light surfaces: panel counts (`5 / 17`), the name in the greeting (5.5:1 on sand) |
+| `brand-on-dark` | `#D9CEBF` linen | Accents on the espresso frame (rail logo dot, tab marker) |
+| `inverse` / `inverse-foreground` / `inverse-muted` | `#2A2420` / `#EFE9E0` / `#B9AD9D` | The espresso frame: icon rail, phone tab bar, announcement bar |
+| `success` / `destructive` / `warning` / `info` | text `#376B46` / `#9B3E2A` / `#84580E` / `#3D5F89` · accent (`-solid`) `#5E9E6E` / `#D4583F` / `#DB9A2E` / `#5F84B0` | State only, always with text or an icon. Deep tone for text and lines (AA), bright accent for icons, dots and glows, on tinted-linen fills, in the garments’ fabric family (sage, terracotta, ochre, denim). Use `StatusBadge` and `StatusMessage` |
 
 - Only semantic token utilities (`bg-primary`, `text-muted-foreground`, `border-border`, `bg-muted`…). No raw colours, no `bg-white` / `text-black`.
 - The page is almost colourless on purpose: espresso on sand. Colour is never decoration.
@@ -80,7 +83,11 @@ One typeface for headings and text. Normal case for headings; uppercase only for
 - **Square edges:** `--radius` is 2px. Don't add `rounded-xl` / `rounded-full` to surfaces or buttons (avatars and the size-tile grid are the only round-ish things).
 - **Hairlines, not shadows:** cards and panels are flat with a 1px `border`. No `shadow-*`, no gradients, no textures.
 - **Product tiles** (`GarmentCard`) have no box: a portrait (4:5) image panel on `muted`, then name (small caps), an optional creator line, one quiet detail line (`Beginner · 3–4 hours`) and the price. Grids use `gap-x-4 gap-y-8`.
-- **Filters** are text tabs with an underline: use `CategoryTabs` (scrolls sideways on phones with a fading edge). **Navigation** is text-only small caps with an underline for the current page.
+- **Filters** are text tabs with an underline: use `CategoryTabs` (scrolls sideways on phones with a fading edge).
+- **Navigation:** on md+ a slim espresso **icon rail** (`AppSidebar`, icons only, names as right-side tooltips, a soft tile marks the current page). On phones the bottom tab bar keeps icon + label.
+- **Workspace panels (the sewing guide's language, used on every screen):** group content in `Panel` (`components/patterns/panel.tsx`): a bordered `card` box with a small-caps label, optional taupe count and 2px progress hairline, then `PanelRow`s (bordered rows with a `StepDot` or icon tile, title, detail, right-hand meta; `href` makes the whole row a link with a chevron) and an optional action footer. The current item is the `active` row (ink frame), finished items are `done` (soft, with a check). A project is always shown with `ProjectPanel`.
+- **Two-column workspace:** on `lg+` screens use a sticky left panel column (`lg:grid-cols-[21rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)]`, `lg:sticky lg:top-20 lg:self-start`) for context (project, filters, account, maker) and the main content on the right.
+- **Top bar:** sub-pages put back + breadcrumbs (+ quick actions) in the sticky full-width `TopBar` (`PageHeader` renders it from `back` / `breadcrumbs` / `barActions`).
 - **Progress** is a single 2px hairline.
 - **Horizontal rows** (filters, carousels) use the `scroll-row` class so they keep the page gutter and fade at the edge on phones.
 - **Destructive buttons** are outlined text in the destructive colour, never a filled red block.
@@ -114,7 +121,7 @@ One typeface for headings and text. Normal case for headings; uppercase only for
 | Screen top bar | `AppHeader` pattern |
 | Section with heading | `PageSection` pattern |
 | Where am I | `PageBreadcrumbs` on every screen (via `PageHeader breadcrumbs`): Home first, current page last |
-| Report a state (saved, failed, needs attention, info) | `StatusMessage` pattern; `StatusBadge` for short labels |
+| Report a state (saved, failed, needs attention, info, neutral) | `StatusMessage`: pastel fill, 3px accent bar on the left, filled icon, title in the status colour; optional body, `action` and `onDismiss`. `StatusBadge` for short labels |
 | Persistent neutral notice / tip | `Alert` (tip = `IconBulb`) |
 | Quick confirmation | `toast()` from `sonner` |
 | Short task (desktop / mobile) | `Dialog` / `Drawer` |
@@ -157,9 +164,9 @@ Quiet and purposeful. Everything below is already wired up; reuse it rather than
 
 ## 8b. Product imagery
 
-Until real photography exists, garments are shown with `GarmentImage` / `GarmentArt`: the silhouette in a muted Scandinavian
-fabric colourway (oat, clay, olive, charcoal, rose, navy…) with soft shading, a fine weave and a ground shadow, on a studio
-backdrop tinted to the fabric. Fabric colours are content, so they live in `components/garment/GarmentArt.tsx`, not in the tokens.
+Until real photography exists, garments are shown with `GarmentImage` / `GarmentArt`: the silhouette in one undyed-linen
+tone (`#C9BDAA`) with soft shading, a fine weave and a ground shadow, on a flat `bg-muted` backdrop. Every garment uses the
+same tone so the grid reads as one collection: no per-garment colours and no gradient backdrops.
 Never show a garment as a bare outline in an empty box.
 
 ## 9. Accessibility (WCAG 2.2 AA)
