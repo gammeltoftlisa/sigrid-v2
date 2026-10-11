@@ -14,7 +14,7 @@ import { ProjectPanel } from '@/components/patterns/project-panel'
 import { Wordmark } from '@/components/patterns/wordmark'
 import { useMounted } from '@/hooks/use-mounted'
 import { creatorPatterns, creators, garments } from '@/lib/data'
-import { listProjects } from '@/lib/project-summary'
+import { listProjects, projectPanelData } from '@/lib/project-summary'
 import type { GarmentCategory } from '@/lib/types'
 
 const categories = ['All', 'Tops', 'Bottoms', 'Dresses', 'Outerwear'] as const satisfies readonly (GarmentCategory | 'All')[]
@@ -64,9 +64,7 @@ export default function HomePage() {
       <div className={cn('grid gap-10', current && 'lg:grid-cols-[21rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)]')}>
         {current && (
           <ProjectPanel
-            garment={current.garment}
-            size={current.project.size}
-            completedUntil={current.project.completedUntil}
+            {...projectPanelData(current.garment, current.project.size, current.project.completedUntil)}
             className="lg:sticky lg:top-20 lg:self-start"
           />
         )}
