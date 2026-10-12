@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { IconBell, IconSparkles, IconTrash } from '@tabler/icons-react'
+import { IconBell, IconRuler2, IconSparkles, IconTrash } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import {
@@ -111,6 +111,16 @@ export default function ProfilePage() {
               }
               title="Plan"
               meta="Free in beta"
+            />
+            <PanelRow
+              href="/studio"
+              leading={
+                <StepDot state="upcoming">
+                  <IconRuler2 className="size-3.5" />
+                </StepDot>
+              }
+              title="Pattern studio"
+              detail="For pattern makers: write and sell your own patterns"
             />
           </Panel>
 
