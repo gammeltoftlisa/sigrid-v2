@@ -57,7 +57,6 @@ function edgeCoords(edge: string, ox: number, oy: number, pw: number, ph: number
 
 function CutAnnotation({ edge, ox, oy, pw, ph, dims }: { edge: string; ox: number; oy: number; pw: number; ph: number; dims: PieceDims }) {
   const c = edgeCoords(edge, ox, oy, pw, ph, dims)
-  const len = Math.hypot(c.x2 - c.x1, c.y2 - c.y1)
   return (
     <motion.line
       x1={c.x1} y1={c.y1} x2={c.x2} y2={c.y2}
@@ -97,7 +96,7 @@ function SewAnnotation({ edge, amount, ox, oy, pw, ph, dims, pxPerCm }: { edge: 
       setDot({ x: pt.x, y: pt.y })
     })
     return () => { ctrl.stop(); unsub() }
-  }, [edge, ox, oy])
+  }, [edge, ox, oy, progress])
 
   return (
     <g>
@@ -160,7 +159,7 @@ function PinAnnotation({ edge, ox, oy, pw, ph, dims, pxPerCm }: { edge: string; 
   )
 }
 
-function FoldAnnotation({ edge, amount, ox, oy, pw, ph, dims, pxPerCm, fabricSide }: { edge: string; amount?: number; ox: number; oy: number; pw: number; ph: number; dims: PieceDims; pxPerCm: number; fabricSide?: FabricSide }) {
+function FoldAnnotation({ edge, amount, ox, oy, pw, ph, pxPerCm, fabricSide }: { edge: string; amount?: number; ox: number; oy: number; pw: number; ph: number; pxPerCm: number; fabricSide?: FabricSide }) {
   const foldPx = (amount ?? 2) * pxPerCm
 
   // The fold-line and the folded strip
@@ -215,7 +214,6 @@ function FoldAnnotation({ edge, amount, ox, oy, pw, ph, dims, pxPerCm, fabricSid
 function MeasureArrow({ edge, ox, oy, pw, ph, dims }: { edge: string; ox: number; oy: number; pw: number; ph: number; dims: PieceDims }) {
   const c = edgeCoords(edge, ox, oy, pw, ph, dims)
   const mid = { x: (c.x1 + c.x2) / 2, y: (c.y1 + c.y2) / 2 }
-  const len = Math.hypot(c.x2 - c.x1, c.y2 - c.y1)
   const labelW = edge === 'top' ? dims.topWidth : dims.bottomWidth
 
   return (
@@ -366,7 +364,7 @@ export default function PatternCanvas({ piece, action, annotation, fabricSide, m
         <FoldAnnotation
           edge={annotation.edge ?? 'bottom'}
           amount={annotation.amount}
-          ox={ox} oy={oy} pw={pw} ph={ph} dims={dims} pxPerCm={pxPerCm}
+          ox={ox} oy={oy} pw={pw} ph={ph} pxPerCm={pxPerCm}
           fabricSide={fabricSide}
         />
       )}

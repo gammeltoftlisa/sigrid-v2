@@ -36,6 +36,7 @@ export function SizePicker({
           key={s}
           value={s}
           data-shape="tile"
+          data-size-picker
           aria-label={`Size ${s}, EU ${euSizes[s]}${current === s ? ', current size' : ''}`}
           className="h-12 w-full flex-col gap-0 rounded-xl data-pressed:border-primary data-pressed:bg-primary data-pressed:text-primary-foreground"
         >

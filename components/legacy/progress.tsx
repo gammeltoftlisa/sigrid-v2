@@ -37,9 +37,9 @@ export function StatusDot({
   return (
     <div
       className={`${s.box} ${s.text} rounded-full shrink-0 flex items-center justify-center font-bold leading-none transition-colors duration-200 ${
-        state === 'done'   ? 'bg-primary-soft text-primary'
-        : state === 'active' ? 'bg-primary text-surface'
-        :                      'bg-surface-2 border border-rim text-ink-3'
+        state === 'done'   ? 'bg-glass text-foreground'
+        : state === 'active' ? 'bg-primary text-primary-foreground'
+        :                      'bg-glass text-muted-foreground'
       }`}
     >
       {state === 'done' ? (
@@ -67,15 +67,14 @@ export function StatusDot({
  * doesn't float loose in the list.
  */
 export const stepRowClass = (state: ProgressState, open = false) =>
-  `rounded-xl overflow-hidden border transition-colors duration-150 ${
-    state === 'active' ? 'border-primary/40 bg-primary-soft'
-    : open             ? 'border-rim-soft bg-surface-2/40'
-    : state === 'done' ? 'border-transparent hover:bg-surface-2'
-    :                    'border-rim bg-surface hover:bg-surface-2'
+  `rounded-lg overflow-hidden transition-colors duration-150 ${
+    state === 'active' ? 'bg-glass'
+    : open             ? 'bg-(--background)'
+    :                    'hover:bg-(--background)'
   }`
 
 /** Title text of a step row or journey. */
 export const stepTextClass = (state: ProgressState) =>
-  state === 'active' ? 'text-ink font-bold'
+  state === 'active' ? 'text-foreground font-medium'
   : state === 'done' ? 'text-ink-3'
   :                    'text-ink-2'

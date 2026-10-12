@@ -7,20 +7,23 @@ import { cn } from 'cn'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 /**
- * Single-choice text tabs for filtering a grid (All / Tops / Bottoms …).
- * Scrolls sideways on phones with a fading edge; the brand layer draws the underline.
+ * Single-choice filter as an Apple-style glass segmented control (All / Tops / Bottoms …).
+ * A soft white thumb slides to the chosen segment. Scrolls sideways on phones.
  */
 export function CategoryTabs<T extends string>({
   options,
   value,
   onValueChange,
   label,
+  counts,
   className,
 }: {
   options: readonly T[]
   value: T
   onValueChange: (value: T) => void
   label: string
+  /** Optional number after each tab, e.g. how many results it holds */
+  counts?: Partial<Record<T, number>>
   className?: string
 }) {
   const underline = useId()
@@ -29,16 +32,19 @@ export function CategoryTabs<T extends string>({
       aria-label={label}
       value={[value]}
       onValueChange={(v) => v[0] && onValueChange(v[0] as T)}
-      className={cn('scroll-row -mx-4 flex w-auto overflow-x-auto px-4 sm:mx-0 sm:px-0', className)}
+      className={cn('glass-control scroll-row flex w-fit max-w-full gap-0 overflow-x-auto rounded-full p-1', className)}
     >
       {options.map((o) => (
-        <ToggleGroupItem key={o} value={o} data-tab className="shrink-0">
-          {o}
+        <ToggleGroupItem key={o} value={o} data-tab data-segment className="relative shrink-0">
+          <span className="relative z-10">
+            {o}
+            {counts?.[o] !== undefined && <span className="ml-1.5 text-muted-foreground tabular-nums">{counts[o]}</span>}
+          </span>
           {o === value && (
             <motion.span
               layoutId={underline}
               aria-hidden
-              className="absolute inset-x-0 -bottom-px h-0.5 bg-brand"
+              className="segment-thumb absolute inset-0 rounded-full"
               transition={{ type: 'spring', stiffness: 420, damping: 38 }}
             />
           )}

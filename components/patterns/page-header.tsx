@@ -34,10 +34,10 @@ export function PageHeader({
   return (
     <>
       {(back || breadcrumbs || barActions) && <TopBar back={back} breadcrumbs={breadcrumbs} actions={barActions} />}
-      <header className={cn('flex flex-col gap-4 pt-2 pb-2 md:pt-4', className)}>
+      <header className={cn('page-header flex flex-col pt-4', className)}>
         <div className="flex items-end justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+            <h1>{title}</h1>
             {description && <p className="max-w-prose text-base text-muted-foreground">{description}</p>}
           </div>
           {action}
@@ -48,8 +48,8 @@ export function PageHeader({
 }
 
 /**
- * Sticky bar at the top of a screen, like the sewing guide's header: back, breadcrumbs,
- * actions on the right. Sits edge to edge inside PageContainer.
+ * The top line of a screen: back, breadcrumbs, actions on the right.
+ * Plain text on the page, no container, and it scrolls away with the content.
  */
 export function TopBar({
   back,
@@ -65,7 +65,7 @@ export function TopBar({
   return (
     <div
       className={cn(
-        'top-bar sticky top-0 z-30 -mx-4 -mb-6 flex h-14 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/85 sm:-mx-6 sm:px-6 md:-mx-12 md:px-12',
+        'top-bar flex h-14 items-center gap-1 -mb-4 md:-mb-6',
         className,
       )}
     >
@@ -81,10 +81,10 @@ export function BackButton({ to, className }: { to?: string; className?: string 
   const router = useRouter()
   return (
     <Button
-      variant="ghost"
+      variant="outline"
       size="icon-lg"
       aria-label="Back"
-      className={cn('-ml-2', className)}
+      className={className}
       onClick={() => (to ? router.push(to) : router.back())}
     >
       <IconArrowLeft />

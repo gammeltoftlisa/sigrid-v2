@@ -9,18 +9,18 @@ export default function GarmentDetailBg({ garmentId }: { garmentId: string }) {
   const garment = getGarmentById(garmentId)
 
   return (
-    <div aria-hidden inert className="min-h-svh md:grid md:grid-cols-2">
-      <div className="md:flex md:h-svh md:flex-col">
+    <div aria-hidden inert className="min-h-svh md:grid md:grid-cols-12 md:gap-x-(--grid-gutter) md:pr-8 md:pl-4">
+      <div className="md:col-span-6 md:flex md:h-svh md:flex-col md:pb-6">
         <div className="px-4 pt-4 sm:px-6 md:pt-6">
           <div className="size-9 rounded-lg" />
         </div>
         <GarmentImage
           name={garment.name}
-          className="mx-4 mt-4 aspect-[4/5] p-10 sm:mx-6 md:m-0 md:mt-6 md:aspect-auto md:flex-1 md:p-16"
+          className="mx-4 mt-4 aspect-product rounded-(--radius) sm:mx-6 md:m-0 md:mt-6 md:aspect-auto md:flex-1"
           artClassName="max-w-72 md:max-w-sm"
         />
       </div>
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-3 px-4 pt-6 sm:px-6 md:pt-16">
+      <div className="flex w-full flex-col gap-3 px-4 pt-6 sm:px-6 md:col-span-6 md:px-0 md:pt-16">
         <h1 className="text-2xl font-semibold tracking-tight">{garment.name}</h1>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <DifficultyBadge difficulty={garment.difficulty} />

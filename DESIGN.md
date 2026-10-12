@@ -1,217 +1,226 @@
-# DESIGN.md — UI rules for Sigrid
+# DESIGN.md: UI rules for Sigrid
 
 These rules are **mandatory** for anyone building UI in this repo, people and AI agents alike.
-The visual reference is the design-system Storybook in the `sewing-app` repo (`npm run storybook` → http://localhost:6006).
-This repo carries a copy of that system: tokens in `app/globals.css`, shadcn components in `components/ui/`, app patterns in `components/patterns/`.
+The visual reference is the Storybook in the `sewing-app` repo (`npm run storybook`, http://localhost:6006), which documents the components in this repo.
 
-> **Brand: Sand.** Scandinavian-luxury minimal: warm sand and espresso, one clean sans (Albert Sans),
-> square edges, hairlines instead of shadows, small uppercase labels and lots of air. Calm, trustworthy, easy to read.
-> All tokens live in `app/globals.css`; the brand layer at the bottom of that file applies the structural rules below.
+Where things live here: tokens and the brand layer in `app/globals.css`, shadcn components in `components/ui/`, patterns in `components/patterns/`, imagery in `components/garment/`.
+The sewing guide (`components/sewing/`, `components/legacy/`) is older code that still uses legacy class aliases (`bg-surface`, `text-ink`…); don't use those names or `components/legacy` in new code.
 
-## Legacy code (sewing guide)
-
-The sewing guide (`app/garment/[id]/guide`, `app/garment/[id]/pattern`, `components/sewing/*`, `components/legacy/*`) predates this system.
-It still uses the old names (`bg-surface`, `text-ink`, `bg-primary-soft`, `var(--sig-*)`, `text-heading`…). Those are aliases onto the
-design tokens (see the bottom of `app/globals.css`). Its buttons, chips and tags have been restyled to the brand (square, small caps,
-neutral step tags, 44px controls), so it matches visually; only its code structure is legacy.
-**Never use the legacy names or `components/legacy/*` in new code.** When the guide is reworked, move it onto `components/ui` and delete the aliases.
+> **Brand: Nordic × Apple.** Near-white and near-black like Totême and Byredo, with Apple's crisp type, soft corners and frosted glass.
+> One typeface (Inter). Glass holds things, white is what you read and touch. No strokes, no shadows. Calm, trustworthy, easy to read.
 
 ## 0. Workflow
 
-1. **Storybook first.** Before building a screen, check Storybook for an existing component or pattern.
-2. **Missing piece?** Add it to `components/patterns/` (or `npx shadcn@latest add <name>` for a shadcn component), and add a matching story to the Storybook in the `sewing-app` repo.
-3. **Compose, don't restyle.** Screens in `app/` are built from `@/components/ui/*` and `@/components/patterns/*`. Avoid long one-off `className` strings in pages; if you need one, it probably belongs in a pattern.
-4. **Check both themes and mobile.** Every new story must look right in light and dark mode (Theme toolbar) and at 375px wide, and must show no violations in the Accessibility panel.
-5. Don't edit files in `components/ui/` to change their look. Those are shadcn source files; wrap them in a pattern instead. (Bug fixes are OK.)
+1. **Storybook first.** Before building a screen, look for an existing component or pattern in Storybook.
+2. **Missing piece?** Add it as a pattern (or `npx shadcn@latest add <name>` for a shadcn component), then a story for it in the Storybook.
+3. **Compose, don't restyle.** Screens are built from `components/ui/*` and `components/patterns/*`. If a page needs a long one-off `className`, it belongs in a pattern.
+4. **Check phone and laptop.** Every story must look right at 375px and on a laptop, with no violations in the Accessibility panel. The app is light only.
+5. **Don't restyle `components/ui/`.** Those are shadcn source files; the brand layer in the global CSS styles them. Bug fixes are fine.
+6. **Keep the Storybook in step.** After changing components, run `node scripts/sync-from-app.mjs <path to sigrid-v2>` in the `sewing-app` repo, then update the stories.
 
 ## 1. Stack
 
 | Thing | Use | Never |
 | --- | --- | --- |
-| Styling | Tailwind CSS v4 utilities | CSS modules, inline `style` for colours/spacing, styled-components |
-| Components | shadcn/ui (`base-nova`, Base UI primitives) in `components/ui/` | Other component libraries (MUI, Chakra, Radix-only copies, …) |
-| Sewing patterns | `components/patterns/` | Duplicating a pattern inline in a page |
-| Icons | `@tabler/icons-react` | Emoji as icons, lucide, inline SVG copies |
-| Class merging | `cn` from `"cn"` | String concatenation of class names |
-| Font | Albert Sans for everything (`font-sans`, `font-heading`); Geist Mono (`font-mono`) for code only | Any other font, serifs, display faces |
+| Styling | Tailwind CSS v4 utilities and the tokens below | CSS modules, inline `style` for colours or spacing, arbitrary values (`text-[…]`, `w-[…]`, `#hex`) |
+| Components | shadcn/ui (`base-nova`, Base UI primitives) | Other component libraries |
+| Patterns | `components/patterns/` | Rebuilding a pattern inline in a page |
+| Icons | `@tabler/icons-react` | Emoji, other icon sets, inline SVG copies |
+| Class merging | `cn` from `"cn"` | String concatenation |
+| Font | Inter for everything (`font-sans`, `font-heading`); Geist Mono for code only | Any other font |
 
-Base UI note: triggers compose with `render={<Button … />}`, **not** `asChild`.
+Base UI note: triggers compose with `render={<Button … />}`, **not** `asChild`. A `Button` rendered as a link needs `nativeButton={false}`.
 
-## 2. Colour — Sand palette
+## 2. Colour
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `background` | `#EFE9E0` sand | Page |
-| `card` / `popover` | `#F5F0E8` | Raised surfaces, sheets, menus |
-| `muted` / `secondary` / `hero` | `#E5DDD1` | Panels, product image backgrounds, the Home "continue" panel |
-| `foreground` / `primary` | `#2A2420` espresso | Text, main buttons, selected states, progress |
-| `muted-foreground` | `#5A5149` | Secondary text (5.8:1 on muted) |
-| `border` / `input` | `#D8CEBF` / `#C9BDAB` | Hairlines, field borders |
-| `brand` / `celebrate` | `#2A2420` espresso | Accent lines: progress hairlines, tab underlines, the wordmark dot. **No orange or clay accents anywhere** |
-| `brand-ink` | `#675B50` taupe | Quiet accent text on light surfaces: panel counts (`5 / 17`), the name in the greeting (5.5:1 on sand) |
-| `brand-on-dark` | `#D9CEBF` linen | Accents on the espresso frame (rail logo dot, tab marker) |
-| `inverse` / `inverse-foreground` / `inverse-muted` | `#2A2420` / `#EFE9E0` / `#B9AD9D` | The espresso frame: icon rail, phone tab bar, announcement bar |
-| `success` / `destructive` / `warning` / `info` | text `#376B46` / `#9B3E2A` / `#84580E` / `#3D5F89` · accent (`-solid`) `#5E9E6E` / `#D4583F` / `#DB9A2E` / `#5F84B0` | State only, always with text or an icon. Deep tone for text and lines (AA), bright accent for icons, dots and glows, on tinted-linen fills, in the garments’ fabric family (sage, terracotta, ochre, denim). Use `StatusBadge` and `StatusMessage` |
+| `background` | `#FAF8F4` | The page: plain very light sand, no gradients |
+| `glass` (`--glass-tint`) | `#E4DBCE` at 86%, frosted | Everything that holds things: navigation, panels, sheets, menus |
+| `card` | `#FFFFFF` | What sits on glass: rows, fields, chips, buttons, tiles, `Inset` |
+| `foreground` / `primary` | `#1D1D1F` | Text, the main button, selected states, progress |
+| `muted-foreground` / `brand-ink` | `#5A5A5E` | Secondary text and counts (AA on every surface) |
+| `muted` / `secondary` | `#ECEAE6` | Photo backdrops, skeletons |
+| `data-1` … `data-4` | `#A88F6C` → `#33261B` | Charts: one hue, light to dark (the heatmap, confetti). Each step ≥ 3:1 on white |
+| `indicator` | `#8A898C` | Inactive step marks (3.3:1 on the page) |
+| `success` / `destructive` / `warning` / `info` | text `#2F6B42` / `#A2382A` / `#7D5508` / `#2F5C8F`, accent (`-solid`) `#4FA06A` / `#E0553F` / `#E2A132` / `#4F86C6` | State only, always with text or an icon. Use `StatusBadge` and `StatusMessage` |
 
-- Only semantic token utilities (`bg-primary`, `text-muted-foreground`, `border-border`, `bg-muted`…). No raw colours, no `bg-white` / `text-black`.
-- The page is almost colourless on purpose: espresso on sand. Colour is never decoration.
-- **One `primary` action per screen or dialog.**
-- New tokens go in `:root` in `app/globals.css` (and the `@theme inline` mapping) and must pass AA contrast.
+- Only token utilities: `bg-card`, `bg-glass`, `text-muted-foreground`, `bg-data-2`. Never `bg-white`, `text-black` or hex values.
+- **One primary action per screen or dialog.**
+- New tokens go in `:root` and the `@theme inline` mapping in the global CSS, and must pass AA.
 
-## 3. Typography — Albert Sans
+## 3. Surfaces: glass, white, nothing else
 
-One typeface for headings and text. Normal case for headings; uppercase only for small labels.
+Three steps, nothing else separates things:
 
-| Role | How |
+| Surface | What | How |
+| --- | --- | --- |
+| Page | plain `background` | nothing to add |
+| Glass | navigation rail and tab bar, panels, sheets, menus, toasts, outline buttons | `Panel`, `glass-panel`, `glass` (floating bars), automatic on sheets, menus and outline buttons |
+| White on glass | rows, fields, chips, buttons, tiles, stat blocks | `PanelRow`, `Inset`, `DetailList`; fields and chips turn white inside glass automatically |
+
+- **No strokes and no shadows anywhere**: no borders, dividers, hairlines or drop shadows. The only drawn line is the keyboard focus outline. (The global CSS makes every border transparent and removes every shadow, so `border`, `ring-*` and `shadow-*` classes do nothing; don't add them.)
+- Fields and chips on the plain page are filled with the glass tint; on glass they're white.
+- Dropdowns open below their field and are solid white.
+- Photos and reading text are never glass. Labels on photos use `PhotoLabel` (a small glass pill).
+- Glass turns solid when the system asks for reduced transparency.
+
+## 4. Shape
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `rounded-(--radius)` | 12px | Panels, cards, sheets |
+| `rounded-(--control-radius)` | 10px | Fields, buttons, white rows, `Inset` |
+| `rounded-(--image-radius)` | 6px | Photos |
+| `rounded-pane` / `rounded-pane-lg` / `rounded-pane-inner` | 22 / 28 / 24px | The floating rail, tab bar, action bar and their inner pills |
+| `rounded-xs` | 4px | Heatmap cells, tiny marks |
+| `rounded-full` | | Avatars, pills, chips on photos |
+
+Image shapes: `aspect-product` (4:5, product tiles), `aspect-cover` (4:3, project cards), `aspect-wide` (2:1, maker covers).
+
+## 5. Type and spacing (the rhythm)
+
+One type scale and one spacing scale. Tailwind's size names are remapped so every class lands on the scale.
+
+| Type | Size | Use |
+| --- | --- | --- |
+| `eyebrow` / `text-2xs` | 12px, uppercase for eyebrows | Panel labels, shop names, counts |
+| `text-xs` | 13px | Details, meta, captions, field labels |
+| `text-sm` | 15px | Body, lists (the default UI size) |
+| `text-base` | 17px | Lead text under a title, reading text |
+| `text-xl` | 22px | Section titles (`PageSection`, `LegalSection`) |
+| `h1` | 34px on phones, 44px from `md`, weight 600 | The page title, one per screen |
+
+Headings are weight 600 with tight tracking; body is 400, emphasis 500. `tabular-nums` on measurements, counts and prices. Reading text is `max-w-prose`.
+
+| Space | Use |
 | --- | --- |
-| Page title (`h1`, one per screen) | `h1` — brand layer sets size (32–52px), weight 500, tracking −0.02em |
-| Section heading (`h2`) | `h2` via `PageSection` — 22px, weight 500 |
-| Card / panel title | `CardTitle` (uses `font-heading`) |
-| Body | `text-sm` default; instructions `text-base leading-relaxed` |
-| Secondary | `text-sm text-muted-foreground` |
-| Label / eyebrow | `eyebrow` class — 12px, uppercase, 0.12em tracking |
-| Buttons, tabs, navigation | Uppercase 12px with letter-spacing (applied by the brand layer, don't add classes) |
+| 4px (`gap-1`) | Lines inside one item: name → meta → price |
+| 8px (`gap-2`) | Related items: rows in a panel, chips, tiles in a stat grid |
+| 12px (`gap-3`) | Image → text, label → control |
+| 16px (`p-4`, `gap-4`) | Inside a component: panel padding, section title → content |
+| 24px (`gap-6`) | Between panels in a column |
+| 32px | Page title → content (built into `PageHeader`) |
+| 40 / 48px | Between page sections, phones / from `md` (built into `PageContainer`) |
 
-- Weights: 400 and 500. No bold display type.
-- `tabular-nums` on measurements, quantities, step counts and percentages.
-- Reading text max width `max-w-prose`.
+Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and pills. Never between things.
 
-## 4. Layout, shape and surfaces
+## 6. Controls
 
-- **Mobile first** (375px), then `sm` / `md` / `lg`. Screens use `PageContainer` (adds generous section spacing) and `PageHeader`.
-- **Full width:** every screen's content fills the space beside the sidebar. Don't cap pages with `max-w-*`; keep long running text readable with `max-w-prose` on the paragraph itself. Grids add columns as space grows.
-- **Square edges:** `--radius` is 2px. Don't add `rounded-xl` / `rounded-full` to surfaces or buttons (avatars and the size-tile grid are the only round-ish things).
-- **Hairlines, not shadows:** cards and panels are flat with a 1px `border`. No `shadow-*`, no gradients, no textures.
-- **Product tiles** (`GarmentCard`) have no box: a portrait (4:5) image panel on `muted`, then name (small caps), an optional creator line, one quiet detail line (`Beginner · 3–4 hours`) and the price. Grids use `gap-x-4 gap-y-8`.
-- **Filters** are text tabs with an underline: use `CategoryTabs` (scrolls sideways on phones with a fading edge).
-- **Navigation:** on md+ a slim espresso **icon rail** (`AppSidebar`, icons only, names as right-side tooltips, a soft tile marks the current page). On phones the bottom tab bar keeps icon + label.
-- **Workspace panels (the sewing guide's language, used on every screen):** group content in `Panel` (`components/patterns/panel.tsx`): a bordered `card` box with a small-caps label, optional taupe count and 2px progress hairline, then `PanelRow`s (bordered rows with a `StepDot` or icon tile, title, detail, right-hand meta; `href` makes the whole row a link with a chevron) and an optional action footer. The current item is the `active` row (ink frame), finished items are `done` (soft, with a check). A project is always shown with `ProjectPanel`.
-- **Two-column workspace:** on `lg+` screens use a sticky left panel column (`lg:grid-cols-[21rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)]`, `lg:sticky lg:top-20 lg:self-start`) for context (project, filters, account, maker) and the main content on the right.
-- **Top bar:** sub-pages put back + breadcrumbs (+ quick actions) in the sticky full-width `TopBar` (`PageHeader` renders it from `back` / `breadcrumbs` / `barActions`).
-- **Progress** is a single 2px hairline.
-- **Horizontal rows** (filters, carousels) use the `scroll-row` class so they keep the page gutter and fade at the edge on phones.
-- **Destructive buttons** are outlined text in the destructive colour, never a filled red block.
-- Primary action on mobile sits in a sticky bottom bar, full width. Touch targets ≥ 44×44px.
+| Control | Height | Notes |
+| --- | --- | --- |
+| Fields and dropdowns | 36px (44px on touch) | 14px text, 12px side padding, 10px corners, 16px muted icons |
+| Button | 40px | `size="lg"` (44px) for the one main action |
+| Small button and chips | 32px (40px on touch) | `size="sm"`; filter chips, removable filters, the bag |
+| Icon button | 36–44px | `size="icon-lg"` in bars, always with `aria-label` |
 
-## 5. Components: which one to use
+- Chips are white on glass and ink when chosen.
+- Labels: 13px medium, 8px above the field. Every field has a visible label; placeholders are examples.
+- While you type, a field turns white with an ink outline and a faint ring.
+- The slider is a 2px track with small white handles; it can always be typed into as well.
+- Touch targets are at least 44×44px on phones.
+
+## 7. Layout
+
+- **Mobile first** (375px). Screens use `PageContainer` and `PageHeader` inside `AppShell`.
+- **Navigation**: from `md`, a floating glass icon rail (`AppSidebar`); on phones, a floating glass tab bar (`AppTabBar`). Pages leave room with `pb-tabbar`. The phone's main action goes in an `ActionBar` above the tab bar.
+- **12-column grid**: one grid, one gutter (16px on phones, 24px from `md`). Never one-off `grid-cols-[…]`.
+  - `grid-12` is the page grid. `col-side` (4 columns on `lg`, 3 from `xl`, sticky 8px from the top like the rail) and `col-main` (the rest) make the two-column workspace.
+  - `tiles` is the product grid: 2 per row on phones, 3 on tablets, 4 on laptops; 5 when full width from `xl`, 4 beside a side panel. Add `tile-grid` to stagger them in; `tiles-compact` for tighter rows (project cards).
+  - `tiles-wide` is for bigger cards: 1, then 2, then 3 per row.
+- **Top line**: `PageHeader` (or `TopBar`) shows back, breadcrumbs and quick actions as plain text on the page, no container.
+- **Side sheets**: `PanelSheet` (full width on phones, 448px from `sm`).
+- **Show only what's needed.** Fewer panels, fewer words, one main action.
+
+## 8. Which component to use
 
 | Need | Use |
 | --- | --- |
-| Main action | `Button` (default), max one per view |
-| Secondary action | `Button variant="outline"` |
-| Quiet action | `Button variant="secondary"` or `ghost` |
-| Delete / reset | `Button variant="destructive"` + `AlertDialog` confirm |
-| Icon-only action | `Button size="icon-lg" variant="ghost"` + `aria-label` + `Tooltip` |
-| Text input | `Field` > `FieldLabel` + `Input` + `FieldDescription`/`FieldError` |
-| Body measurement | `MeasurementField` pattern |
-| Pick a size | `SizePicker` pattern |
-| 2 options | `Switch` (setting) / `Checkbox` (agree, have item) |
-| 2–5 visible options | `RadioGroup` or `ToggleGroup variant="outline"` |
-| 6+ options | `Select` |
-| Approximate value | `Slider` (never for exact measurements) |
-| Switch views of one thing | `Tabs` (≤ 4) |
-| Group one thing | `Card` (never nested) |
-| Garment in a list | `GarmentCard` pattern (whole tile is the link) |
-| Filter a grid by category | `CategoryTabs` pattern |
-| Resume the current project | Home's continue panel: eyebrow → name → "Next: step" → progress → one primary button |
-| A started project in a list | Project row (Projects page): image, name, size and steps, next step, progress, Continue + Details |
-| Fabric / tool row | `MaterialItem` pattern |
-| Sewing step content | `InstructionStep` pattern |
-| Step navigation / progress | `StepList` pattern |
-| Screen top bar | `AppHeader` pattern |
-| Section with heading | `PageSection` pattern |
-| Where am I | `PageBreadcrumbs` on every screen (via `PageHeader breadcrumbs`): Home first, current page last |
-| Report a state (saved, failed, needs attention, info, neutral) | `StatusMessage`: pastel fill, 3px accent bar on the left, filled icon, title in the status colour; optional body, `action` and `onDismiss`. `StatusBadge` for short labels |
-| Persistent neutral notice / tip | `Alert` (tip = `IconBulb`) |
+| Main / secondary / quiet action | `Button` / `variant="outline"` / `variant="ghost"` |
+| Delete or reset | `Button variant="destructive"` (outlined text) + `AlertDialog` that says what will be lost |
+| Icon-only action | `Button size="icon-lg"` + `aria-label` |
+| Text input | `Field` > `FieldLabel` + `Input` |
+| Choose one of 6+ | `Select` |
+| A setting / an agreement | `Switch` / `Checkbox` |
+| Filter by category | `CategoryTabs` |
+| Filter the fabric store | `FabricFilterGroups` + `ActiveFilters` |
+| Group things | `Panel` (glass), rows in `PanelRow`, plain white blocks in `Inset` |
+| Label–value details | `DetailList` |
+| A garment in a grid | `GarmentCard` |
+| A fabric in a grid | `FabricCard` |
+| Started projects | `ProjectGrid` (cards: `ProjectCard`, data: `projectCardData()`) |
+| A pattern maker | `MakerCard`; their page starts with `ProfileHeader` |
+| A label on a photo | `PhotoLabel` |
+| A small white label | `Pill` |
+| Pick a size | `SizePicker`, or `SizeSheet` for a project |
+| Streaks and stats | `SewingDashboard` |
+| Side panel | `PanelSheet` |
+| The fabric bag | `FabricBagButton` + `FabricBagSheet` |
+| State (saved, failed, needs a look, info) | `StatusMessage`; `StatusBadge` for short labels |
 | Quick confirmation | `toast()` from `sonner` |
-| Short task (desktop / mobile) | `Dialog` / `Drawer` |
-| Side panel | `Sheet` |
-| Item actions | `DropdownMenu` |
-| Loading content / action | `Skeleton` / `Spinner` in the button |
 | Nothing here yet | `Empty` with one next action |
-| Size chart | `Table`, numbers right-aligned |
+| Loading | `Skeleton`, or `Spinner` in the button |
+| A table | `Table` inside an `Inset` |
+| A legal page | `LegalPage` + `LegalSection`; `LegalFooter` on every screen |
+| Keep the page from jumping when a list shrinks | `KeepHeight` |
 
-## 6. Product rules (sewing-specific)
+## 9. Product rules (sewing)
 
-- **Viewing a step ≠ completing a step.** Progress (`upcoming | active | done`) changes only on an explicit user action ("Mark as done"). Opening, scrolling to, or navigating past a step never changes progress. The step on screen is marked with `aria-current="step"`, separately from its status.
-- Any action that resets progress (e.g. changing size) needs an `AlertDialog` that says what will be lost.
-- The recommended size is labelled, never silently selected.
-- Measurements always show their unit inside the field and use `inputMode="decimal"`.
-- Instructions: one action per sentence, numbers with units ("1.5 cm"), tips in an `Alert` with `IconBulb`.
+- **Viewing a step ≠ completing a step.** Progress changes only when the user presses "Mark done". Opening, scrolling to or moving past a step never changes it. The step on screen has `aria-current="step"`.
+- Anything that resets progress (like changing size) needs a confirmation that says what will be lost.
+- The recommended size is labelled, never chosen silently.
+- Measurements show their unit in the field and use `inputMode="decimal"`.
+- No fake social proof: example profiles are labelled "Example profile", no invented reviews or counts.
 
-## 7. Icons
+## 10. Icons
 
-- Tabler only, stroke style, default stroke width. Colour inherits (`currentColor`).
-- Inside buttons/menus/inputs, don't set a size (component handles it). Inline: `size-4`. List tiles: `size-5`. Empty/media: `size-8`.
-- Decorative icons get `aria-hidden`. Same meaning → same icon everywhere.
-- No emoji for anything functional (tools, categories, status, actions).
+- Tabler only, stroke style. Colour inherits.
+- In buttons, menus and inputs, don't set a size. Inline `size-4`, rows `size-5`, empty states `size-8`.
+- Decorative icons get `aria-hidden`. Same meaning, same icon everywhere. No emoji.
 
-## 8. Motion
-
-Quiet and purposeful. Everything below is already wired up; reuse it rather than adding new effects.
+## 11. Motion
 
 | What | How |
 | --- | --- |
-| Sections rise in on page load | Automatic for children of `PageContainer` (`.page`), staggered 70ms |
-| Product grids stagger in | Add `tile-grid` to the grid; give it a `key` tied to the active filter so it replays on change |
-| Sliding underline (tabs, nav) | `CategoryTabs` and the app navigation use framer-motion `layoutId` |
-| Progress draws in | Automatic on every `Progress` |
-| Arrow nudge on hover | Automatic for buttons with `data-icon="inline-end"` |
-| Product image hover | `GarmentCard` eases the garment up 4% |
+| Sections rise in | Automatic for children of `PageContainer` |
+| Grids stagger in | `tile-grid` on the grid; key it by the active filter so it replays |
+| Sliding marker (tabs, navigation) | Built into `CategoryTabs`, `AppSidebar`, `AppTabBar` |
+| Progress draws in | Automatic on `Progress` |
+| Photo zoom on hover | `hover-zoom` on the image, triggered by the card's `group` |
+| Press feedback | `press` (scales to 97%) |
 
-- Easing `--ease-out-soft` (cubic-bezier(.2,.7,.2,1)); 0.25s for feedback, 0.6–0.7s for content entering.
-- No bounce, no looping, no parallax. `prefers-reduced-motion` is respected globally (CSS) and in framer-motion (`MotionProvider`).
+Easing `--ease-out-soft`. No bounce, loops or parallax. Reduced motion is respected everywhere.
 
-## 8b. Product imagery
+## 12. Imagery
 
-Until real photography exists, garments are shown with `GarmentImage` / `GarmentArt`: the silhouette in one undyed-linen
-tone (`#C9BDAA`) with soft shading, a fine weave and a ground shadow, on a flat `bg-muted` backdrop. Every garment uses the
-same tone so the grid reads as one collection: no per-garment colours and no gradient backdrops.
-Never show a garment as a bare outline in an empty box.
+`GarmentImage` shows the garment photo from `lib/garment-photos.ts` (free Unsplash photos, credited on the company page). The garment is the subject: plain backdrops, cropped to the garment, no faces (`focus` crops past them). Without a photo it falls back to `GarmentArt`. Fabric photos belong to the shops.
 
-## 9. Accessibility (WCAG 2.2 AA)
+## 13. Accessibility (WCAG 2.2 AA)
 
-- Contrast ≥ 4.5:1 for text, ≥ 3:1 for UI parts (semantic tokens already pass).
-- Everything works by keyboard; focus is always visible (built in; don't remove `focus-visible` styles).
-- Every input has a visible label. Placeholders are examples, not labels.
-- Errors are text under the field + `aria-invalid`, shown on blur/submit.
-- Icon-only buttons have `aria-label`. Meaningful images have `alt`; decorative ones `alt=""`.
+- Text ≥ 4.5:1, UI parts ≥ 3:1. The tokens pass; raw colours might not.
+- Everything works by keyboard. Focus is a 2px ink outline, always visible (built in).
+- Every input has a visible label. Errors are text under the field plus `aria-invalid`.
+- Icon-only buttons have `aria-label`. Photos have `alt`; decorative images `alt=""`.
+- Charts have the same data as text for screen readers.
 - One `h1` per screen; headings in order.
 
-## 10. Voice & tone
+## 14. Voice
 
-**Sigrid sounds like a calm, experienced friend at the sewing table.** Emma (24) has never sewn, is afraid of
-making mistakes and wasting fabric, and needs to feel progress. Every sentence should leave her calmer and clearer
-than before she read it.
+Sigrid sounds like a calm, experienced friend at the sewing table. Every sentence should leave a nervous first-time sewer calmer and clearer.
 
-| Principle | Means | Example |
-| --- | --- | --- |
-| Calm, not cheerful | No exclamation marks, no hype, no emoji | "Shoulders done." not "Amazing job!!" |
-| Reassure with facts | Name the worry, then the way out | "If something goes wrong, most seams can be unpicked and sewn again." |
-| One thing at a time | Short sentences, one action each, numbers with units | "Pin every 5 cm. Sew 1.5 cm from the edge." |
-| Quietly proud | Acknowledge progress plainly, never grade her | "You sewed every seam yourself." |
-| Honest | Say what happens to her progress, data and money | "Nothing changes without telling you first." |
-| Body-neutral | Sizes and measurements, never judgements | "Made in your size", never "flattering" or "slimming" |
-| Scandinavian restraint | Understated, sentence case, plain words | "Choose a garment" not "Discover your next obsession" |
+- Calm, not cheerful: no exclamation marks, no hype, no emoji.
+- One thing at a time: short sentences, one action each, numbers with units ("Sew 1.5 cm from the edge").
+- Honest about progress, data and money ("Nothing changes without telling you first").
+- Body-neutral: sizes and measurements, never "flattering".
+- Buttons: a verb first, 1–3 words, saying the result ("Start sewing", "Agree and continue").
+- No step numbers like "01" or percentages where a plain "6/25" or words will do.
 
-**Words**
-- Use: make, sew, piece, seam, step, part, your size, choose, saved.
-- Avoid: simply, just (as in "just sew…"), easy, perfect, flawless, flattering, oops, error, failed, "you forgot".
-- Buttons: verb first, 1–3 words, describe the result: "Start sewing", "Save my size", "Stay signed in".
+## 15. Before you call UI work done
 
-**Situations**
-- *Empty states*: say what will appear here and the one next step ("Nothing on the sewing table yet. Choose a garment…").
-- *Errors*: what happened, that nothing is lost, what to do ("We couldn’t save that. Your progress is safe; try again.").
-- *Destructive actions*: say exactly what will be lost and offer a calm way out ("Stay signed in", "Keep M / 38").
-- *Celebration*: one quiet moment when a garment is finished. No confetti language elsewhere.
-- *Instructions*: imperative, one action per sentence, the "why" in a tip when it helps.
-
-## 11. Before you call UI work done
-
-- [ ] Uses only `components/ui` and `components/patterns` pieces shown in Storybook (or new ones were added there with stories)
-- [ ] No raw colours, arbitrary values, emoji icons, extra fonts, shadows, gradients or large radii
+- [ ] Built only from components and patterns shown in Storybook (or new ones were added with stories)
+- [ ] No raw colours, arbitrary values, strokes, shadows, emoji icons or extra fonts
+- [ ] Glass holds things, white is what you read and touch
 - [ ] At most one primary button per view
-- [ ] Looks right at 375px and desktop, light and dark
-- [ ] Keyboard works, focus visible, Accessibility panel clean
-- [ ] Progress state only changes on explicit user action
-- [ ] Copy follows the voice: calm, specific, reassuring, no exclamation marks or hype
+- [ ] Right at 375px and on a laptop; keyboard works; Accessibility panel clean
+- [ ] Progress only changes on an explicit action
+- [ ] Copy is calm, specific and plain

@@ -1,10 +1,13 @@
 'use client'
 
 import { useId } from 'react'
+import Image from 'next/image'
 import { cn } from 'cn'
 
+import { garmentPhoto, photoSrc } from '@/lib/garment-photos'
+
 /**
- * Product imagery for a garment until real photography exists: the silhouette in a
+ * Drawn product imagery for garments without a photo: the silhouette in a
  * fabric colourway, lit from the top left, with a fine woven texture, tonal seam
  * details and a soft ground shadow. `GarmentImage` adds a studio backdrop tinted
  * to the fabric, like a product photo.
@@ -102,21 +105,44 @@ export function GarmentArt({ name, className }: { name: string; className?: stri
   )
 }
 
-/** Flat studio backdrop in the card's linen, with the garment art centred. */
+/**
+ * The garment's product photo, cropped to fill the frame. Falls back to the drawn art
+ * on a flat linen backdrop for garments without a photo yet.
+ * `artClassName` applies to whichever is shown (e.g. the hover zoom on product tiles).
+ */
 export function GarmentImage({
   name,
   className,
   artClassName,
+  sizes = '(min-width: 1280px) 20vw, (min-width: 768px) 30vw, 50vw',
+  priority,
   children,
 }: {
   name: string
   className?: string
   artClassName?: string
+  /** How wide the image is shown, so the browser picks the right size */
+  sizes?: string
+  /** Load right away (the main image on a page) */
+  priority?: boolean
   children?: React.ReactNode
 }) {
+  const photo = garmentPhoto(name)
   return (
     <div className={cn('garment-image relative flex items-center justify-center overflow-hidden bg-muted', className)}>
-      <GarmentArt name={name} className={cn('size-full', artClassName)} />
+      {photo ? (
+        <Image
+          src={photoSrc(photo)}
+          alt={photo.alt}
+          fill
+          sizes={sizes}
+          preload={priority}
+          // Size limits are for the drawing; a photo always fills the frame
+          className={cn('object-cover', artClassName?.replace(/(^|\s)\S*max-w-\S+/g, ''))}
+        />
+      ) : (
+        <GarmentArt name={name} className={cn('size-full', artClassName)} />
+      )}
       {children}
     </div>
   )

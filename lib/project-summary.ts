@@ -1,9 +1,7 @@
-import type { ProjectPart } from '@/components/patterns/project-panel'
 import { garments, getGarmentGuide } from './data'
-import { groupIntoJourneys } from './journeys'
 import { loadProject, type ProjectState } from './projects'
 import { sizeLabel } from './sizes'
-import type { Garment, StandardSize } from './types'
+import type { Garment } from './types'
 
 export interface ProjectSummary {
   garment: Garment
@@ -27,25 +25,16 @@ export function listProjects(): ProjectSummary[] {
     .sort((a, b) => Number(a.finished) - Number(b.finished))
 }
 
-/**
- * Maps a garment's guide and saved progress onto the design system's ProjectPanel:
- * each short journey becomes a part with how many of its steps are done.
- */
-export function projectPanelData(garment: Garment, size: StandardSize, completedUntil: number) {
+/** What a project card shows: the garment, the next step and how far along it is */
+export function projectCardData({ garment, project, totalSteps }: ProjectSummary) {
   const steps = getGarmentGuide(garment.id)?.steps ?? []
-  const parts: ProjectPart[] = groupIntoJourneys(steps).map((j) => ({
-    key: j.key,
-    title: j.title,
-    kind: j.kind,
-    done: j.stepIndices.filter((i) => i < completedUntil).length,
-    total: j.stepIndices.length,
-  }))
   return {
     name: garment.name,
     href: `/garment/${garment.id}`,
     continueHref: `/garment/${garment.id}/guide`,
-    sizeLabel: sizeLabel(size),
-    nextStep: steps[completedUntil]?.title,
-    parts,
+    sizeLabel: sizeLabel(project.size),
+    nextStep: steps[project.completedUntil]?.title,
+    done: Math.min(project.completedUntil, totalSteps),
+    total: totalSteps,
   }
 }

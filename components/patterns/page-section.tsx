@@ -1,8 +1,7 @@
 import { cn } from "cn"
 
 /**
- * Standard vertical section on a screen. Editorial header: a taupe section number
- * (automatic, counted per page), the title, and a hairline running out to the right,
+ * Standard vertical section on a screen: the title,
  * then an optional action. Description and content below.
  */
 function PageSection({
@@ -12,7 +11,8 @@ function PageSection({
   children,
   className,
 }: {
-  title: string
+  /** Leave out when the page has only one section, so the heading doesn't repeat the page title */
+  title?: string
   description?: string
   action?: React.ReactNode
   children: React.ReactNode
@@ -20,14 +20,13 @@ function PageSection({
 }) {
   return (
     <section className={cn("flex flex-col gap-4", className)}>
-      <div className="flex flex-col gap-1">
+      {title && <div className="flex flex-col gap-1">
         <div className="flex items-center gap-4">
-          <h2 className="page-section-title text-[1.375rem] leading-tight font-medium tracking-tight">{title}</h2>
-          <span aria-hidden className="page-section-rule" />
+          <h2 className="page-section-title text-xl font-semibold">{title}</h2>
           {action}
         </div>
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
-      </div>
+      </div>}
       {children}
     </section>
   )

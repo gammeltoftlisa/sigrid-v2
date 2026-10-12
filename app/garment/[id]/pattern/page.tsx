@@ -118,6 +118,8 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     const fromLink = searchParams.get('size')
     const valid = fromLink && (allSizes as string[]).includes(fromLink) ? (fromLink as StandardSize) : null
+    // The saved project lives in localStorage, so it can only be read after hydration
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSize(valid ?? loadProject(id)?.size ?? null)
     setReady(true)
   }, [id, searchParams])
