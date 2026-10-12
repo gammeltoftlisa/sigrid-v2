@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { cn } from 'cn'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { GarmentImage } from '@/components/garment/GarmentArt'
 import type { Difficulty } from '@/lib/types'
+import { PhotoLabel } from '@/components/patterns/photo-label'
 
 /**
  * A garment or creator pattern in a grid, styled like a store tile.
@@ -38,36 +39,34 @@ export function GarmentCard({
   return (
     <Card
       data-variant="product"
-      className={cn('group/tile relative gap-3 pt-0 has-[a:focus-visible]:ring-3 has-[a:focus-visible]:ring-ring/50', className)}
+      className={cn('group/tile relative gap-3 pt-0', className)}
     >
       <GarmentImage
         name={name}
-        className="product-image aspect-[4/5] p-6 sm:p-8"
-        artClassName="max-w-40 transition-transform duration-500 ease-out group-hover/tile:scale-[1.04]"
+        className="product-image aspect-product p-6 sm:p-8"
+        artClassName="max-w-40 hover-zoom"
       >
         {tag && (
-          <span className="eyebrow absolute top-3 left-3 bg-foreground px-2 py-1 text-inverse-foreground">{tag}</span>
+          <PhotoLabel className="absolute top-3 left-3">{tag}</PhotoLabel>
         )}
       </GarmentImage>
-      <CardHeader className="gap-1">
+      <CardHeader className="gap-0.5">
         <CardTitle>
           <Link href={href} className="outline-none after:absolute after:inset-0">
             {name}
           </Link>
         </CardTitle>
-        {byline && <p className="truncate text-sm">{byline}</p>}
-        <p className="line-clamp-1 text-sm text-muted-foreground">{details}</p>
-      </CardHeader>
-      <CardContent>
+        {byline && <p className="truncate text-xs">{byline}</p>}
+        <p className="line-clamp-1 text-xs text-muted-foreground">{details}</p>
         {progress !== undefined ? (
-          <div className="flex items-center gap-2">
+          <div className="mt-1 flex items-center gap-2">
             <Progress value={progress} aria-label={`${name} progress`} className="flex-1" />
             <span className="text-xs text-muted-foreground tabular-nums">{progress}%</span>
           </div>
         ) : (
-          price !== undefined && <p className="text-sm tabular-nums">€{price}</p>
+          price !== undefined && <p className="mt-1 text-sm tabular-nums">€{price}</p>
         )}
-      </CardContent>
+      </CardHeader>
     </Card>
   )
 }

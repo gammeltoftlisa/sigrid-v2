@@ -31,7 +31,7 @@ export default function PrimaryButton({
     ${fullWidth ? 'w-full' : ''}
     flex items-center justify-center gap-2
     ${tone === 'warn' ? 'bg-warn hover:brightness-95' : 'bg-primary hover:bg-primary-deep'}
-    text-surface text-xs font-medium uppercase tracking-[0.1em]
+    text-surface text-sm font-medium tracking-tight
     px-6 h-12 rounded-(--radius)
     ${feedback} ${press} ${disabledCls}
     ${className}

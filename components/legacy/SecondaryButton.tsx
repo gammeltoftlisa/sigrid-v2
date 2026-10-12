@@ -34,7 +34,7 @@ export default function SecondaryButton({
     ${fullWidth ? 'w-full' : ''}
     flex items-center justify-center gap-2
     ${variantClasses}
-    text-xs font-medium uppercase tracking-[0.1em]
+    text-sm font-medium tracking-tight
     px-6 h-12 rounded-(--radius)
     ${feedback} ${press} ${disabledCls}
     ${className}

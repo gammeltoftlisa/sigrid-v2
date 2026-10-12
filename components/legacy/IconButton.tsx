@@ -28,8 +28,8 @@ export default function IconButton({
       disabled={disabled}
       aria-label={label}
       title={label}
-      className={`${size === 'md' ? 'w-10 h-10' : 'w-8 h-8'} shrink-0 rounded-(--radius) flex items-center justify-center text-ink-2 ${
-        variant === 'raised' ? `bg-surface border border-rim ${hoverOnSurface}` : `bg-surface-2 ${hoverOnMuted}`
+      className={`${size === 'md' ? 'w-10 h-10' : 'w-8 h-8'} shrink-0 rounded-full flex items-center justify-center text-foreground ${
+        variant === 'raised' ? `bg-surface border border-rim ${hoverOnSurface}` : `bg-glass ${hoverOnMuted}`
       } ${feedback} ${pressIcon} ${disabledCls} ${className}`}
     >
       {children}

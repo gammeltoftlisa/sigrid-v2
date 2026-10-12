@@ -10,7 +10,7 @@ import type { SewingStep2D } from '@/lib/types'
 import { groupIntoJourneys, type JourneyKind } from '@/lib/journeys'
 import { StatusDot, progressStateOf, stepRowClass, stepTextClass, type ProgressState } from '@/components/legacy/progress'
 import { TOOLS } from './tools'
-import { ACTION_COLORS, ACTION_LABELS } from './actions'
+import { ACTION_LABELS } from './actions'
 
 const JOURNEY_ICONS: Record<JourneyKind, typeof IconScissors> = {
   prepare: IconDroplet,
@@ -31,12 +31,11 @@ interface Props {
   allDone?: boolean
   onNext: () => void
   onPrev: () => void
-  onExit: () => void
   /** Preview a step in the canvas without changing completion status */
   onPreview: (index: number) => void
 }
 
-export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast, allDone, onNext, onPrev, onExit, onPreview }: Props) {
+export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast, allDone, onNext, onPrev, onPreview }: Props) {
   const [openStep, setOpenStep] = useState<number>(viewStep)
   const [showTip, setShowTip] = useState(false)
   const activeRef = useRef<HTMLDivElement>(null)
@@ -56,11 +55,32 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
 
   // Whatever step is on the canvas is also the one open in the list — so the
   // ‹ › arrows (and anything else that moves the canvas) reveal that step here.
-  const firstView = useRef(true)
-  useEffect(() => {
+  const [prevView, setPrevView] = useState(viewStep)
+  if (viewStep !== prevView) {
+    setPrevView(viewStep)
     openJourneyFor(viewStep)
     setOpenStep(viewStep)
     setShowTip(false)
+  }
+
+  // When completedUntil advances (Mark done pressed): a journey that was just
+  // finished folds away and the one now being worked on opens, and the new
+  // active step opens unless the user is previewing a different step.
+  const [prevDone, setPrevDone] = useState(completedUntil)
+  if (completedUntil !== prevDone) {
+    setPrevDone(completedUntil)
+    if (journeys.some((j) => j.stepIndices[j.stepIndices.length - 1] === completedUntil - 1)) {
+      setOpenJourney(journeyKeyAt(completedUntil) ?? null)
+    }
+    if (openStep === completedUntil - 1 || openStep === completedUntil) {
+      setOpenStep(completedUntil)
+      openJourneyFor(completedUntil)
+      setShowTip(false)
+    }
+  }
+
+  const firstView = useRef(true)
+  useEffect(() => {
     if (firstView.current) { firstView.current = false; return }
     // Wait for the journey/step expand animation before scrolling to it
     const t = setTimeout(() => {
@@ -71,23 +91,11 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
     return () => clearTimeout(t)
   }, [viewStep])
 
-  // A journey that was just finished always folds away, and the one now being
-  // worked on opens — regardless of which step the user is looking at.
+  // Bring the newly active step into view once it has opened
+  const firstDone = useRef(true)
   useEffect(() => {
-    const finished = journeys.find((j) => j.stepIndices[j.stepIndices.length - 1] === completedUntil - 1)
-    if (!finished) return
-    setOpenJourney(journeyKeyAt(completedUntil) ?? null)
-  }, [completedUntil])
-
-  // When completedUntil advances (Mark done pressed), open the new active step
-  // only if the user isn't already previewing a different step.
-  useEffect(() => {
-    if (openStep === completedUntil - 1 || openStep === completedUntil) {
-      setOpenStep(completedUntil)
-      openJourneyFor(completedUntil)
-      setShowTip(false)
-      activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    }
+    if (firstDone.current) { firstDone.current = false; return }
+    activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [completedUntil])
 
   const toggle = (i: number) => {
@@ -126,7 +134,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
         >
           <StatusDot state={state}>{n}</StatusDot>
 
-          <span className={`flex-1 text-[13px] leading-tight truncate ${stepTextClass(state)}`}>
+          <span className={`flex-1 text-sm leading-tight truncate ${stepTextClass(state)}`}>
             {s.title}
           </span>
 
@@ -148,21 +156,21 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
               className="overflow-hidden md:hidden"
             >
               <div className="px-2.5 pb-3">
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-(--radius) mb-2 inline-block ${ACTION_COLORS[s.action]}`}>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full mb-2 inline-block bg-card`}>
                   {ACTION_LABELS[s.action]}
                 </span>
 
-                <p className="text-xs text-ink-2 leading-relaxed mb-2">{s.instruction}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-2">{s.instruction}</p>
 
                 <div className="flex flex-wrap gap-1 mb-2">
                   {s.measurement && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-surface/70 text-primary-deep px-1.5 py-0.5 rounded-(--radius)">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium bg-card text-primary-deep px-1.5 py-0.5 rounded-(--radius)">
                       <IconRuler2 size={12} />
                       {s.measurement}
                     </span>
                   )}
                   {s.tool && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-surface/70 text-ink-2 px-1.5 py-0.5 rounded-(--radius)">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium bg-card text-ink-2 px-1.5 py-0.5 rounded-(--radius)">
                       {(() => { const T = TOOLS[s.tool].Icon; return <T size={12} /> })()}
                       {TOOLS[s.tool].short}
                     </span>
@@ -171,8 +179,8 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
                     <button
                       onClick={(e) => { e.stopPropagation(); setShowTip((v) => !v) }}
                       aria-pressed={showTip}
-                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-(--radius) transition-colors duration-150 ${
-                        showTip ? 'bg-warn text-surface' : 'bg-warn-soft text-warn hover:bg-warn hover:text-surface'
+                      className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full transition-colors duration-150 ${
+                        showTip ? 'bg-foreground text-background' : 'bg-card text-foreground'
                       }`}
                     >
                       <IconBulb size={12} />
@@ -180,7 +188,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
                     </button>
                   )}
                   {s.tip && !active && (
-                    <span className="inline-flex items-start gap-1 text-[11px] font-semibold bg-warn-soft text-warn px-1.5 py-0.5 rounded-lg">
+                    <span className="inline-flex items-start gap-1 text-xs font-medium bg-warn-soft text-warn px-2 py-0.5 rounded-lg">
                       <IconBulb size={12} className="shrink-0 mt-px" />
                       {s.tip}
                     </span>
@@ -194,7 +202,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.16 }}
-                      className="text-[11px] text-ink-2 bg-warn-soft/60 rounded-lg px-2 py-1.5 mb-2 overflow-hidden leading-relaxed"
+                      className="text-xs text-ink-2 bg-warn-soft/60 rounded-lg px-2 py-1.5 mb-2 overflow-hidden leading-relaxed"
                     >
                       {s.tip}
                     </motion.p>
@@ -210,17 +218,17 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
   }
 
   return (
-    <div className="order-2 md:order-none flex-1 min-h-0 md:flex-none md:w-1/3 md:shrink-0 bg-surface border-t md:border-t-0 md:border-r border-rim flex flex-col overflow-hidden">
+    <div className="glass-panel order-2 md:order-none flex-1 min-h-0 md:flex-none md:w-88 lg:w-96 md:shrink-0 rounded-(--radius) flex flex-col overflow-hidden">
       {/* Label + progress count */}
       <div className="px-3 pt-4 pb-2 shrink-0">
         <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[11px] font-bold text-ink-3 uppercase tracking-widest">Steps</p>
-          <p className="text-[11px] font-bold text-primary tabular-nums">
+          <p className="eyebrow text-muted-foreground">Steps</p>
+          <p className="text-xs font-medium text-muted-foreground tabular-nums">
             {completedUntil} / {steps.length}
           </p>
         </div>
         {/* Progress bar — advances only when steps are effectively marked done */}
-        <div className="h-0.5 rounded-full bg-rim overflow-hidden">
+        <div className="h-1 rounded-full bg-card overflow-hidden">
           <div
             className="h-full bg-primary rounded-full transition-all duration-500"
             style={{ width: `${(completedUntil / steps.length) * 100}%` }}
@@ -242,23 +250,21 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
           return (
             <div
               key={j.key}
-              className={`mb-2 rounded-2xl border overflow-hidden transition-colors duration-200 ${
-                current ? 'border-primary/40' : 'border-rim'
-              }`}
+              className="mb-2 rounded-(--control-radius) overflow-hidden bg-card"
             >
               {/* Journey header — expanding only shows steps, never marks progress */}
               <button
                 onClick={() => toggleJourney(j.key)}
                 aria-expanded={expanded}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2.5 text-left hover:bg-surface-2 transition-colors duration-150"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2.5 text-left hover:bg-(--background) transition-colors duration-150"
               >
                 <StatusDot state={jState} size="md"><Icon size={15} /></StatusDot>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[14px] leading-tight truncate ${stepTextClass(jState)} ${jState === 'upcoming' ? 'font-semibold' : ''}`}>
+                  <p className={`text-sm leading-tight truncate ${stepTextClass(jState)}`}>
                     {j.title}
                   </p>
                 </div>
-                <span className={`text-[11px] font-bold tabular-nums ${current ? 'text-primary' : 'text-ink-3'}`}>
+                <span className="text-xs tabular-nums text-muted-foreground">
                   {doneCount}/{total}
                 </span>
                 <IconChevronDown
@@ -288,13 +294,13 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
       </div>
 
       {/* ── Sticky bottom navigation — < Mark done > ── */}
-      <div className="shrink-0 border-t border-rim bg-surface px-3 pt-2.5 pb-3">
+      <div className="shrink-0 px-3 pt-1 pb-3">
         <div className="flex items-center gap-1">
           <button
             onClick={onPrev}
             disabled={viewStep === 0}
             aria-label="Previous step"
-            className="w-11 h-11 rounded-lg flex items-center justify-center text-ink-2 hover:bg-surface-2 active:scale-90 transition duration-150 disabled:opacity-40 disabled:pointer-events-none"
+            className="w-11 h-11 rounded-full bg-card flex items-center justify-center text-foreground active:scale-90 transition duration-150 disabled:opacity-40 disabled:pointer-events-none"
           >
             <IconChevronLeft size={16} stroke={2.5} />
           </button>
@@ -304,7 +310,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
             // so the main button takes you back to the one you're on instead.
             <button
               onClick={() => onPreview(completedUntil)}
-              className="flex-1 h-11 rounded-lg border border-rim bg-surface text-ink text-xs font-medium uppercase tracking-[0.1em] hover:bg-surface-2 active:scale-[0.97] transition duration-150 inline-flex items-center justify-center gap-1.5"
+              className="flex-1 h-11 rounded-(--control-radius) bg-card text-foreground text-sm font-medium tracking-tight press transition duration-150 inline-flex items-center justify-center gap-1.5"
             >
               <IconArrowBackUp size={15} />
               Back to step {completedUntil + 1}
@@ -312,7 +318,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
           ) : (
             <button
               onClick={onNext}
-              className="flex-1 h-11 rounded-lg bg-primary text-surface text-xs font-medium uppercase tracking-[0.1em] hover:bg-primary-deep active:scale-[0.97] transition duration-150 inline-flex items-center justify-center gap-1.5"
+              className="flex-1 h-11 rounded-(--control-radius) bg-primary text-primary-foreground text-sm font-medium tracking-tight hover:bg-primary/85 press transition duration-150 inline-flex items-center justify-center gap-1.5"
             >
               {allDone ? <IconConfetti size={15} /> : <IconCheck size={15} stroke={3} />}
               {allDone ? 'View summary' : isLast ? 'Finish' : 'Mark done'}
@@ -323,7 +329,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
             onClick={() => !isLast && onPreview(Math.min(viewStep + 1, steps.length - 1))}
             disabled={viewStep >= steps.length - 1}
             aria-label="Next step"
-            className="w-11 h-11 rounded-lg flex items-center justify-center text-ink-2 hover:bg-surface-2 active:scale-90 transition duration-150 disabled:opacity-40 disabled:pointer-events-none"
+            className="w-11 h-11 rounded-full bg-card flex items-center justify-center text-foreground active:scale-90 transition duration-150 disabled:opacity-40 disabled:pointer-events-none"
           >
             <IconChevronRight size={16} stroke={2.5} />
           </button>

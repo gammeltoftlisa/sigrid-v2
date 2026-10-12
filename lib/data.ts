@@ -360,8 +360,26 @@ export const standardSizes: Record<StandardSize, UserMeasurements> = {
   XXL: { bust: 102, waist: 88, hips: 112, height: 174, inseam: 81 },
 }
 
-export const getGarmentById = (id: string) =>
-  garments.find((g) => g.id === id) ?? garments[0]
+/** A base garment, or a creator pattern shown as a garment of its own */
+export const getGarmentById = (id: string): Garment => {
+  const garment = garments.find((g) => g.id === id)
+  if (garment) return garment
+  const pattern = creatorPatterns.find((p) => p.garmentId === id)
+  if (!pattern) return garments[0]
+  const base = garments.find((g) => g.category === pattern.category) ?? garments[0]
+  const creator = creators.find((c) => c.id === pattern.creatorId)
+  return {
+    ...base,
+    id,
+    name: pattern.name,
+    difficulty: pattern.difficulty,
+    price: pattern.price,
+    fits: [pattern.fit],
+    isCreator: true,
+    creatorId: pattern.creatorId,
+    description: `${/^[aeiou]/i.test(pattern.fit) ? 'An' : 'A'} ${pattern.fit.toLowerCase()} fit pattern by ${creator?.name ?? 'an independent maker'}.`,
+  }
+}
 
 export const getCreatorById = (id: string) =>
   creators.find((c) => c.id === id) ?? creators[0]

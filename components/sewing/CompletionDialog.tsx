@@ -8,10 +8,12 @@ import SecondaryButton from '@/components/legacy/SecondaryButton'
 import IconButton from '@/components/legacy/IconButton'
 import { GarmentArt } from '@/components/garment/GarmentArt'
 import { TAP_ICON } from '@/components/legacy/interaction'
+import { cn } from '@/lib/utils'
 import type { Garment } from '@/lib/types'
 
 // Fabric colourways, so the moment feels like Sigrid rather than a party popper
-const CONFETTI_COLORS = ['#D8C9B0', '#B8876A', '#7C8264', '#C7A19C', '#3F4B5F']
+// The data ramp from the design tokens, so confetti stays in the palette
+const CONFETTI_COLORS = ['bg-data-1', 'bg-data-2', 'bg-data-3', 'bg-data-4', 'bg-glass']
 // A thank-you, not a grade: every make counts
 const RATING_COPY = ['', 'Thanks for telling us. The next one gets easier.', 'Thanks. Every make teaches something.', 'Good to hear.', 'Lovely. That’s a real achievement.', 'Wonderful. Enjoy wearing it.']
 
@@ -39,9 +41,11 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
   const [confetti, setConfetti] = useState<ConfettiPiece[]>([])
 
   // Fresh confetti each time it opens (created in the browser, so no hydration mismatch)
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(false)
+  if (open !== wasOpen) {
+    setWasOpen(open)
     if (open) setConfetti(makeConfetti())
-  }, [open])
+  }
 
   useEffect(() => {
     if (!open) return
@@ -99,8 +103,7 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
                       initial={{ left: `${c.x}%`, y: -20, rotate: c.rotate, opacity: 1 }}
                       animate={{ y: 260, rotate: c.spin, opacity: [1, 1, 0] }}
                       transition={{ duration: c.duration, delay: c.delay, ease: 'easeIn' }}
-                      className="absolute top-0 w-2.5 h-2.5 rounded-sm"
-                      style={{ backgroundColor: CONFETTI_COLORS[i % CONFETTI_COLORS.length] }}
+                      className={cn('absolute top-0 size-2.5 rounded-xs', CONFETTI_COLORS[i % CONFETTI_COLORS.length])}
                     />
                   ))}
                 </div>
@@ -141,7 +144,7 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
 
                 {/* Photo */}
                 <h3 className="text-label font-semibold text-ink mt-5 mb-2">Keep a record</h3>
-                <button className="w-full border-2 border-dashed border-rim rounded-3xl h-32 flex flex-col items-center justify-center gap-2 bg-surface hover:bg-surface-2 hover:border-primary/40 active:scale-[0.97] transition duration-150">
+                <button className="w-full border-2 border-dashed border-rim rounded-3xl h-32 flex flex-col items-center justify-center gap-2 bg-surface hover:bg-surface-2 hover:border-primary/40 press transition duration-150">
                   <IconCamera size={28} className="text-ink-3" stroke={1.5} />
                   <p className="text-label font-semibold text-ink">Add a photo</p>
                   <p className="text-caption text-ink-3 -mt-1.5">Remember what you made, and how far you’ve come</p>

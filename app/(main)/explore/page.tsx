@@ -8,11 +8,13 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CategoryTabs } from '@/components/patterns/category-tabs'
-import { CreatorAvatar } from '@/components/patterns/creator-avatar'
 import { GarmentCard } from '@/components/patterns/garment-card'
+import { MakerCard } from '@/components/patterns/maker-card'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
-import { Panel, PanelRow } from '@/components/patterns/panel'
-import { creatorPatterns, creators } from '@/lib/data'
+import { Panel } from '@/components/patterns/panel'
+import { PageSection } from '@/components/patterns/page-section'
+import { KeepHeight } from '@/components/patterns/keep-height'
+import { creatorPatterns, creators, getPatternsByCreator } from '@/lib/data'
 import type { Difficulty, GarmentCategory } from '@/lib/types'
 
 const categories = ['All', 'Tops', 'Bottoms', 'Dresses', 'Outerwear'] as const satisfies readonly (GarmentCategory | 'All')[]
@@ -46,47 +48,29 @@ export default function ExplorePage() {
     setDifficulty('All')
   }
 
-  const creatorRows = creators.map((c) => (
-    <PanelRow
-      key={c.id}
-      href={`/creator/${c.id}`}
-      leading={<CreatorAvatar creator={c} />}
-      title={c.handle}
-      detail={`${c.followerCount} followers${c.isCertified ? ' · Certified' : ''}`}
-    />
-  ))
-
   return (
     <PageContainer>
-      <PageHeader breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Explore' }]} title="Explore" description="Patterns by independent makers, ready in your size." />
+      <PageHeader breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Explore' }]} title="Explore" description="Example patterns and maker profiles while Sigrid is in beta." />
 
-      <div className="grid gap-6 lg:grid-cols-[21rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)]">
-        <div className="flex flex-col gap-6 lg:sticky lg:top-20 lg:self-start">
-          <Panel
-            label="Find a pattern"
-            meta={`${filtered.length} / ${creatorPatterns.length}`}
-            footer={
-              filtering ? (
-                <Button variant="outline" className="w-full" onClick={clearFilters}>
-                  Clear filters
-                </Button>
-              ) : undefined
-            }
-          >
-            <InputGroup className="h-11 bg-background">
+      <PageSection title="Patterns">
+        {/* Same as Home: category tabs, then a full-width grid; search and level sit on the same row */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CategoryTabs label="Filter by category" options={categories} value={category} onValueChange={setCategory} />
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <InputGroup className="flex-1 sm:w-64 sm:flex-none">
               <InputGroupAddon>
                 <IconSearch />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
-                aria-label="Search patterns or creators"
-                placeholder="Search patterns or creators"
+                aria-label="Search patterns or makers"
+                placeholder="Search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </InputGroup>
             <Select items={difficulties} value={difficulty} onValueChange={(v) => setDifficulty(v as Difficulty | 'All')}>
-              <SelectTrigger aria-label="Difficulty" className="h-11 w-full bg-background">
+              <SelectTrigger aria-label="Difficulty" className="w-36">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -97,54 +81,52 @@ export default function ExplorePage() {
                 ))}
               </SelectContent>
             </Select>
-          </Panel>
-
-          <Panel label="Featured creators" meta={creators.length} className="hidden lg:flex">
-            {creatorRows}
-          </Panel>
+          </div>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b">
-            <CategoryTabs label="Filter by category" options={categories} value={category} onValueChange={setCategory} />
-          </div>
-
-          {filtered.length === 0 ? (
-            <Empty className="border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <IconZoomQuestion />
-                </EmptyMedia>
-                <EmptyTitle>Nothing matches yet</EmptyTitle>
-                <EmptyDescription>Try a different word, or clear a filter to see more.</EmptyDescription>
-              </EmptyHeader>
+        <KeepHeight>
+        {filtered.length === 0 ? (
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <IconZoomQuestion />
+              </EmptyMedia>
+              <EmptyTitle>Nothing matches yet</EmptyTitle>
+              <EmptyDescription>Try a different word, or clear a filter to see more.</EmptyDescription>
+            </EmptyHeader>
+            {filtering && (
               <EmptyContent>
                 <Button variant="outline" onClick={clearFilters}>
                   Clear filters
                 </Button>
               </EmptyContent>
-            </Empty>
-          ) : (
-            <div key={`${category}-${difficulty}`} className="tile-grid grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 2xl:grid-cols-4">
-              {filtered.map((p) => (
-                <GarmentCard
-                  key={p.id}
-                  href={`/garment/${p.garmentId}`}
-                  name={p.name}
-                  difficulty={p.difficulty}
-                  byline={creators.find((c) => c.id === p.creatorId)?.handle}
-                  price={p.price}
-                />
-              ))}
-            </div>
-          )}
+            )}
+          </Empty>
+        ) : (
+          <div key={`${category}-${difficulty}`} className="tile-grid tiles">
+            {filtered.map((p) => (
+              <GarmentCard
+                key={p.id}
+                href={`/garment/${p.garmentId}`}
+                name={p.name}
+                difficulty={p.difficulty}
+                byline={creators.find((c) => c.id === p.creatorId)?.handle}
+                price={p.price}
+              />
+            ))}
+          </div>
+        )}
+        </KeepHeight>
+      </PageSection>
 
-          {/* Phones and tablets: makers after the patterns */}
-          <Panel label="Featured creators" meta={creators.length} className="lg:hidden">
-            {creatorRows}
-          </Panel>
+      {/* Makers: a brown-glass panel with white cards in the same grid, like projects on Home */}
+      <Panel label="Makers" meta={creators.length}>
+        <div className="tiles !gap-y-3">
+          {creators.map((c) => (
+            <MakerCard key={c.id} creator={c} patterns={getPatternsByCreator(c.id)} />
+          ))}
         </div>
-      </div>
+      </Panel>
     </PageContainer>
   )
 }

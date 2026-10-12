@@ -8,6 +8,7 @@ import { textLink } from '@/components/legacy/interaction'
 import { getGarmentById, getGarmentGuide, standardSizes } from '@/lib/data'
 import type { StandardSize, UserMeasurements } from '@/lib/types'
 import { loadProject, saveProject } from '@/lib/projects'
+import { logStepDone } from '@/lib/activity'
 import { sizeLabel } from '@/lib/sizes'
 import SizeSheet from '@/components/garment/SizeSheet'
 import PatternCanvas from '@/components/sewing/PatternCanvas'
@@ -44,12 +45,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [measurements, setMeasurements] = useState<UserMeasurements>(DEFAULT_MEASUREMENTS)
   const [doneAnim, setDoneAnim] = useState(false)
   const [exiting, setExiting] = useState(false)
-  const [animateIn] = useState(() => {
-    if (typeof window === 'undefined') return false
-    const flag = sessionStorage.getItem('sigrid_flow_enter')
-    if (flag) { sessionStorage.removeItem('sigrid_flow_enter'); return true }
-    return false
-  })
+  // The sheet always slides up when the guide opens (same on server and client, so hydration matches)
+  const animateIn = true
 
   // The project (size + progress) is set up on the garment page; without one, go back there
   const [size, setSize] = useState<StandardSize | null>(null)
@@ -65,6 +62,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     const last = Math.max(0, total - 1)
     // completedUntil === total means every step is done
     const resumeAt = Math.min(project.completedUntil, total)
+    // Reading saved progress from localStorage has to wait until after hydration
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSize(project.size)
     setMeasurements(standardSizes[project.size])
     setCompletedUntil(resumeAt)
@@ -106,7 +105,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   if (!guide || guide.steps.length === 0) {
     return (
       <motion.div
-        className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-bg rounded-t-3xl overflow-hidden shadow-modal"
+        className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-background rounded-t-3xl overflow-hidden"
         initial={{ y: animateIn ? '100%' : 0 }}
         animate={{ y: exiting ? '100%' : 0 }}
         transition={{ type: 'spring', stiffness: 320, damping: 32 }}
@@ -133,6 +132,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const advance = () => {
     if (allDone) { setDoneOpen(true); return }
     setDoneAnim(true)
+    // Remember when each step was done, for streaks and the Projects dashboard
+    logStepDone({ garmentId: id, step: completedUntil, action: steps[completedUntil].action })
     setTimeout(() => {
       setDoneAnim(false)
       if (isLast) {
@@ -172,7 +173,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <motion.div
-      className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-bg rounded-t-3xl overflow-hidden shadow-modal"
+      className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-background rounded-t-3xl overflow-hidden"
       initial={{ y: animateIn ? '100%' : 0 }}
       animate={{ y: exiting ? '100%' : 0 }}
       transition={{ type: 'spring', stiffness: 320, damping: 32 }}
@@ -184,7 +185,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
             <button
               onClick={() => setSizeSheetOpen(true)}
               aria-label={`Size ${sizeLabel(size)}. Change size`}
-              className="inline-flex items-center gap-1 h-7 pl-2.5 pr-2 rounded-(--radius) border border-rim bg-surface text-caption font-semibold text-ink-2 hover:bg-surface-2 active:scale-90 transition duration-150"
+              className="inline-flex items-center gap-1 h-8 pl-3 pr-2.5 rounded-full bg-glass text-xs font-medium text-foreground tabular-nums hover:bg-white transition-colors duration-150"
             >
               {sizeLabel(size)}
               <IconChevronDown size={12} />
@@ -193,7 +194,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
               onClick={printPattern}
               aria-label="Print pattern"
               title="Print pattern"
-              className="w-7 h-7 rounded-(--radius) border border-rim bg-surface text-ink-2 flex items-center justify-center hover:bg-surface-2 active:scale-90 transition duration-150"
+              className="w-8 h-8 rounded-full bg-glass text-foreground flex items-center justify-center hover:bg-white transition-colors duration-150"
             >
               <IconPrinter size={14} />
             </button>
@@ -212,7 +213,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
       <CompletionDialog garment={garment} open={doneOpen} onClose={() => setDoneOpen(false)} />
 
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-3 overflow-hidden p-3 pt-0">
         {size && <GuideSidePanel
           key={runId}
           steps={steps}
@@ -222,21 +223,20 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
           allDone={allDone}
           onNext={advance}
           onPrev={goBack}
-          onExit={() => router.push('/home')}
           onPreview={preview}
         />}
 
         {/* Right 2/3: canvas (on phones: a fixed-height strip above the steps) */}
-        <div className="order-1 md:order-none h-[34vh] shrink-0 md:h-auto md:flex-1 flex flex-row overflow-hidden">
+        <div className="order-1 md:order-none h-[32vh] shrink-0 md:h-auto md:flex-1 flex flex-row overflow-hidden">
 
           {/* Canvas column */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 relative px-5 py-2 min-h-0">
+            <div className="flex-1 relative min-h-0 rounded-(--radius) bg-card overflow-hidden">
               {allDone ? (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="w-full h-full flex flex-col items-center justify-center gap-4 bg-surface-2 rounded-3xl text-center px-6"
+                  className="w-full h-full flex flex-col items-center justify-center gap-4 text-center px-6"
                 >
                   <div className="w-28 h-28 md:w-36 md:h-36 rounded-(--radius) bg-muted flex items-center justify-center p-6 md:p-8">
                     <GarmentArt name={garment.name} className="w-full h-full" />
@@ -295,7 +295,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
             {/* Instructions for the step on the canvas (desktop; phones read them in the list) */}
             {!allDone && (
-              <div className="hidden md:block shrink-0 px-5 pb-5 pt-1">
+              <div className="hidden md:block shrink-0 pt-3">
                 <StepInstruction
                   step={step}
                   index={viewStep}

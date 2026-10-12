@@ -65,7 +65,7 @@ function StatusMessage({
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="status-dismiss -my-1 -mr-1 flex size-8 shrink-0 items-center justify-center self-center rounded-(--radius) outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="status-dismiss -my-1 -mr-1 flex size-8 shrink-0 items-center justify-center self-center rounded-(--radius) outline-none transition-colors"
         >
           <IconCircleX className="size-5" stroke={1.5} />
         </button>

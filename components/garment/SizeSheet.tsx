@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { IconBulb, IconColorSwatch } from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
@@ -40,9 +40,11 @@ export default function SizeSheet({ garment, open, onClose, initialSize, onConfi
   const fabric = tshirtFabrics[0]
 
   // Re-sync each time the sheet opens
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
     if (open) setSize(initialSize && garment.sizes.includes(initialSize) ? initialSize : null)
-  }, [open, initialSize, garment.sizes])
+  }
 
   const isChange = !!progress
   const changed = isChange && size !== null && size !== progress.size
@@ -122,7 +124,7 @@ export default function SizeSheet({ garment, open, onClose, initialSize, onConfi
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="gap-5 sm:max-w-md">
+        <DialogContent className="gap-6 sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>
@@ -142,7 +144,7 @@ export default function SizeSheet({ garment, open, onClose, initialSize, onConfi
           <DrawerDescription>{description}</DrawerDescription>
         </DrawerHeader>
         <div className="overflow-y-auto px-4 pt-2">{body}</div>
-        <DrawerFooter className="pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{confirmButton}</DrawerFooter>
+        <DrawerFooter className="pt-4 pb-safe">{confirmButton}</DrawerFooter>
       </DrawerContent>
     </Drawer>
   )

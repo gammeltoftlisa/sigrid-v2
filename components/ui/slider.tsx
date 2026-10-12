@@ -7,8 +7,12 @@ function Slider({
   value,
   min = 0,
   max = 100,
+  thumbLabels,
   ...props
-}: SliderPrimitive.Root.Props) {
+}: SliderPrimitive.Root.Props & {
+  /** Accessible name for each thumb, e.g. ["Lowest price", "Highest price"] */
+  thumbLabels?: string[]
+}) {
   const _values = Array.isArray(value)
     ? value
     : Array.isArray(defaultValue)
@@ -40,6 +44,8 @@ function Slider({
           <SliderPrimitive.Thumb
             data-slot="slider-thumb"
             key={index}
+            // A single slider can be named with aria-label on the root; the thumb is what gets focus
+            aria-label={thumbLabels?.[index] ?? props["aria-label"]}
             className="relative block size-3 shrink-0 rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow] select-none after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50"
           />
         ))}

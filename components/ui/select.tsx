@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "cn"
-import { IconSelector, IconCheck, IconChevronUp, IconChevronDown } from "@tabler/icons-react"
+import { IconCheck, IconChevronUp, IconChevronDown } from "@tabler/icons-react"
 
 const Select = SelectPrimitive.Root
 
@@ -48,7 +48,7 @@ function SelectTrigger({
       {children}
       <SelectPrimitive.Icon
         render={
-          <IconSelector className="pointer-events-none size-4 text-muted-foreground" />
+          <IconChevronDown className="pointer-events-none size-4 text-muted-foreground" stroke={1.75} />
         }
       />
     </SelectPrimitive.Trigger>
@@ -59,10 +59,10 @@ function SelectContent({
   className,
   children,
   side = "bottom",
-  sideOffset = 4,
-  align = "center",
+  sideOffset = 6,
+  align = "start",
   alignOffset = 0,
-  alignItemWithTrigger = true,
+  alignItemWithTrigger = false,
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<

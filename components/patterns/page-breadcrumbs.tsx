@@ -18,7 +18,8 @@ export interface Crumb {
 }
 
 /**
- * Where you are in the app, on every screen: small caps, quiet, the current page in ink.
+ * Where you are in the app, on every screen: quiet earlier steps with a soft hover,
+ * clear chevrons, the current page in ink.
  * The first crumb is always Home; the last is the page itself.
  */
 export function PageBreadcrumbs({
