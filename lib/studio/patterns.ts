@@ -19,18 +19,39 @@ export interface BodySize {
   hips: number | null
 }
 
-export interface PieceSize {
-  width: number | null
-  length: number | null
+/**
+ * A pattern piece is described from top to bottom by measurement lines
+ * ("Shoulder", "Bust", "Waist", "Hem"): for each size, how far down from the
+ * top edge the line is and how wide the piece is there. The outline is drawn
+ * through those widths, mirrored around the middle.
+ */
+export interface PieceLine {
+  id: string
+  label: string
 }
+
+export interface LineSize {
+  /** cm from the top edge; the first line is the top edge itself (0) */
+  down: number | null
+  /** Width of the piece at this line, in cm */
+  width: number | null
+}
+
+/** The lines every new piece starts with */
+export const TOP_LINE = 'top'
+export const BOTTOM_LINE = 'bottom'
 
 export interface StudioPiece {
   id: string
   label: string
   name: string
   shape: 'rectangle' | 'trapezoid'
-  /** Width and length in cm, for every size */
-  bySize: PerSize<PieceSize>
+  /** Cut on the fold: the drawing shows the half piece, with the fold on the left */
+  onFold: boolean
+  /** Measurement lines, top to bottom */
+  lines: PieceLine[]
+  /** For every size: each line's position and width */
+  bySize: PerSize<Record<string, LineSize>>
   /** The outline drawn in the guide: the base size, kept in step by withDerived() */
   dims: PieceDims
   quantity: number
@@ -78,6 +99,8 @@ export interface StudioPattern {
   seamAllowance: number
   pieces: StudioPiece[]
   steps: StudioStep[]
+  /** The icon chosen for each section, by section name (see components/studio/section-icons) */
+  sectionIcons: Record<string, string>
   messages: StudioMessage[]
   status: 'draft' | 'ready'
   updatedAt: number
@@ -103,6 +126,7 @@ const defaults = (): Omit<StudioPattern, 'id' | 'updatedAt'> => ({
   seamAllowance: 1.5,
   pieces: [],
   steps: [],
+  sectionIcons: {},
   messages: [],
   status: 'draft',
 })
@@ -116,9 +140,19 @@ const normalize = (saved: Saved): StudioPattern => {
   // Patterns saved before sizes had their own numbers: the old single numbers become the base size
   const oldMeters = saved.fabric?.meters
   if (oldMeters && Object.keys(p.fabric.metersBySize ?? {}).length === 0) p.fabric.metersBySize = { [base]: oldMeters }
-  p.pieces = p.pieces.map((piece) =>
-    piece.bySize ? piece : { ...piece, bySize: piece.dims?.height ? { [base]: { width: piece.dims.topWidth, length: piece.dims.height } } : {} },
-  )
+  p.pieces = p.pieces.map((piece) => {
+    if (piece.lines) return piece
+    // Older pieces were a width and a length per size: they become a top and a bottom line
+    type Old = { width?: number | null; length?: number | null }
+    const old = (piece.bySize ?? {}) as PerSize<Old>
+    const fromDims = piece.dims?.height ? { [base]: { width: piece.dims.topWidth, length: piece.dims.height } } : {}
+    const src: PerSize<Old> = Object.keys(old).length ? old : fromDims
+    const bySize: PerSize<Record<string, LineSize>> = {}
+    for (const [size, v] of Object.entries(src) as [StandardSize, Old][]) {
+      bySize[size] = { [TOP_LINE]: { down: 0, width: v.width ?? null }, [BOTTOM_LINE]: { down: v.length ?? null, width: v.width ?? null } }
+    }
+    return { ...piece, onFold: false, lines: defaultLines(), bySize }
+  })
   return withDerived(p)
 }
 
@@ -186,14 +220,66 @@ export function withDerived(p: StudioPattern): StudioPattern {
   return {
     ...p,
     pieces: p.pieces.map((piece) => {
-      const b = piece.bySize[base]
-      const w = b?.width ?? 0
-      return { ...piece, shape: 'rectangle', dims: { topWidth: w, bottomWidth: w, height: b?.length ?? 0 } }
+      const o = outline(piece, base)
+      if (!o) return { ...piece, dims: { topWidth: 0, bottomWidth: 0, height: 0 } }
+      const top = o[0].width
+      const bottom = o[o.length - 1].width
+      return { ...piece, shape: top === bottom ? 'rectangle' : 'trapezoid', dims: { topWidth: top, bottomWidth: bottom, height: o[o.length - 1].down } }
     }),
   }
 }
 
-const roundTo = (n: number, step: number) => Math.round(n / step) * step
+export const defaultLines = (): PieceLine[] => [
+  { id: TOP_LINE, label: 'Top' },
+  { id: BOTTOM_LINE, label: 'Hem' },
+]
+
+/** A line's numbers in one size; the top line always sits at 0 */
+export function lineAt(piece: StudioPiece, size: StandardSize, lineId: string): LineSize {
+  const v = piece.bySize[size]?.[lineId] ?? { down: null, width: null }
+  return lineId === piece.lines[0]?.id ? { ...v, down: 0 } : v
+}
+
+/** Every line has a width, and every line below the top sits further down than the one above */
+export function pieceSizeDone(piece: StudioPiece, size: StandardSize): boolean {
+  let last = -1
+  for (const line of piece.lines) {
+    const v = lineAt(piece, size, line.id)
+    if (!v.width || v.down === null || v.down <= last) return false
+    last = v.down
+  }
+  return piece.lines.length >= 2
+}
+
+/** The piece's outline in one size, top to bottom, once it is complete */
+export function outline(piece: StudioPiece, size: StandardSize): { label: string; down: number; width: number }[] | null {
+  if (!pieceSizeDone(piece, size)) return null
+  return piece.lines.map((l) => {
+    const v = lineAt(piece, size, l.id)
+    return { label: l.label, down: v.down!, width: v.width! }
+  })
+}
+
+/** Fills the empty numbers in the other sizes from one finished size (widths by girth, positions by height) */
+export function gradePiece(p: StudioPattern, piece: StudioPiece, from: StandardSize): StudioPiece {
+  if (!pieceSizeDone(piece, from)) return piece
+  const bySize = { ...piece.bySize }
+  for (const size of p.sizes) {
+    if (size === from) continue
+    const g = gradeFrom(p, from, size)
+    const row = { ...(bySize[size] ?? {}) }
+    for (const line of piece.lines) {
+      const src = lineAt(piece, from, line.id)
+      const cur = row[line.id] ?? { down: null, width: null }
+      row[line.id] = { down: cur.down ?? g.length(src.down!), width: cur.width ?? g.width(src.width!) }
+    }
+    bySize[size] = row
+  }
+  return { ...piece, bySize }
+}
+
+// toFixed(2) clears float noise like 2.3000000000000003
+const roundTo = (n: number, step: number) => Number((Math.round(n / step) * step).toFixed(2))
 
 /**
  * Estimates the other sizes from one filled-in size, using the size chart:
@@ -215,7 +301,6 @@ export function gradeFrom(p: StudioPattern, from: StandardSize, size: StandardSi
 
 /** A size with every number filled in */
 export const bodyDone = (b?: BodySize) => !!b && !!b.bust && !!b.waist && !!b.hips
-export const pieceSizeDone = (s?: PieceSize) => !!s && !!s.width && !!s.length
 
 /** The guide as a sewer gets it, for the real guide components */
 export function toGuide(pattern: Pick<StudioPattern, 'id' | 'pieces' | 'steps' | 'seamAllowance'>): GarmentGuide {
@@ -261,7 +346,9 @@ function pieceFromDraft(p: DeepPartial<DraftPiece> | undefined): StudioPiece | n
     label: p.label ?? '?',
     name: p.name,
     shape: p.shape ?? (top === bottom ? 'rectangle' : 'trapezoid'),
-    bySize: { M: { width: top, length: p.height } },
+    onFold: false,
+    lines: defaultLines(),
+    bySize: { M: { [TOP_LINE]: { down: 0, width: top }, [BOTTOM_LINE]: { down: p.height, width: bottom } } },
     dims: { topWidth: top, bottomWidth: bottom, height: p.height },
     quantity: p.quantity ?? 1,
     grainLine: p.grainLine ?? 'vertical',
@@ -304,7 +391,7 @@ export function toRequestPattern(p: StudioPattern): WriteRequest['pattern'] {
     name: p.name,
     category: p.category,
     difficulty: p.difficulty,
-    pieces: p.pieces.map(({ dims, bySize: _bySize, ...rest }) => (void _bySize, { ...rest, ...dims })),
+    pieces: p.pieces.map(({ dims, bySize: _b, lines: _l, onFold: _f, ...rest }) => (void [_b, _l, _f], { ...rest, ...dims })),
     steps: p.steps.map(({ id, ...rest }) => (void id, rest)),
   }
 }
@@ -373,6 +460,26 @@ export function moveStep(steps: StudioStep[], index: number, dir: -1 | 1): { ste
   return { steps: next, index: target }
 }
 
+/**
+ * Moves a step so it sits before position `to` (counted in the list before the
+ * move; `steps.length` is the end) and joins `group`. Used by drag and drop and
+ * by "Move to section".
+ */
+export function moveStepTo(steps: StudioStep[], from: number, to: number, group: string): { steps: StudioStep[]; index: number } {
+  const moving = { ...steps[from], group }
+  const rest = steps.filter((_, i) => i !== from)
+  const at = to > from ? to - 1 : to
+  rest.splice(at, 0, moving)
+  return { steps: rest, index: at }
+}
+
+/** A copy of a step right after it */
+export function duplicateStep(steps: StudioStep[], index: number): StudioStep[] {
+  const next = [...steps]
+  next.splice(index + 1, 0, { ...steps[index], id: nextId(steps) })
+  return next
+}
+
 export function renameSection(steps: StudioStep[], section: Section, name: string): StudioStep[] {
   const set = new Set(section.indices)
   return steps.map((s, i) => (set.has(i) ? { ...s, group: name } : s))
@@ -387,6 +494,8 @@ export function newPiece(pieces: StudioPiece[]): StudioPiece {
     label,
     name: 'New piece',
     shape: 'rectangle',
+    onFold: false,
+    lines: defaultLines(),
     bySize: {},
     dims: { topWidth: 0, bottomWidth: 0, height: 0 },
     quantity: 1,

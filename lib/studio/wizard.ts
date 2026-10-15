@@ -10,9 +10,9 @@ export type WizardStep = 'basics' | 'describe' | 'sizes' | 'materials' | 'pieces
 export const WIZARD: { id: WizardStep; title: string; short: string; intro: string }[] = [
   { id: 'basics', title: 'Name and price', short: 'Name', intro: 'What the pattern is called and what it costs.' },
   { id: 'describe', title: 'Describe the garment', short: 'Describe', intro: 'A few sentences and the time it takes. This is what sewers read before they buy.' },
-  { id: 'sizes', title: 'Sizes', short: 'Sizes', intro: 'Choose the sizes, then check the body measurements each size is made for. Sewers pick their size from this chart.' },
-  { id: 'materials', title: 'What sewers need', short: 'Materials', intro: 'The fabric and how much of it for each size, everything else to buy, and the tools.' },
-  { id: 'pieces', title: 'Pattern pieces', short: 'Pieces', intro: 'Each piece as a simple outline, with its width and length in every size.' },
+  { id: 'materials', title: 'What sewers need', short: 'Materials', intro: 'The fabric, everything else to buy, and the tools.' },
+  { id: 'sizes', title: 'Sizes', short: 'Sizes', intro: 'The sizes, the body measurements each size is made for, and the fabric each size needs.' },
+  { id: 'pieces', title: 'Pattern pieces', short: 'Pieces', intro: 'Each piece measured from top to bottom, in every size.' },
   { id: 'guide', title: 'Write the sewing steps', short: 'Steps', intro: 'Write each step right where sewers will read it.' },
   { id: 'publish', title: 'Check and publish', short: 'Publish', intro: 'Look it over as a sewer will see it.' },
 ]
@@ -31,18 +31,19 @@ export function missingFor(step: WizardStep, p: StudioPattern): string[] {
       break
     case 'sizes':
       if (p.sizes.length === 0) out.push('the sizes')
-      else if (p.sizes.some((s) => !bodyDone(p.sizeChart[s]))) out.push('measurements for every size')
+      else {
+        if (p.sizes.some((s) => !bodyDone(p.sizeChart[s]))) out.push('measurements for every size')
+        if (p.sizes.some((s) => !p.fabric.metersBySize[s])) out.push('fabric for every size')
+      }
       break
     case 'materials':
       if (!p.fabric.name.trim()) out.push('the fabric')
-      if (p.sizes.length === 0) out.push('the sizes first')
-      else if (p.sizes.some((s) => !p.fabric.metersBySize[s])) out.push('how much fabric for every size')
       break
     case 'pieces':
       if (p.pieces.length === 0) out.push('at least one piece')
       else {
         if (p.pieces.some((x) => !x.name.trim() || x.name === 'New piece')) out.push('a name for every piece')
-        if (p.pieces.some((x) => p.sizes.some((s) => !pieceSizeDone(x.bySize[s])))) out.push('the width and length of every piece in every size')
+        if (p.pieces.some((x) => p.sizes.some((s) => !pieceSizeDone(x, s)))) out.push('the measurements of every piece in every size')
       }
       break
     case 'guide':

@@ -21,6 +21,7 @@ export function InlineText({
   label,
   placeholder,
   className,
+  inheritFont,
 }: {
   value: string
   onChange: (v: string) => void
@@ -28,9 +29,12 @@ export function InlineText({
   label: string
   placeholder?: string
   className?: string
+  /** Take the type style of the element around it (e.g. sit inside an h1) */
+  inheritFont?: boolean
 }) {
   return (
     <input
+      style={inheritFont ? { font: 'inherit', letterSpacing: 'inherit' } : undefined}
       aria-label={label}
       data-empty={!value}
       value={value}
@@ -113,7 +117,7 @@ export function InlineNumber({
           setLast(n)
           onChange(n)
         }}
-        className={cn(base, 'mx-0 w-auto tabular-nums')}
+        className={cn(base, 'mx-0 w-auto tabular-nums', unitBefore && 'pl-0.5')}
       />
       {unit && !unitBefore && <span className="text-muted-foreground">{unit}</span>}
     </span>

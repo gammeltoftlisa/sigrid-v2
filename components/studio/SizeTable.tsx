@@ -6,7 +6,6 @@ import { IconWand } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Inset } from '@/components/patterns/inset'
 import type { StandardSize } from '@/lib/types'
 
 export interface SizeColumn<K extends string> {
@@ -16,7 +15,7 @@ export interface SizeColumn<K extends string> {
 }
 
 /** A number cell that keeps what you type ("1," or empty) and reports a number or null */
-function CellNumber({ value, onChange, label }: { value: number | null | undefined; onChange: (n: number | null) => void; label: string }) {
+export function CellNumber({ value, onChange, label }: { value: number | null | undefined; onChange: (n: number | null) => void; label: string }) {
   const [text, setText] = useState(value ? String(value) : '')
   const [last, setLast] = useState(value ?? null)
   if ((value ?? null) !== last) {
@@ -74,7 +73,7 @@ export function SizeTable<K extends string>({
 
   return (
     <div className="flex flex-col gap-2">
-      <Inset className="overflow-x-auto p-1">
+      <div className="overflow-x-auto">
         <Table aria-label={label}>
           <TableHeader>
             <TableRow>
@@ -102,7 +101,7 @@ export function SizeTable<K extends string>({
             ))}
           </TableBody>
         </Table>
-      </Inset>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground" aria-live="polite">
           {empty === 0 ? 'Every size is filled in.' : empty === 1 ? '1 size still needs numbers.' : `${empty} sizes still need numbers.`}
