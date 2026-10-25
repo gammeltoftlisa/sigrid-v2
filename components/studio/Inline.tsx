@@ -23,6 +23,7 @@ export function InlineText({
   className,
   inheritFont,
   required,
+  todo,
 }: {
   value: string
   onChange: (v: string) => void
@@ -32,6 +33,8 @@ export function InlineText({
   className?: string
   /** Needed before the pattern can be sold: shows a basting line while empty */
   required?: boolean
+  /** Lets the "Still to fill in" bar jump here */
+  todo?: string
   /** Take the type style of the element around it (e.g. sit inside an h1) */
   inheritFont?: boolean
 }) {
@@ -41,6 +44,7 @@ export function InlineText({
       aria-label={label}
       aria-required={required || undefined}
       data-required={required || undefined}
+      data-todo={todo}
       data-empty={!value}
       value={value}
       placeholder={placeholder}
@@ -58,6 +62,7 @@ export function InlineTextarea({
   placeholder,
   className,
   required,
+  todo,
 }: {
   value: string
   onChange: (v: string) => void
@@ -65,12 +70,14 @@ export function InlineTextarea({
   placeholder?: string
   className?: string
   required?: boolean
+  todo?: string
 }) {
   return (
     <textarea
       aria-label={label}
       aria-required={required || undefined}
       data-required={required || undefined}
+      data-todo={todo}
       data-empty={!value}
       value={value}
       rows={1}
@@ -94,6 +101,7 @@ export function InlineNumber({
   unitBefore,
   className,
   required,
+  todo,
 }: {
   value: number | null
   onChange: (n: number | null) => void
@@ -105,6 +113,7 @@ export function InlineNumber({
   unitBefore?: boolean
   className?: string
   required?: boolean
+  todo?: string
 }) {
   const [text, setText] = useState(value ? String(value) : '')
   const [last, setLast] = useState(value)
@@ -119,6 +128,7 @@ export function InlineNumber({
         aria-label={unit ? `${label} (${unit})` : label}
         aria-required={required || undefined}
         data-required={required || undefined}
+        data-todo={todo}
         data-empty={!text}
         inputMode="decimal"
         value={text}

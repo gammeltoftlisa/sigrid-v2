@@ -2,13 +2,14 @@
 
 import { cn } from 'cn'
 
-import type { StudioPattern } from '@/lib/studio/patterns'
-import { WIZARD, isDone } from '@/lib/studio/wizard'
+import { TodoMark } from './Inline'
+import { todoItems } from './TodoBar'
 
-/** "Draft · 4/6" or "Ready to publish": opens the last check */
+import type { StudioPattern } from '@/lib/studio/patterns'
+
+/** "• 4 to fill in", "All filled in" or "Ready to publish": opens the last check */
 export function StatusChip({ pattern, onClick, className }: { pattern: StudioPattern; onClick: () => void; className?: string }) {
-  const parts = WIZARD.filter((w) => w.id !== 'publish')
-  const done = parts.filter((w) => isDone(w.id, pattern)).length
+  const left = todoItems(pattern).length
   return (
     <button
       type="button"
@@ -19,7 +20,7 @@ export function StatusChip({ pattern, onClick, className }: { pattern: StudioPat
         className,
       )}
     >
-      {pattern.status === 'ready' ? 'Ready to publish' : `Draft · ${done}/${parts.length} done`}
+      {pattern.status === 'ready' ? 'Ready to publish' : left === 0 ? 'All filled in · Check' : <TodoMark>{`${left} to fill in`}</TodoMark>}
     </button>
   )
 }

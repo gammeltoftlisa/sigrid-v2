@@ -13,6 +13,7 @@ import { baseSize, plural, type StudioPattern } from '@/lib/studio/patterns'
 import { isDone } from '@/lib/studio/wizard'
 import type { Difficulty, GarmentCategory } from '@/lib/types'
 import { InlineNumber, InlinePick, InlineText, InlineTextarea, TodoMark } from './Inline'
+import { TodoBar } from './TodoBar'
 
 type Change = (patch: Partial<StudioPattern>) => void
 
@@ -98,13 +99,14 @@ export function StudioPatternPage({
                 <InlineText
                   inheritFont
                   required
+                  todo="name"
                   label="Pattern name"
                   value={pattern.name === 'Untitled pattern' ? '' : pattern.name}
                   placeholder="Pattern name"
                   onChange={(name) => onChange({ name: name || 'Untitled pattern' })}
                 />
               </h1>
-              <InlineNumber required label="Price" unit="€" unitBefore value={pattern.price} placeholder="0" onChange={(price) => onChange({ price })} className="shrink-0 text-xl font-medium" />
+              <InlineNumber required todo="price" label="Price" unit="€" unitBefore value={pattern.price} placeholder="0" onChange={(price) => onChange({ price })} className="shrink-0 text-xl font-medium" />
             </div>
             <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
               <InlinePick label="Difficulty" text={pattern.difficulty} placeholder="Difficulty">
@@ -118,6 +120,7 @@ export function StudioPatternPage({
               ·
               <InlineText
                 required
+                todo="time"
                 label="Time to sew"
                 value={pattern.estimatedTime}
                 placeholder="time, e.g. 3–4 hours"
@@ -147,6 +150,7 @@ export function StudioPatternPage({
             </p>
             <InlineTextarea
               required
+              todo="description"
               label="Description"
               value={pattern.description}
               placeholder="Describe the garment in two or three sentences: the shape, what makes it nice, what you learn."
@@ -154,6 +158,8 @@ export function StudioPatternPage({
               className="-mx-1 max-w-prose text-sm text-muted-foreground"
             />
           </header>
+
+          <TodoBar pattern={pattern} onOpen={(what) => (what === 'sizes' ? onOpenSizes() : what === 'pieces' ? onOpenPieces() : onOpenGuide())} />
 
           {/* One container, like the garment page: rows scroll inside, the main button stays at its bottom */}
           <Panel className="md:min-h-0" bodyClassName="md:overflow-y-auto" footer={<div className="hidden md:block">{cta}</div>} label="Overview">
@@ -167,7 +173,7 @@ export function StudioPatternPage({
             />
             <EditRow
               leading={<StepDot state="upcoming"><IconShirt className="size-3.5" /></StepDot>}
-              title={<InlineText required label="Fabric" value={fabric.name} placeholder="Fabric, e.g. linen or cotton poplin" onChange={(name) => onChange({ fabric: { ...fabric, name } })} />}
+              title={<InlineText required todo="fabric" label="Fabric" value={fabric.name} placeholder="Fabric, e.g. linen or cotton poplin" onChange={(name) => onChange({ fabric: { ...fabric, name } })} />}
               detail={
                 <>
                   <span>{meters ? `${meters} m for ${base}` : 'Fabric per size is set under sizes'} · Find fabric</span>
