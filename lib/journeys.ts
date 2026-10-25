@@ -23,7 +23,7 @@ const kindOf = (groups: string[], steps: SewingStep2D[]): JourneyKind => {
  * journey feels trivial (first into the next group, or into the previous
  * one if it's the last group).
  */
-export function groupIntoJourneys(steps: SewingStep2D[]): JourneySection[] {
+export function groupIntoJourneys(steps: SewingStep2D[], { keepSections = false }: { keepSections?: boolean } = {}): JourneySection[] {
   type Run = { groups: string[]; stepIndices: number[] }
   const runs: Run[] = []
   steps.forEach((s, i) => {
@@ -31,6 +31,16 @@ export function groupIntoJourneys(steps: SewingStep2D[]): JourneySection[] {
     if (last && last.groups[last.groups.length - 1] === s.group) last.stepIndices.push(i)
     else runs.push({ groups: [s.group], stepIndices: [i] })
   })
+
+  // A maker's own sections are shown exactly as they made them
+  if (keepSections) {
+    return runs.map((r) => ({
+      key: r.groups.join('+'),
+      title: r.groups[0],
+      kind: kindOf(r.groups, r.stepIndices.map((i) => steps[i])),
+      stepIndices: r.stepIndices,
+    }))
+  }
 
   const merged: Run[] = []
   let carry: Run | null = null

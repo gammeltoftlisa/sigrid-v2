@@ -34,9 +34,10 @@ const slideVariants = {
 export default function GuidePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const garment = getGarmentById(id)
-  const guide = getGarmentGuide(id)
+  // Stable per id: a published pattern's guide is rebuilt from storage on every call
+  const guide = useMemo(() => getGarmentGuide(id), [id])
   const router = useRouter()
-  const journeys = useMemo(() => (guide ? groupIntoJourneys(guide.steps) : []), [guide])
+  const journeys = useMemo(() => (guide ? groupIntoJourneys(guide.steps, { keepSections: guide.keepSections }) : []), [guide])
 
   // completedUntil: index of the step currently being worked on (0..n-1 are done)
   const [completedUntil, setCompletedUntil] = useState(0)
@@ -207,6 +208,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
       <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-3 overflow-hidden p-3 pt-0">
         {size && <GuideSidePanel
+          keepSections={guide.keepSections}
+          sectionIcons={guide.sectionIcons}
           key={runId}
           steps={steps}
           completedUntil={completedUntil}

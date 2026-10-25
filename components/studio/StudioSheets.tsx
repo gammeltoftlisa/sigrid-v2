@@ -3,7 +3,10 @@
 import { IconCheck, IconCircleCheck } from '@tabler/icons-react'
 import { cn } from 'cn'
 
+import Link from 'next/link'
+
 import { Button } from '@/components/ui/button'
+import { PUBLISHED_PREFIX } from '@/lib/published'
 import { PanelSheet } from '@/components/patterns/panel-sheet'
 import { StatusMessage } from '@/components/patterns/status-message'
 import type { StudioPattern } from '@/lib/studio/patterns'
@@ -46,14 +49,19 @@ export function CheckSheet({
       title="Check and publish"
       description="Everything sewers need, in one list."
       footer={
-        pattern.status === 'ready' ? (
-          <Button size="lg" variant="outline" className="ml-auto" onClick={() => onChange({ status: 'draft' })}>
-            Back to draft
-          </Button>
+        pattern.publishedAt ? (
+          <>
+            <Button size="lg" variant="outline" onClick={() => onChange({ publishedAt: null })}>
+              Unpublish
+            </Button>
+            <Button size="lg" className="ml-auto" nativeButton={false} render={<Link href={`/garment/${PUBLISHED_PREFIX}${pattern.id}`} />}>
+              View product page
+            </Button>
+          </>
         ) : (
           <Button size="lg" className="ml-auto" disabled={left.length > 0} onClick={onMarkReady}>
             <IconCircleCheck data-icon="inline-start" />
-            Mark ready to publish
+            Publish
           </Button>
         )
       }
@@ -61,13 +69,13 @@ export function CheckSheet({
       <Body>
         {left.length > 0 ? (
           <StatusMessage status="warning" title={left.length === 1 ? 'One part still needs something' : `${left.length} parts still need something`} />
-        ) : pattern.status === 'ready' ? (
-          <StatusMessage status="success" title="Ready to publish">
-            Changing anything puts it back to draft.
+        ) : pattern.publishedAt ? (
+          <StatusMessage status="success" title="Published">
+            It’s in Explore with its own product page. Changes you make show there straight away.
           </StatusMessage>
         ) : (
           <StatusMessage status="info" title="Everything is filled in">
-            Mark it ready when you have looked it over.
+            Publish it when you have looked it over. It appears in Explore with its own product page.
           </StatusMessage>
         )}
         <ol className="flex flex-col gap-2">

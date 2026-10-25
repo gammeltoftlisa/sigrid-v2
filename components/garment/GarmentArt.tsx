@@ -116,9 +116,12 @@ export function GarmentImage({
   artClassName,
   sizes = '(min-width: 1280px) 20vw, (min-width: 768px) 30vw, 50vw',
   priority,
+  photoSrc: ownPhoto,
   children,
 }: {
   name: string
+  /** A photo of this exact garment (e.g. the maker's own), used instead of the stock photo */
+  photoSrc?: string
   className?: string
   artClassName?: string
   /** How wide the image is shown, so the browser picks the right size */
@@ -127,12 +130,13 @@ export function GarmentImage({
   priority?: boolean
   children?: React.ReactNode
 }) {
-  const photo = garmentPhoto(name)
+  const stock = garmentPhoto(name)
+  const photo = ownPhoto ? { src: ownPhoto, alt: name, own: true as const } : stock
   return (
     <div className={cn('garment-image relative flex items-center justify-center overflow-hidden bg-muted', className)}>
       {photo ? (
         <Image
-          src={photoSrc(photo)}
+          src={'own' in photo ? photo.src : photoSrc(photo)}
           alt={photo.alt}
           fill
           sizes={sizes}

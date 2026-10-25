@@ -64,6 +64,7 @@ export function InlineTextarea({
   className,
   required,
   todo,
+  inheritFont,
 }: {
   value: string
   onChange: (v: string) => void
@@ -72,9 +73,12 @@ export function InlineTextarea({
   className?: string
   required?: boolean
   todo?: string
+  /** Take the type style of the element around it (e.g. sit inside an h1) */
+  inheritFont?: boolean
 }) {
   return (
     <textarea
+      style={inheritFont ? { font: 'inherit', letterSpacing: 'inherit' } : undefined}
       aria-label={label}
       aria-required={required || undefined}
       data-required={required || undefined}

@@ -29,7 +29,8 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const fabricNeed = getFabricNeed(id)
   const creator = garment.isCreator && garment.creatorId ? creators.find((c) => c.id === garment.creatorId) : null
   const [following, setFollowing] = useState(false)
-  const guide = getGarmentGuide(id)
+  // Stable per id: a published pattern's guide is rebuilt from storage on every call
+  const guide = useMemo(() => getGarmentGuide(id), [id])
   const tools = useMemo(() => (guide ? [...new Set(guide.steps.flatMap((s) => (s.tool ? [s.tool] : [])))] : []), [guide])
   const totalSteps = guide?.steps.length ?? 0
 
@@ -87,7 +88,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         <PageBreadcrumbs
           items={[
             { label: 'Home', href: '/home' },
-            ...(garment.isCreator ? [{ label: 'Explore', href: '/explore' }] : []),
+            ...(garment.isCreator || garment.published ? [{ label: 'Explore', href: '/explore' }] : []),
             { label: garment.name },
           ]}
         />
@@ -103,8 +104,9 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             artClassName="max-w-72 md:max-w-sm"
             sizes="(min-width: 768px) 50vw, 100vw"
             priority
+            photoSrc={garment.photo}
           >
-            <PhotoLabel className="absolute bottom-3 left-3 normal-case tracking-normal">Inspiration photo · Unsplash</PhotoLabel>
+            {!garment.photo && <PhotoLabel className="absolute bottom-3 left-3 normal-case tracking-normal">Inspiration photo · Unsplash</PhotoLabel>}
           </GarmentImage>
         </div>
 

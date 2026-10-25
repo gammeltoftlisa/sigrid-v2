@@ -94,6 +94,8 @@ export interface StudioFabric {
 }
 
 export interface StudioPattern {
+  /** When it was published: it's in Explore with its own product page until unpublished (edits show live) */
+  publishedAt?: number | null
   /** A photo of the made garment, shown on the pattern list; optional */
   photo?: string
   id: string

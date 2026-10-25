@@ -22,6 +22,7 @@ import { Panel } from '@/components/patterns/panel'
 import { StatusMessage } from '@/components/patterns/status-message'
 import { useMounted } from '@/hooks/use-mounted'
 import { garments, getGarmentById } from '@/lib/data'
+import { isPublishedId, listPublishedGarments } from '@/lib/published'
 import { addToBag, removeFromBag, useBag } from '@/lib/fabric/bag'
 import { cleanSearch, departments, getDepartment } from '@/lib/fabric/catalog'
 import { activeFilterCount, noFilters, passes, type FabricFilters } from '@/lib/fabric/filters'
@@ -63,7 +64,9 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
 
   // No garment in the link: the whole store. With one: exactly what that garment needs.
   const mode: Mode = params.garment ? 'For a garment' : 'All fabric'
-  const garment = params.garment ? getGarmentById(params.garment) : null
+  // A pattern published from the studio lives in this browser: wait until mounted to look it up
+  const garment = params.garment && (!isPublishedId(params.garment) || mounted) ? getGarmentById(params.garment) : null
+  const garmentOptions = [...garments, ...(mounted ? listPublishedGarments() : [])]
   const need = garment ? getFabricNeed(garment.id) : null
   // A recommended fabric to narrow to, or null for all of them
   const choice = need?.choices.find((c) => c.id === params.choice) ?? null
@@ -88,7 +91,9 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   // What to ask the API for
   // A garment asks for all its recommended fabrics at once; picking one filters on the page
   const apiQuery = garment
-    ? `garment=${garment.id}`
+    ? garment.published
+      ? `q=${encodeURIComponent(need!.choices[0].query)}`
+      : `garment=${garment.id}`
     : department
       ? `department=${department.id}`
       : search
@@ -222,9 +227,9 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
               action={clearAction}
             >
               <div className="flex items-center gap-2">
-                <GarmentThumb id={garment.id} name={garment.name} />
+                <GarmentThumb id={garment.id} name={garment.name} photoSrc={garment.photo} />
                 <Select
-                  items={garments.map((g) => ({ value: g.id, label: g.name }))}
+                  items={garmentOptions.map((g) => ({ value: g.id, label: g.name }))}
                   value={garment.id}
                   onValueChange={(v) => router.replace(hrefFor({ garment: v as string }), { scroll: false })}
                 >
@@ -232,7 +237,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {garments.map((g) => (
+                    {garmentOptions.map((g) => (
                       <SelectItem key={g.id} value={g.id}>
                         {g.name}
                       </SelectItem>

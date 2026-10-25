@@ -116,8 +116,8 @@ export default function StudioGuidePage({ params }: { params: Promise<{ id: stri
         onChange={change}
         onOpen={openPart}
         onMarkReady={() => {
-          change({ status: 'ready' })
-          toast.success('Ready to publish.')
+          change({ status: 'ready', publishedAt: Date.now() })
+          toast.success('Published. It’s in Explore now.')
         }}
       />
     </>

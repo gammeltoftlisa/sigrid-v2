@@ -4,6 +4,7 @@ import { use } from 'react'
 import { usePathname } from 'next/navigation'
 import GarmentDetailBg from '@/components/garment/GarmentDetailBg'
 import { AppShell } from '@/components/patterns/app-nav'
+import { PublishedGate } from '@/components/garment/published-gate'
 
 export default function GarmentIdLayout({
   children,
@@ -20,13 +21,17 @@ export default function GarmentIdLayout({
 
   if (isFlowPage) {
     return (
-      <>
+      <PublishedGate id={id}>
         {/* The garment page shows behind the sewing sheet */}
         <GarmentDetailBg garmentId={id} />
         {children}
-      </>
+      </PublishedGate>
     )
   }
-  if (isPrintPage) return children
-  return <AppShell>{children}</AppShell>
+  if (isPrintPage) return <PublishedGate id={id}>{children}</PublishedGate>
+  return (
+    <AppShell>
+      <PublishedGate id={id}>{children}</PublishedGate>
+    </AppShell>
+  )
 }

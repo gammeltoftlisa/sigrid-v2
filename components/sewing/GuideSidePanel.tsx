@@ -8,6 +8,7 @@ import {
 } from '@tabler/icons-react'
 import type { SewingStep2D } from '@/lib/types'
 import { groupIntoJourneys, type JourneyKind } from '@/lib/journeys'
+import { SECTION_ICONS, type SectionIconKey } from '@/components/studio/section-icons'
 import { StatusDot, progressStateOf, stepRowClass, stepTextClass, type ProgressState } from '@/components/legacy/progress'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -36,15 +37,18 @@ interface Props {
   onPrev: () => void
   /** Preview a step in the canvas without changing completion status */
   onPreview: (index: number) => void
+  /** Show the maker's sections as they made them, with their icons (patterns from the studio) */
+  keepSections?: boolean
+  sectionIcons?: Record<string, string>
 }
 
-export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast, allDone, onNext, onPrev, onPreview }: Props) {
+export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast, allDone, onNext, onPrev, onPreview, keepSections, sectionIcons }: Props) {
   const [openStep, setOpenStep] = useState<number>(viewStep)
   const [showTip, setShowTip] = useState(false)
   const activeRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const viewingOther = !allDone && viewStep !== completedUntil
-  const journeys = useMemo(() => groupIntoJourneys(steps), [steps])
+  const journeys = useMemo(() => groupIntoJourneys(steps, { keepSections }), [steps, keepSections])
   const journeyKeyAt = (i: number) => journeys.find((j) => j.stepIndices.includes(i))?.key
   // Only one journey is open at a time — starting with the one you're working on
   const [openJourney, setOpenJourney] = useState<string | null>(() => journeyKeyAt(completedUntil) ?? null)
@@ -243,7 +247,8 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
           const current   = !complete && j.stepIndices[0] <= completedUntil
           const jState: ProgressState = complete ? 'done' : current ? 'active' : 'upcoming'
           const expanded  = openJourney === j.key
-          const Icon      = JOURNEY_ICONS[j.kind]
+          const own       = sectionIcons?.[j.title]
+          const Icon      = own && own in SECTION_ICONS ? SECTION_ICONS[own as SectionIconKey].Icon : JOURNEY_ICONS[j.kind]
 
           return (
             <div

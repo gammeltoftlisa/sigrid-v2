@@ -247,8 +247,9 @@ function MeasureArrow({ edge, ox, oy, pw, ph, dims }: { edge: string; ox: number
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function PatternCanvas({ piece, action, annotation, fabricSide, measurements, title }: Props) {
-  // Prepare step — no piece
-  if (!piece || action === 'prepare') {
+  // No piece to show (a prepare step without one): an illustration instead. A step that names a
+  // piece always shows it, whatever kind of step it is.
+  if (!piece) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-surface-2 rounded-3xl">
         {action === 'prepare' ? (

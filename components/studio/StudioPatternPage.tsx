@@ -1,12 +1,15 @@
 'use client'
 
-import { IconChevronDown, IconListCheck, IconPrinter, IconRuler2, IconScissors, IconShirt, IconShoppingBag } from '@tabler/icons-react'
+import { useRef, useState } from 'react'
+import { toast } from 'sonner'
+import { IconCamera, IconChevronDown, IconListCheck, IconPrinter, IconRuler2, IconScissors, IconShirt, IconShoppingBag } from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
+import { photoFromFile } from '@/lib/studio/photo'
 import { ActionBar } from '@/components/patterns/action-bar'
 import { ChipGroup } from '@/components/patterns/chip-group'
 import { Panel, PanelRow, StepDot } from '@/components/patterns/panel'
-import { PhotoLabel } from '@/components/patterns/photo-label'
 import { GarmentImage } from '@/components/garment/GarmentArt'
 import { TOOLS, type Tool } from '@/components/sewing/tools'
 import { baseSize, plural, type StudioPattern } from '@/lib/studio/patterns'
@@ -86,8 +89,9 @@ export function StudioPatternPage({
           className="mx-4 mt-4 aspect-product rounded-(--radius) sm:mx-6 md:m-0 md:aspect-auto md:h-full"
           artClassName="max-w-72 md:max-w-sm"
           sizes="(min-width: 768px) 50vw, 100vw"
+          photoSrc={pattern.photo}
         >
-          <PhotoLabel className="absolute bottom-3 left-3 normal-case tracking-normal">Photos can be added later</PhotoLabel>
+          <PhotoControls photo={pattern.photo} onChange={(photo) => onChange({ photo })} />
         </GarmentImage>
       </div>
 
@@ -96,14 +100,15 @@ export function StudioPatternPage({
           <header className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-4">
               <h1 className="min-w-0 flex-1">
-                <InlineText
+                {/* Wraps onto more lines like the real title, instead of being cut off */}
+                <InlineTextarea
                   inheritFont
                   required
                   todo="name"
                   label="Pattern name"
                   value={pattern.name === 'Untitled pattern' ? '' : pattern.name}
                   placeholder="Pattern name"
-                  onChange={(name) => onChange({ name: name || 'Untitled pattern' })}
+                  onChange={(name) => onChange({ name: name.replace(/\n/g, ' ') || 'Untitled pattern' })}
                 />
               </h1>
               <InlineNumber required todo="price" label="Price" unit="€" unitBefore value={pattern.price} placeholder="0" onChange={(price) => onChange({ price })} className="shrink-0 text-xl font-medium" />
@@ -230,6 +235,38 @@ export function StudioPatternPage({
         {/* Phones: the main button stays reachable, as on the garment page */}
         <ActionBar>{cta}</ActionBar>
       </div>
+    </div>
+  )
+}
+
+/** Add, change or remove the garment photo, on the photo itself */
+function PhotoControls({ photo, onChange }: { photo?: string; onChange: (photo: string | undefined) => void }) {
+  const input = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const pick = async (file?: File) => {
+    if (!file) return
+    setBusy(true)
+    try {
+      onChange(await photoFromFile(file))
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'This photo couldn’t be added.')
+    } finally {
+      setBusy(false)
+      if (input.current) input.current.value = ''
+    }
+  }
+  return (
+    <div className="absolute bottom-3 left-3 flex flex-wrap gap-2">
+      <Button variant="outline" size="sm" disabled={busy} onClick={() => input.current?.click()}>
+        {busy ? <Spinner data-icon="inline-start" /> : <IconCamera data-icon="inline-start" />}
+        {photo ? 'Change photo' : 'Add a photo'}
+      </Button>
+      {photo && (
+        <Button variant="outline" size="sm" onClick={() => onChange(undefined)}>
+          Remove
+        </Button>
+      )}
+      <input ref={input} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => pick(e.target.files?.[0])} />
     </div>
   )
 }

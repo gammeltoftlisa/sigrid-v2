@@ -108,8 +108,8 @@ export default function StudioPage() {
                   title={p.name}
                   detail={`${plural(p.steps.length, 'step')} · ${plural(p.pieces.length, 'piece')} · edited ${updated(p.updatedAt)}`}
                   meta={
-                    <StatusBadge status={p.status === 'ready' ? 'success' : 'neutral'}>
-                      {p.status === 'ready' ? 'Ready' : `Draft · ${done} of ${toFill.length} steps done`}
+                    <StatusBadge status={p.publishedAt ? 'success' : 'neutral'}>
+                      {p.publishedAt ? 'Published' : `Draft · ${done} of ${toFill.length} steps done`}
                     </StatusBadge>
                   }
                 />

@@ -94,8 +94,8 @@ export default function StudioPatternRoute({ params }: { params: Promise<{ id: s
         onChange={change}
         onOpen={openPart}
         onMarkReady={() => {
-          change({ status: 'ready' })
-          toast.success('Ready to publish.')
+          change({ status: 'ready', publishedAt: Date.now() })
+          toast.success('Published. It’s in Explore now.')
         }}
       />
     </AppShell>

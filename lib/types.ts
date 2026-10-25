@@ -17,6 +17,10 @@ export interface Garment {
   fits?: FitType[]
   sizes: StandardSize[]
   description: string
+  /** A photo of this exact garment (a published studio pattern's own photo) */
+  photo?: string
+  /** Published from the pattern studio on this device */
+  published?: boolean
 }
 
 export interface Creator {
@@ -160,4 +164,8 @@ export interface GarmentGuide {
   garmentId: string
   pieces: GuidePiece[]
   steps: SewingStep2D[]
+  /** Show the maker's sections exactly (patterns from the studio); built-in guides merge one-step sections */
+  keepSections?: boolean
+  /** The maker's icon per section title (keys of the studio's section icons) */
+  sectionIcons?: Record<string, string>
 }

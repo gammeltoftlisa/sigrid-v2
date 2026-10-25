@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { use, useMemo, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { IconChevronLeft, IconPrinter } from '@tabler/icons-react'
 import { getGarmentById, getGarmentGuide, standardSizes } from '@/lib/data'
@@ -110,7 +110,8 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
   const router = useRouter()
   const searchParams = useSearchParams()
   const garment = getGarmentById(id)
-  const guide = getGarmentGuide(id)
+  // Stable per id: a published pattern's guide is rebuilt from storage on every call
+  const guide = useMemo(() => getGarmentGuide(id), [id])
 
   // Size comes from the link (so the right size always prints), else the saved project
   const [size, setSize] = useState<StandardSize | null>(null)

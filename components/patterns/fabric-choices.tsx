@@ -9,10 +9,10 @@ import { GarmentImage } from '@/components/garment/GarmentArt'
 import type { FabricChoice } from '@/lib/fabric/needs'
 
 /** A small photo of the garment, linking back to its page. Sits in front of the garment field. */
-export function GarmentThumb({ id, name }: { id: string; name: string }) {
+export function GarmentThumb({ id, name, photoSrc }: { id: string; name: string; photoSrc?: string }) {
   return (
     <Link href={`/garment/${id}`} aria-label={`${name}: open the garment`} className="group/tile shrink-0 rounded-(--image-radius) outline-none">
-      <GarmentImage name={name} sizes="64px" className="garment-thumb rounded-(--image-radius)" artClassName="max-w-8 hover-zoom" />
+      <GarmentImage name={name} photoSrc={photoSrc} sizes="64px" className="garment-thumb rounded-(--image-radius)" artClassName="max-w-8 hover-zoom" />
     </Link>
   )
 }

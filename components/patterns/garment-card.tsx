@@ -23,6 +23,7 @@ export function GarmentCard({
   tag,
   lead,
   description,
+  photoSrc,
   className,
 }: {
   href: string
@@ -39,6 +40,8 @@ export function GarmentCard({
   lead?: boolean
   /** Shown on the lead tile only */
   description?: string
+  /** The garment's own photo, instead of the stock one */
+  photoSrc?: string
   className?: string
 }) {
   const details = [difficulty, time].filter(Boolean).join(' · ')
@@ -49,6 +52,7 @@ export function GarmentCard({
     >
       <GarmentImage
         name={name}
+        photoSrc={photoSrc}
         sizes={lead ? '(min-width: 1280px) 40vw, (min-width: 768px) 60vw, 100vw' : undefined}
         className="product-image aspect-product p-6 sm:p-8"
         artClassName={cn('hover-zoom', lead ? 'max-w-72' : 'max-w-40')}
