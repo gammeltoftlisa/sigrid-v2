@@ -13,7 +13,7 @@ import { curveCm, gradePiece, lineAt, pieceSizeDone, type LineSize, type StudioP
 import type { StandardSize } from '@/lib/types'
 import { InlineNumber, InlineText } from './Inline'
 import { PieceShape } from './PieceShape'
-import { PIECE_SHAPES, applyShape, isBlankPiece } from '@/lib/studio/piece-shapes'
+import { PIECE_SHAPES, applyShape, isBlankPiece, type PieceShapeStart } from '@/lib/studio/piece-shapes'
 import { CellNumber } from './SizeTable'
 import { arrowStep } from '@/lib/studio/arrow-step'
 
@@ -45,8 +45,6 @@ export function PieceEditor({
 }) {
   const foldId = useId()
   const blank = isBlankPiece(piece)
-  const [picking, setPicking] = useState(false)
-  const showPicker = blank || picking
   const { sizes } = pattern
   const index = pattern.pieces.findIndex((p) => p.id === piece.id)
   const doneSizes = sizes.filter((s) => pieceSizeDone(piece, s))
@@ -137,45 +135,12 @@ export function PieceEditor({
             )}
           </div>
 
-          {showPicker && (
-            /* One slim, optional row: start from a shape, or just type the numbers below */
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-1 text-xs text-muted-foreground">
-              {blank ? 'Start from a shape:' : 'Replace with:'}
-              {PIECE_SHAPES.map((shape) => (
-                <Button
-                  key={shape.id}
-                  variant="ghost"
-                  size="xs"
-                  title={blank ? undefined : 'Replaces the numbers in every size'}
-                  onClick={() => {
-                    onPiece(applyShape(piece, shape, size))
-                    setPicking(false)
-                  }}
-                >
-                  <span aria-hidden className="block h-4 w-3.5">
-                    <PieceShape piece={applyShape(piece, shape, 'M')} sizes={['M']} active="M" bare />
-                  </span>
-                  {shape.name}
-                </Button>
-              ))}
-              {!blank && (
-                <Button variant="ghost" size="xs" className="text-muted-foreground" onClick={() => setPicking(false)}>
-                  Cancel
-                </Button>
-              )}
-            </div>
-          )}
-
           {/* One plain row per line across the piece: where it is, and how wide the piece is there */}
           <div className="flex flex-col gap-2">
-            {!showPicker && (
-              <div className="flex items-baseline justify-between gap-3 px-1">
-                <p className="text-sm text-muted-foreground">Change the numbers to fit your pattern.</p>
-                <Button variant="ghost" size="xs" className="shrink-0" onClick={() => setPicking(true)}>
-                  Change shape
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center justify-between gap-3 px-1">
+              <p className="text-sm text-muted-foreground">{blank ? 'Type the numbers of your piece.' : 'Change the numbers to fit your pattern.'}</p>
+              <ShapeMenu blank={blank} onPick={(shape) => onPiece(applyShape(piece, shape, size))} piece={piece} />
+            </div>
             <ol aria-label={`Measurements of ${piece.name}, size ${size}`} className="flex flex-col gap-2">
               {piece.lines.map((line, i) => {
                 const v = lineAt(piece, size, line.id)
@@ -263,6 +228,38 @@ export function PieceEditor({
         </>
       )}
     </section>
+  )
+}
+
+/** A small "Start from a shape" button; the shapes only show in its menu */
+function ShapeMenu({ blank, piece, onPick }: { blank: boolean; piece: StudioPiece; onPick: (shape: PieceShapeStart) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger render={<Button variant="ghost" size="xs" className="shrink-0 text-muted-foreground" />}>
+        {blank ? 'Start from a shape' : 'Change shape'}
+        <IconChevronDown data-icon="inline-end" />
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-56 gap-1 p-1.5">
+        {!blank && <p className="px-2 pt-1 pb-1.5 text-xs text-muted-foreground">Replaces the numbers in every size.</p>}
+        {PIECE_SHAPES.map((shape) => (
+          <button
+            key={shape.id}
+            type="button"
+            onClick={() => {
+              onPick(shape)
+              setOpen(false)
+            }}
+            className="glass-inset-hover flex items-center gap-3 rounded-(--control-radius) px-2 py-1.5 text-left text-sm"
+          >
+            <span aria-hidden className="block h-7 w-6 shrink-0">
+              <PieceShape piece={applyShape(piece, shape, 'M')} sizes={['M']} active="M" bare />
+            </span>
+            {shape.name}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   )
 }
 
