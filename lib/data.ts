@@ -352,6 +352,7 @@ export const tshirtFabrics: FabricOption[] = [
 ]
 
 export const standardSizes: Record<StandardSize, UserMeasurements> = {
+  XXS: { bust: 76,  waist: 58, hips: 83,  height: 162, inseam: 73 },
   XS:  { bust: 80,  waist: 62, hips: 87,  height: 164, inseam: 74 },
   S:   { bust: 84,  waist: 66, hips: 91,  height: 166, inseam: 76 },
   M:   { bust: 88,  waist: 70, hips: 95,  height: 168, inseam: 78 },

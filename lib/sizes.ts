@@ -1,9 +1,10 @@
 import type { StandardSize } from './types'
 
-export const allSizes: StandardSize[] = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+export const allSizes: StandardSize[] = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL']
 
 // EU numeric equivalent shown next to each letter size, e.g. "XS / 34"
 export const euSizes: Record<StandardSize, number> = {
+  XXS: 32,
   XS: 34,
   S: 36,
   M: 38,

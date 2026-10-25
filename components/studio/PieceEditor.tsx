@@ -139,7 +139,7 @@ export function PieceEditor({
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3 px-1">
               <p className="text-sm text-muted-foreground">{blank ? 'Type the numbers of your piece.' : 'Change the numbers to fit your pattern.'}</p>
-              <ShapeMenu blank={blank} onPick={(shape) => onPiece(applyShape(piece, shape, size))} piece={piece} />
+              <ShapeMenu blank={blank} onPick={(shape) => onPiece(applyShape(piece, shape, sizes))} piece={piece} />
             </div>
             <ol aria-label={`Measurements of ${piece.name}, size ${size}`} className="flex flex-col gap-2">
               {piece.lines.map((line, i) => {
@@ -241,7 +241,7 @@ function ShapeMenu({ blank, piece, onPick }: { blank: boolean; piece: StudioPiec
         <IconChevronDown data-icon="inline-end" />
       </PopoverTrigger>
       <PopoverContent align="end" className="w-56 gap-1 p-1.5">
-        {!blank && <p className="px-2 pt-1 pb-1.5 text-xs text-muted-foreground">Replaces the numbers in every size.</p>}
+        <p className="px-2 pt-1 pb-1.5 text-xs text-muted-foreground">{blank ? 'Fills in every size with standard numbers.' : 'Replaces the numbers in every size.'}</p>
         {PIECE_SHAPES.map((shape) => (
           <button
             key={shape.id}
@@ -253,7 +253,7 @@ function ShapeMenu({ blank, piece, onPick }: { blank: boolean; piece: StudioPiec
             className="glass-inset-hover flex items-center gap-3 rounded-(--control-radius) px-2 py-1.5 text-left text-sm"
           >
             <span aria-hidden className="block h-7 w-6 shrink-0">
-              <PieceShape piece={applyShape(piece, shape, 'M')} sizes={['M']} active="M" bare />
+              <PieceShape piece={applyShape(piece, shape, ['M'])} sizes={['M']} active="M" bare />
             </span>
             {shape.name}
           </button>
