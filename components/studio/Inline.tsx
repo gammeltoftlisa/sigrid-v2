@@ -5,6 +5,7 @@ import { IconChevronDown } from '@tabler/icons-react'
 import { cn } from 'cn'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { arrowStep } from '@/lib/studio/arrow-step'
 
 /**
  * Write-in-place fields for the studio: they look like the text a sewer will
@@ -139,6 +140,13 @@ export function InlineNumber({
           const n = parse(e.target.value)
           setLast(n)
           onChange(n)
+        }}
+        onKeyDown={(e) => {
+          const n = arrowStep(e, text, { min: 0 })
+          if (n === null) return
+          setText(n ? String(n) : '')
+          setLast(n || null)
+          onChange(n || null)
         }}
         className={cn(base, 'mx-0 w-auto tabular-nums', unitBefore && 'pl-0.5')}
       />

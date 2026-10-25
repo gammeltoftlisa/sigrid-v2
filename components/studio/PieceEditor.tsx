@@ -15,6 +15,7 @@ import { InlineNumber, InlineText } from './Inline'
 import { PieceShape } from './PieceShape'
 import { PIECE_SHAPES, applyShape, isBlankPiece } from '@/lib/studio/piece-shapes'
 import { CellNumber } from './SizeTable'
+import { arrowStep } from '@/lib/studio/arrow-step'
 
 /**
  * The measurements of one pattern piece, in the guide's instruction panel.
@@ -300,6 +301,12 @@ function CurveField({ label, value, onChange }: { label: string; value: number; 
           setText(e.target.value)
           const n = parseFloat(e.target.value.replace(',', '.').replace('−', '-'))
           onChange(Number.isFinite(n) && n !== 0 ? n : null)
+        }}
+        onKeyDown={(e) => {
+          const n = arrowStep(e, text)
+          if (n === null) return
+          setText(String(n))
+          onChange(n !== 0 ? n : null)
         }}
         data-slot="input"
         className="h-8 w-16 rounded-(--control-radius) px-2 text-sm tabular-nums"

@@ -5,6 +5,7 @@ import { IconWand } from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { arrowStep } from '@/lib/studio/arrow-step'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { StandardSize } from '@/lib/types'
 
@@ -35,6 +36,13 @@ export function CellNumber({ value, onChange, label }: { value: number | null | 
       onChange={(e) => {
         setText(e.target.value)
         const n = parse(e.target.value)
+        setLast(n)
+        onChange(n)
+      }}
+      onKeyDown={(e) => {
+        const n = arrowStep(e, text, { min: 0.5 })
+        if (n === null) return
+        setText(String(n))
         setLast(n)
         onChange(n)
       }}
