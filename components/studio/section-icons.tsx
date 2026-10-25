@@ -67,6 +67,26 @@ export function sectionIconKey(section: Section, steps: StudioStep[], chosen?: R
   if (picked && picked in SECTION_ICONS) return picked as SectionIconKey
   const preset = SECTION_PRESETS.find((p) => p.title.toLowerCase() === section.group.toLowerCase())
   if (preset) return preset.icon
+  // Guess from the section's name, so sections don't all get the same icon
+  const name = section.group.toLowerCase()
+  const byName: [RegExp, SectionIconKey][] = [
+    [/pocket|welt/, 'layers'],
+    [/button/, 'check'],
+    [/collar|neck/, 'shirt'],
+    [/pleat|fold|placket/, 'fold'],
+    [/back|slit/, 'brush'],
+    [/assembl|join|attach|together/, 'join'],
+    [/hem/, 'ruler'],
+    [/press|iron/, 'iron'],
+    [/mark|chalk/, 'pencil'],
+    [/cut/, 'scissors'],
+    [/pin|baste/, 'pin'],
+    [/hand|tack/, 'needle'],
+    [/wash|prepare/, 'droplet'],
+    [/finish|done/, 'hanger'],
+  ]
+  const named = byName.find(([re]) => re.test(name))
+  if (named) return named[1]
   const actions = section.indices.map((i) => steps[i].action)
   if (actions.includes('cut')) return 'scissors'
   if (actions.every((a) => a === 'prepare')) return 'droplet'

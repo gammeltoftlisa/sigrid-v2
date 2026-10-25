@@ -42,11 +42,15 @@ export function SizesForm({ pattern, onChange }: Props) {
     onChange({ sizes: sorted, sizeChart: chart })
   }
   const fabric = pattern.fabric
-  const baseMeters = fabric.metersBySize[base]
+  // Fill from M when it's there, otherwise from the nearest size the maker did fill in
+  // (a pattern often gives the fabric for one size only, e.g. S)
+  const order = [...sizes].sort((a, b) => Math.abs(allSizes.indexOf(a) - allSizes.indexOf(base)) - Math.abs(allSizes.indexOf(b) - allSizes.indexOf(base)))
+  const from = order.find((s) => fabric.metersBySize[s])
+  const fromMeters = from ? fabric.metersBySize[from] : undefined
   const fillMeters = () => {
-    if (!baseMeters) return
+    if (!from || !fromMeters) return
     const next = { ...fabric.metersBySize }
-    for (const s of sizes) if (!next[s]) next[s] = gradeFrom(pattern, base, s).meters(baseMeters)
+    for (const s of sizes) if (!next[s]) next[s] = gradeFrom(pattern, from, s).meters(fromMeters)
     onChange({ fabric: { ...fabric, metersBySize: next } })
   }
   const setCell = (s: StandardSize, key: keyof BodySize, n: number | null) =>
@@ -57,7 +61,6 @@ export function SizesForm({ pattern, onChange }: Props) {
       <Chips<StandardSize>
         multiple
         label="Sizes"
-        hint="Every size you choose needs its own measurements."
         options={allSizes.map((s) => ({ value: s, label: s }))}
         value={sizes}
         onValueChange={setSizes}
@@ -94,7 +97,8 @@ export function SizesForm({ pattern, onChange }: Props) {
             value={(s) => fabric.metersBySize[s]}
             onChange={(s, _k, n) => onChange({ fabric: { ...fabric, metersBySize: { ...fabric.metersBySize, [s]: n } } })}
             onFill={fillMeters}
-            canFill={!!baseMeters}
+            canFill={!!fromMeters}
+            fillFrom={from}
           />
         </Field>
       )}

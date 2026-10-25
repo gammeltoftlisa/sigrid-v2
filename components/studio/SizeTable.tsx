@@ -68,6 +68,7 @@ export function SizeTable<K extends string>({
   onChange,
   onFill,
   canFill,
+  fillFrom,
 }: {
   /** What the table holds, for screen readers and the fill button */
   label: string
@@ -79,6 +80,8 @@ export function SizeTable<K extends string>({
   /** Fills the empty sizes from the base size */
   onFill?: () => void
   canFill?: boolean
+  /** The size the fill starts from, when it isn't the base */
+  fillFrom?: StandardSize
 }) {
   const empty = sizes.filter((s) => columns.some((c) => !value(s, c.key))).length
 
@@ -120,7 +123,7 @@ export function SizeTable<K extends string>({
         {onFill && sizes.length > 1 && empty > 0 && (
           <Button variant="outline" size="sm" disabled={!canFill} onClick={onFill}>
             <IconWand data-icon="inline-start" />
-            {canFill ? `Fill the other sizes from ${base}` : `Fill in ${base} first`}
+            {canFill ? `Fill the other sizes from ${fillFrom ?? base}` : 'Fill in one size first'}
           </Button>
         )}
       </div>

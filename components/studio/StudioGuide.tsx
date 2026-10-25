@@ -154,9 +154,16 @@ export function StudioGuide({
   const setSection = (sec: Section, next: { title?: string; icon?: SectionIconKey }) => {
     const icons = { ...pattern.sectionIcons }
     const title = next.title ?? sec.group
-    const icon = next.icon ?? sectionIconKey(sec, steps, icons)
-    if (title !== sec.group) delete icons[sec.group]
-    icons[title] = icon
+    if (next.icon) {
+      if (title !== sec.group) delete icons[sec.group]
+      icons[title] = next.icon
+    } else if (title !== sec.group) {
+      // Renamed by typing: an icon the maker picked moves with the section; one that was only
+      // guessed from the old name is dropped, so the new name gets its own guess
+      const kept = icons[sec.group]
+      delete icons[sec.group]
+      if (kept && kept !== sectionIconKey(sec, steps)) icons[title] = kept
+    }
     onChange({ steps: title !== sec.group ? renameSection(steps, sec, title) : steps, sectionIcons: icons })
   }
   const deleteStep = (index = current) => {
