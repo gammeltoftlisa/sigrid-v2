@@ -112,7 +112,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
         transition={{ type: 'spring', stiffness: 320, damping: 32 }}
         onAnimationComplete={() => { if (exiting) router.push(`/garment/${id}`) }}
       >
-        <FlowHeader garmentName={garment.name} onClose={() => setExiting(true)} />
+        <FlowHeader garmentName={garment.name} garmentId={id} onClose={() => setExiting(true)} />
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
           <IconNeedleThread className="size-10 text-muted-foreground" stroke={1.5} aria-hidden />
           <h2 className="text-3xl">This guide is still <em className="display-italic">being written</em></h2>

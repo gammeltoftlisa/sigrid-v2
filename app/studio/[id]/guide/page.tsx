@@ -79,7 +79,12 @@ export default function StudioGuidePage({ params }: { params: Promise<{ id: stri
     <>
       {/* The same sheet as the sewer's guide */}
       <div className="guide-sheet fixed inset-x-0 top-3 bottom-0 flex flex-col overflow-hidden rounded-t-pane-lg">
-        <FlowHeader garmentName={pattern.name} onClose={() => router.push(`/studio/${id}`)}>
+        <FlowHeader
+          garmentName={pattern.name}
+          garmentHref={`/studio/${id}`}
+          trail={[{ label: 'Pattern studio', href: '/studio' }]}
+          onClose={() => router.push(`/studio/${id}`)}
+        >
           <div className="flex shrink-0 items-center gap-1">
             <Button variant="outline" size="sm" className="tabular-nums" onClick={() => setSizesOpen(true)} aria-label={`Sizes: ${sizeText}. Edit sizes`}>
               {sizeText}
