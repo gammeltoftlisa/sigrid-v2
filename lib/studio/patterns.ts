@@ -94,6 +94,8 @@ export interface StudioFabric {
 }
 
 export interface StudioPattern {
+  /** A photo of the made garment, shown on the pattern list; optional */
+  photo?: string
   id: string
   name: string
   category: GarmentCategory
