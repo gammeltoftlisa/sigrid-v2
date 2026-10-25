@@ -5,7 +5,6 @@ import { IconCheck, IconPlus, IconTrash, IconWand, IconX } from '@tabler/icons-r
 
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ChipGroup } from '@/components/patterns/chip-group'
 import { StatusMessage } from '@/components/patterns/status-message'
 import { gradePiece, lineAt, pieceSizeDone, type LineSize, type StudioPattern, type StudioPiece } from '@/lib/studio/patterns'
@@ -127,66 +126,55 @@ export function PieceEditor({
             </p>
           </div>
 
-          <div className="overflow-x-auto">
-            <Table aria-label={`Measurements of ${piece.name}, size ${size}`}>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Line</TableHead>
-                  <TableHead>
-                    From top <span className="font-normal text-muted-foreground">(cm)</span>
-                  </TableHead>
-                  <TableHead>
-                    Width <span className="font-normal text-muted-foreground">(cm)</span>
-                  </TableHead>
-                  <TableHead className="w-10">
-                    <span className="sr-only">Remove</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {piece.lines.map((line, i) => {
-                  const v = lineAt(piece, size, line.id)
-                  const first = i === 0
-                  const last = i === piece.lines.length - 1
-                  return (
-                    <TableRow key={line.id}>
-                      <TableCell className="min-w-36">
-                        <InlineText
-                          label={`Name of measurement line ${i + 1}`}
-                          value={line.label}
-                          placeholder={first ? 'Top' : last ? 'Hem' : 'e.g. Waist'}
-                          onChange={(label) => renameLine(line.id, label)}
-                          className="text-sm font-medium"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {first ? (
-                          <span className="px-3 text-sm text-muted-foreground tabular-nums">0</span>
-                        ) : (
-                          <CellNumber label={`${line.label || `Line ${i + 1}`} from top, size ${size} (cm)`} value={v.down} onChange={(n) => setCell(line.id, 'down', n)} />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <CellNumber label={`${line.label || `Line ${i + 1}`} width, size ${size} (cm)`} value={v.width} onChange={(n) => setCell(line.id, 'width', n)} />
-                      </TableCell>
-                      <TableCell>
-                        {!first && !last && (
-                          <Button variant="ghost" size="icon-sm" aria-label={`Remove line ${line.label || i + 1}`} onClick={() => removeLine(line.id)}>
-                            <IconX />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+          {/* One plain row per line across the piece: where it is, and how wide the piece is there */}
+          <div className="flex flex-col gap-2">
+            <p className="px-1 text-sm text-muted-foreground">
+              Measure straight across the piece. Add a line wherever the width changes, like at the waist.
+            </p>
+            <ol aria-label={`Measurements of ${piece.name}, size ${size}`} className="flex flex-col gap-2">
+              {piece.lines.map((line, i) => {
+                const v = lineAt(piece, size, line.id)
+                const first = i === 0
+                const last = i === piece.lines.length - 1
+                const name = line.label || (first ? 'Top edge' : last ? 'Hem' : `Line ${i + 1}`)
+                return (
+                  <li key={line.id} data-slot="inset" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-(--control-radius) px-3 py-2">
+                    <InlineText
+                      label={`Name of measurement line ${i + 1}`}
+                      value={line.label}
+                      placeholder={first ? 'Top edge' : last ? 'Hem' : 'Name it, e.g. Waist'}
+                      onChange={(label) => renameLine(line.id, label)}
+                      className="field-sizing-content w-auto min-w-24 text-sm font-medium"
+                    />
+                    <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                      {!first && (
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-20"><CellNumber label={`${name}: cm down from the top, size ${size}`} value={v.down} onChange={(n) => setCell(line.id, 'down', n)} /></span>
+                          cm down
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-20"><CellNumber label={`${name}: width in cm, size ${size}`} value={v.width} onChange={(n) => setCell(line.id, 'width', n)} /></span>
+                        cm wide
+                      </span>
+                      {!first && !last ? (
+                        <Button variant="ghost" size="icon-sm" aria-label={`Remove ${name}`} onClick={() => removeLine(line.id)}>
+                          <IconX />
+                        </Button>
+                      ) : (
+                        <span aria-hidden className="size-7" />
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={addLine}>
               <IconPlus data-icon="inline-start" />
-              Add a measurement line
+              Add a line
             </Button>
             {sizes.length > 1 && doneSizes.length < sizes.length && (
               <Button variant="outline" size="sm" disabled={!sizeDone} onClick={() => onPiece(gradePiece(pattern, piece, size))}>
