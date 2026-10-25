@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Switch } from '@/components/ui/switch'
 import { ChipGroup } from '@/components/patterns/chip-group'
 import { StatusMessage } from '@/components/patterns/status-message'
-import { gradePiece, lineAt, pieceSizeDone, type LineSize, type SideCurve, type StudioPattern, type StudioPiece } from '@/lib/studio/patterns'
+import { curveCm, gradePiece, lineAt, pieceSizeDone, type LineSize, type StudioPattern, type StudioPiece } from '@/lib/studio/patterns'
 import type { StandardSize } from '@/lib/types'
 import { InlineNumber, InlineText } from './Inline'
 import { PieceShape } from './PieceShape'
@@ -53,7 +53,7 @@ export function PieceEditor({
     row[lineId] = { ...(row[lineId] ?? { down: null, width: null }), [key]: n }
     onPiece({ ...piece, bySize: { ...piece.bySize, [size]: row } })
   }
-  const setCurve = (lineId: string, curveBelow: SideCurve) => onPiece({ ...piece, lines: piece.lines.map((l) => (l.id === lineId ? { ...l, curveBelow } : l)) })
+  const setCurve = (lineId: string, curveBelow: number | null) => onPiece({ ...piece, lines: piece.lines.map((l) => (l.id === lineId ? { ...l, curveBelow } : l)) })
   const renameLine = (lineId: string, label: string) => onPiece({ ...piece, lines: piece.lines.map((l) => (l.id === lineId ? { ...l, label } : l)) })
   const addLine = () => {
     const id = `l${Date.now().toString(36)}`
@@ -239,15 +239,10 @@ export function PieceEditor({
                   </li>
                   {!last && (
                     <li className="flex items-center gap-2 pl-5 text-xs text-muted-foreground">
-                      <QuietPick
-                        label={`How the side runs below ${name}`}
-                        value={line.curveBelow ?? 'straight'}
-                        options={[
-                          { value: 'straight', glyph: 'M8 2 L8 16', text: 'Straight side' },
-                          { value: 'in', glyph: 'M10 2 Q2 9 10 16', text: 'Side curves in' },
-                          { value: 'out', glyph: 'M5 2 Q13 9 5 16', text: 'Side curves out' },
-                        ]}
-                        onChange={(c) => setCurve(line.id, c)}
+                      <CurveField
+                        label={`Curve of the side below ${name}`}
+                        value={curveCm(line.curveBelow)}
+                        onChange={(n) => setCurve(line.id, n)}
                       />
                     </li>
                   )}
@@ -272,6 +267,58 @@ export function PieceEditor({
         </>
       )}
     </section>
+  )
+}
+
+/**
+ * The curve of a side, in cm: quiet "+ Curve" while straight; then a number field where plus bows
+ * out and minus bows in. Clearing it (or the ×) makes the side straight again.
+ */
+function CurveField({ label, value, onChange }: { label: string; value: number; onChange: (n: number | null) => void }) {
+  const [open, setOpen] = useState(value !== 0)
+  const [text, setText] = useState(value ? String(value) : '')
+  if (!open) {
+    return (
+      <button type="button" aria-label={`${label}: straight. Add a curve`} onClick={() => setOpen(true)} className="glass-inset-hover -mx-1 inline-flex items-center gap-1.5 rounded-full px-2 py-1">
+        <Glyph d="M8 2 L8 16" />
+        Straight side
+        <span className="text-foreground">· Add a curve</span>
+      </button>
+    )
+  }
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+      <Glyph d={value < 0 ? 'M10 2 Q2 9 10 16' : value > 0 ? 'M5 2 Q13 9 5 16' : 'M8 2 L8 16'} />
+      <span className="font-medium text-foreground">Curve</span>
+      <input
+        aria-label={`${label}, in cm: plus curves out, minus curves in`}
+        inputMode="decimal"
+        autoFocus={value === 0}
+        value={text}
+        placeholder="0"
+        onChange={(e) => {
+          setText(e.target.value)
+          const n = parseFloat(e.target.value.replace(',', '.').replace('−', '-'))
+          onChange(Number.isFinite(n) && n !== 0 ? n : null)
+        }}
+        data-slot="input"
+        className="h-8 w-16 rounded-(--control-radius) px-2 text-sm tabular-nums"
+      />
+      cm
+      <span className="text-muted-foreground">· plus curves out, minus curves in</span>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        aria-label="Make the side straight"
+        onClick={() => {
+          setText('')
+          onChange(null)
+          setOpen(false)
+        }}
+      >
+        <IconX />
+      </Button>
+    </span>
   )
 }
 

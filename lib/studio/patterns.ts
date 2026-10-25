@@ -28,12 +28,15 @@ export interface BodySize {
 export interface PieceLine {
   id: string
   label: string
-  /** How the side runs from this line down to the next one (straight if unset) */
-  curveBelow?: SideCurve
+  /**
+   * How much the side bows between this line and the next, in cm at its middle:
+   * positive bows out (hips, a sleeve cap), negative bows in (an armhole, a waist), 0 or unset is straight
+   */
+  curveBelow?: number | null
 }
 
-/** "in" bows toward the middle of the piece (an armhole, a waist), "out" away from it (hips, a sleeve cap) */
-export type SideCurve = 'straight' | 'in' | 'out'
+/** A curve in cm; older patterns saved "in" / "out" */
+export const curveCm = (c: unknown): number => (typeof c === 'number' ? c : c === 'in' ? -3 : c === 'out' ? 3 : 0)
 
 export interface LineSize {
   /** cm from the top edge; the first line is the top edge itself (0) */

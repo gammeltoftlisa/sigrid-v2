@@ -2,7 +2,7 @@
 
 import { IconRulerMeasure } from '@tabler/icons-react'
 
-import { lineAt, outline, type StudioPiece } from '@/lib/studio/patterns'
+import { curveCm, lineAt, outline, type StudioPiece } from '@/lib/studio/patterns'
 import type { StandardSize } from '@/lib/types'
 
 const W = 360
@@ -77,13 +77,14 @@ export function PieceShape({ piece, sizes, active, bare }: { piece: StudioPiece;
     const f = (n: number) => n.toFixed(1)
     const R = o.map((l) => ({ x: xR(l.width), y: y(l.down) }))
     const L = o.map((l) => ({ x: xL(l.width), y: y(l.down) }))
-    const kindAt = (k: number) => piece.lines[o[k].line ?? k]?.curveBelow ?? 'straight'
-    // Control point of a curved side, bowed toward the middle ("in") or away from it ("out")
-    const control = (a: { x: number; y: number }, b: { x: number; y: number }, kind: 'in' | 'out') => {
+    const curveAt = (k: number) => curveCm(piece.lines[o[k].line ?? k]?.curveBelow)
+    // Control point of a curved side: a quadratic bows half as far as its control point, so it
+    // sits twice the curve away from the middle of the side; plus bows out, minus bows in
+    const control = (a: { x: number; y: number }, b: { x: number; y: number }, cm: number) => {
       const dx = b.x - a.x
       const dy = b.y - a.y
       const len = Math.hypot(dx, dy) || 1
-      const off = 0.22 * len * (kind === 'in' ? 1 : -1)
+      const off = -2 * cm * scale
       return { x: (a.x + b.x) / 2 + (-dy / len) * off, y: (a.y + b.y) / 2 + (dx / len) * off }
     }
     const firstGap = o.length > 1 ? R[1].y - R[0].y : 0
@@ -99,10 +100,10 @@ export function PieceShape({ piece, sizes, active, bare }: { piece: StudioPiece;
     } else d += ` L${f(R[0].x)},${f(R[0].y)}`
     // Down the right side
     for (let k = 0; k < o.length - 1; k++) {
-      const kind = kindAt(k)
-      if (kind === 'straight') d += ` L${f(R[k + 1].x)},${f(R[k + 1].y)}`
+      const cm = curveAt(k)
+      if (!cm) d += ` L${f(R[k + 1].x)},${f(R[k + 1].y)}`
       else {
-        const c = control(R[k], R[k + 1], kind)
+        const c = control(R[k], R[k + 1], cm)
         d += ` Q${f(c.x)},${f(c.y)} ${f(R[k + 1].x)},${f(R[k + 1].y)}`
       }
     }
@@ -111,10 +112,10 @@ export function PieceShape({ piece, sizes, active, bare }: { piece: StudioPiece;
     d += ` L${f(L[n].x)},${f(L[n].y)}`
     if (!piece.onFold) {
       for (let k = n - 1; k >= 0; k--) {
-        const kind = kindAt(k)
-        if (kind === 'straight') d += ` L${f(L[k].x)},${f(L[k].y)}`
+        const cm = curveAt(k)
+        if (!cm) d += ` L${f(L[k].x)},${f(L[k].y)}`
         else {
-          const c = control(R[k], R[k + 1], kind)
+          const c = control(R[k], R[k + 1], cm)
           d += ` Q${f(2 * left - c.x)},${f(c.y)} ${f(L[k].x)},${f(L[k].y)}`
         }
       }
@@ -165,7 +166,9 @@ export function PieceShape({ piece, sizes, active, bare }: { piece: StudioPiece;
           {/* Length, down the side */}
           {!bare && current.length > 1 && (() => {
             const last = current[current.length - 1]
-            const x = piece.onFold ? xR(Math.max(...current.map((l) => l.width))) + 18 : xL(Math.max(...current.map((l) => l.width))) - 18
+            // Clear of the widest point, including any side that curves out
+            const bulge = Math.max(0, ...piece.lines.map((l) => curveCm(l.curveBelow))) * scale
+            const x = piece.onFold ? xR(Math.max(...current.map((l) => l.width))) + 18 + bulge : xL(Math.max(...current.map((l) => l.width))) - 18 - bulge
             return (
               <g>
                 <line x1={x} x2={x} y1={y(0)} y2={y(last.down)} stroke="var(--muted-foreground)" strokeWidth={1} />

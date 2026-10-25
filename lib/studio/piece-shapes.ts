@@ -1,4 +1,4 @@
-import type { SideCurve, StudioPiece } from './patterns'
+import type { StudioPiece } from './patterns'
 import type { StandardSize } from '@/lib/types'
 
 /**
@@ -12,7 +12,7 @@ export interface PieceShapeStart {
   pieceName: string
   neckline?: 'straight' | 'scoop'
   necklineDepth?: number
-  lines: { label: string; down: number; width: number; curveBelow?: SideCurve }[]
+  lines: { label: string; down: number; width: number; curveBelow?: number }[]
 }
 
 export const PIECE_SHAPES: PieceShapeStart[] = [
@@ -32,7 +32,7 @@ export const PIECE_SHAPES: PieceShapeStart[] = [
     neckline: 'scoop',
     necklineDepth: 8,
     lines: [
-      { label: 'Shoulders', down: 0, width: 36, curveBelow: 'in' },
+      { label: 'Shoulders', down: 0, width: 36, curveBelow: -4 },
       { label: 'Underarm', down: 20, width: 46 },
       { label: 'Hem', down: 62, width: 48 },
     ],
@@ -42,7 +42,7 @@ export const PIECE_SHAPES: PieceShapeStart[] = [
     name: 'Skirt',
     pieceName: 'Skirt front',
     lines: [
-      { label: 'Waist', down: 0, width: 36, curveBelow: 'out' },
+      { label: 'Waist', down: 0, width: 36, curveBelow: 3 },
       { label: 'Hips', down: 20, width: 48 },
       { label: 'Hem', down: 60, width: 60 },
     ],
@@ -52,7 +52,7 @@ export const PIECE_SHAPES: PieceShapeStart[] = [
     name: 'Sleeve',
     pieceName: 'Sleeve',
     lines: [
-      { label: 'Top', down: 0, width: 12, curveBelow: 'out' },
+      { label: 'Top', down: 0, width: 12, curveBelow: 5 },
       { label: 'Underarm', down: 14, width: 40 },
       { label: 'Cuff', down: 45, width: 28 },
     ],
@@ -62,7 +62,7 @@ export const PIECE_SHAPES: PieceShapeStart[] = [
     name: 'Trouser leg',
     pieceName: 'Front leg',
     lines: [
-      { label: 'Waist', down: 0, width: 24, curveBelow: 'out' },
+      { label: 'Waist', down: 0, width: 24, curveBelow: 2 },
       { label: 'Crotch', down: 28, width: 32 },
       { label: 'Hem', down: 100, width: 22 },
     ],
