@@ -1,9 +1,11 @@
 'use client'
 
 import { Fragment, useId, useState } from 'react'
-import { IconCheck, IconPlus, IconTrash, IconWand, IconX } from '@tabler/icons-react'
+import { IconCheck, IconChevronDown, IconPlus, IconTrash, IconWand, IconX } from '@tabler/icons-react'
+import { cn } from 'cn'
 
 import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { ChipGroup } from '@/components/patterns/chip-group'
 import { StatusMessage } from '@/components/patterns/status-message'
@@ -216,16 +218,15 @@ export function PieceEditor({
                       )}
                     </div>
                     {first && (
-                      <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground">
-                        Neckline
-                        <ChipGroup<'straight' | 'scoop'>
+                      <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        <QuietPick
                           label="Shape of the top edge"
+                          value={piece.neckline ?? 'straight'}
                           options={[
-                            { value: 'straight', label: 'Straight' },
-                            { value: 'scoop', label: 'Scoop' },
+                            { value: 'straight', glyph: 'M2 6 L14 6', text: 'Straight top' },
+                            { value: 'scoop', glyph: 'M2 4 Q8 12 14 4', text: 'Scooped neckline' },
                           ]}
-                          value={[piece.neckline ?? 'straight']}
-                          onValueChange={([neckline]) => onPiece({ ...piece, neckline, necklineDepth: piece.necklineDepth ?? (neckline === 'scoop' ? 8 : null) })}
+                          onChange={(neckline) => onPiece({ ...piece, neckline, necklineDepth: piece.necklineDepth ?? (neckline === 'scoop' ? 8 : null) })}
                         />
                         {piece.neckline === 'scoop' && (
                           <span className="flex items-center gap-1.5">
@@ -237,22 +238,16 @@ export function PieceEditor({
                     )}
                   </li>
                   {!last && (
-                    <li aria-label={`Side from ${name} down to the next line`} className="flex items-center gap-3 pl-6 text-xs text-muted-foreground">
-                      <span aria-hidden className="h-6 border-l-2 border-dashed border-muted-foreground/40" />
-                      Side
-                      <ChipGroup<SideCurve>
+                    <li className="flex items-center gap-2 pl-5 text-xs text-muted-foreground">
+                      <QuietPick
                         label={`How the side runs below ${name}`}
-                        options={(['straight', 'in', 'out'] as const).map((value) => ({
-                          value,
-                          label: (
-                            <span className="inline-flex items-center gap-1.5">
-                              <SideGlyph kind={value} />
-                              {value === 'straight' ? 'Straight' : value === 'in' ? 'Curve in' : 'Curve out'}
-                            </span>
-                          ),
-                        }))}
-                        value={[line.curveBelow ?? 'straight']}
-                        onValueChange={([c]) => setCurve(line.id, c)}
+                        value={line.curveBelow ?? 'straight'}
+                        options={[
+                          { value: 'straight', glyph: 'M8 2 L8 16', text: 'Straight side' },
+                          { value: 'in', glyph: 'M10 2 Q2 9 10 16', text: 'Side curves in' },
+                          { value: 'out', glyph: 'M5 2 Q13 9 5 16', text: 'Side curves out' },
+                        ]}
+                        onChange={(c) => setCurve(line.id, c)}
                       />
                     </li>
                   )}
@@ -280,11 +275,58 @@ export function PieceEditor({
   )
 }
 
-/** A tiny drawing of the side: straight, bowing in toward the middle, or bowing out */
-function SideGlyph({ kind }: { kind: SideCurve }) {
-  const d = kind === 'straight' ? 'M8 2 L8 16' : kind === 'in' ? 'M10 2 Q2 9 10 16' : 'M5 2 Q13 9 5 16'
+/**
+ * A small, quiet choice: shows the current option as a tiny drawing and a few words, and opens
+ * the others only when asked. Straight is the default and stays out of the way; a curve, once
+ * chosen, reads in ink so it's easy to spot.
+ */
+function QuietPick<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  value: T
+  options: { value: T; glyph: string; text: string }[]
+  onChange: (v: T) => void
+}) {
+  const current = options.find((o) => o.value === value) ?? options[0]
+  const isDefault = current === options[0]
   return (
-    <svg aria-hidden viewBox="0 0 16 18" className="size-4">
+    <Popover>
+      <PopoverTrigger
+        aria-label={`${label}: ${current.text}. Change`}
+        className={cn(
+          'glass-inset-hover -mx-1 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs',
+          isDefault ? 'text-muted-foreground' : 'font-medium text-foreground',
+        )}
+      >
+        <Glyph d={current.glyph} />
+        {current.text}
+        <IconChevronDown className="size-3 opacity-60" aria-hidden />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-auto gap-1 p-1.5">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={o.value === value}
+            onClick={() => onChange(o.value)}
+            className={cn('glass-inset-hover flex items-center gap-2 rounded-(--control-radius) px-3 py-2 text-left text-sm', o.value === value && 'step-row-active font-medium')}
+          >
+            <Glyph d={o.glyph} />
+            {o.text}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function Glyph({ d }: { d: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 16 18" className="size-4 shrink-0">
       <path d={d} fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" />
     </svg>
   )
