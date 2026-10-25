@@ -246,7 +246,7 @@ export function StudioGuide({
               </span>
               <span className="flex-1 truncate text-sm">Pattern pieces</span>
               <span className="text-xs tabular-nums text-muted-foreground">
-                {pieces.filter((p) => pattern.sizes.length > 0 && pattern.sizes.every((s) => pieceSizeDone(p, s))).length}/{pieces.length}
+                {pieces.length === 0 ? 'None yet' : `${pieces.filter((p) => pattern.sizes.length > 0 && pattern.sizes.every((s) => pieceSizeDone(p, s))).length}/${pieces.length}`}
               </span>
             </button>
             <div className="px-2 pb-1">
@@ -276,10 +276,12 @@ export function StudioGuide({
                   </button>
                 )
               })}
-              <button type="button" onClick={addPiece} className="mb-1 flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-muted-foreground hover:bg-background">
-                <IconPlus className="size-4" aria-hidden />
-                {pieces.length === 0 ? 'Add the first piece' : 'Add piece'}
-              </button>
+              {pieces.length > 0 && (
+                <button type="button" onClick={addPiece} className="glass-inset-hover mb-1 flex w-full items-center gap-2 rounded-(--control-radius) px-2.5 py-2 text-left text-sm text-muted-foreground">
+                  <IconPlus className="size-4" aria-hidden />
+                  Add piece
+                </button>
+              )}
             </div>
           </div>
 
@@ -421,7 +423,7 @@ export function StudioGuide({
                     data-to={sec.indices[sec.indices.length - 1] + 1}
                     data-group={sec.group}
                     onClick={() => addStep(sec.indices[sec.indices.length - 1] + 1, sec.group)}
-                    className="mb-1 flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-muted-foreground hover:bg-background"
+                    className="glass-inset-hover mb-1 flex w-full items-center gap-2 rounded-(--control-radius) px-2.5 py-2 text-left text-sm text-muted-foreground"
                   >
                     <IconPlus className="size-4" aria-hidden />
                     Add step
@@ -430,10 +432,28 @@ export function StudioGuide({
               </div>
             )
           })}
-          <Button variant="ghost" className="w-full text-muted-foreground" onClick={addSection}>
-            <IconPlus data-icon="inline-start" />
-            {steps.length === 0 ? 'Add the first sewing step' : 'Add section'}
-          </Button>
+          {steps.length === 0 ? (
+            <div data-slot="inset" className="mb-2 flex items-center gap-2.5 rounded-(--control-radius) px-2.5 py-2">
+              <span className="step-dot-upcoming flex size-7 shrink-0 items-center justify-center rounded-full">
+                <IconNeedleThread size={15} aria-hidden />
+              </span>
+              <span className="flex-1 truncate text-sm">Sewing steps</span>
+              {/* The middle panel already offers it when it shows the empty guide */}
+              {pieceFocus === null ? (
+                <span className="text-xs text-muted-foreground">None yet</span>
+              ) : (
+                <Button variant="outline" size="xs" onClick={addSection}>
+                  <IconPlus data-icon="inline-start" />
+                  Add step
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Button variant="ghost" className="w-full text-muted-foreground" onClick={addSection}>
+              <IconPlus data-icon="inline-start" />
+              Add section
+            </Button>
+          )}
         </div>
 
         {/* The sewer's ‹ Mark done › bar; here the arrows move through the steps */}
@@ -484,7 +504,7 @@ export function StudioGuide({
             </p>
             <Button onClick={addPiece}>
               <IconPlus data-icon="inline-start" />
-              Add the first piece
+              Add a piece
             </Button>
           </div>
         )
@@ -578,11 +598,11 @@ export function StudioGuide({
       ) : (
         <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 guide-canvas rounded-(--radius) p-6 text-center md:order-none">
           <IconNeedleThread className="size-8 text-muted-foreground" aria-hidden />
-          <p className="text-base font-semibold">No steps yet</p>
+          <h2 className="text-3xl">Write the <em className="display-italic">sewing steps</em></h2>
           <p className="max-w-sm text-sm text-muted-foreground">You write each step right here, exactly where sewers will read it.</p>
           <Button onClick={addSection}>
             <IconPlus data-icon="inline-start" />
-            Add the first step
+            Add a step
           </Button>
         </div>
       )}

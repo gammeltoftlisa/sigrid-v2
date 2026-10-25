@@ -12,7 +12,7 @@ import { TOOLS, type Tool } from '@/components/sewing/tools'
 import { baseSize, plural, type StudioPattern } from '@/lib/studio/patterns'
 import { isDone } from '@/lib/studio/wizard'
 import type { Difficulty, GarmentCategory } from '@/lib/types'
-import { InlineNumber, InlinePick, InlineText, InlineTextarea, TodoMark } from './Inline'
+import { InlineNumber, InlinePick, InlineText, InlineTextarea } from './Inline'
 import { TodoBar } from './TodoBar'
 
 type Change = (patch: Partial<StudioPattern>) => void
@@ -40,7 +40,7 @@ function OpenRow(props: React.ComponentProps<typeof PanelRow> & { onOpen: () => 
     <button type="button" onClick={onOpen} data-missing={todo || undefined} className="rounded-(--control-radius) text-left">
       <PanelRow
         {...row}
-        trailing={todo ? <TodoMark>{action}</TodoMark> : <span className="shrink-0 text-xs font-medium">{action}</span>}
+        trailing={<span className="shrink-0 text-xs font-medium">{action}</span>}
         className="glass-inset-hover"
       />
     </button>
