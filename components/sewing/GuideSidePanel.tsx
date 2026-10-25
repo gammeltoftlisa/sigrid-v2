@@ -137,7 +137,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
         >
           <StatusDot state={state}>{n}</StatusDot>
 
-          <span className={`flex-1 text-sm leading-tight truncate ${stepTextClass(state)}`}>
+          <span className={`flex-1 text-sm leading-tight truncate ${stepTextClass(state)} ${isOpen ? 'font-medium text-foreground' : ''}`}>
             {s.title}
           </span>
 

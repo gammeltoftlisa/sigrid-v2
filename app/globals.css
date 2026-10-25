@@ -1139,7 +1139,16 @@ body { background: transparent !important; isolation: isolate; }
 .guide-canvas { background-color: color-mix(in srgb, var(--app-elev) 70%, transparent) !important; }
 /* Steps: the active one is tinted with the palette, an opened one sits on the inset */
 .step-row-active { background: color-mix(in srgb, rgb(var(--tri-primary)) 12%, transparent); box-shadow: inset 0 0 0 1px rgb(var(--tri-primary) / 0.25); }
-.step-row-open { background: color-mix(in srgb, var(--app-elev) 70%, transparent); }
+/* The step on screen (the one you're looking at, not necessarily the one you're on):
+   a solid fill and an ink stitch around it, so it's easy to find again */
+.step-row-open {
+  background-color: var(--app-elev) !important;
+  outline: 1.5px dashed color-mix(in srgb, var(--app-text) 60%, transparent);
+  outline-offset: -1.5px;
+  box-shadow: inset 0 1px 0 var(--sheen), 0 6px 16px -12px rgb(0 0 0 / 0.35);
+}
+/* Its number dot fills in ink too, unless it's the active step (which keeps its own marker) */
+.step-row-open .step-dot-upcoming { background: var(--foreground) !important; color: var(--background) !important; box-shadow: none; }
 .step-dot-active { background: var(--line-fill, var(--cta-fill)) !important; color: var(--cta-ink) !important; box-shadow: 0 0 0 3px rgb(var(--tri-primary) / 0.15); }
 .step-dot-upcoming { background: color-mix(in srgb, var(--app-elev) 70%, transparent); box-shadow: inset 0 0 0 1px var(--app-border-strong); }
 .done-flash { background: var(--cta-fill) !important; color: var(--cta-ink) !important; box-shadow: 0 0 0 10px rgb(var(--tri-primary) / 0.12); }

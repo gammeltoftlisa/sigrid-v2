@@ -68,10 +68,8 @@ export function StatusDot({
  */
 export const stepRowClass = (state: ProgressState, open = false) =>
   `step-row rounded-(--control-radius) overflow-hidden transition-colors duration-150 ${
-    state === 'active' ? 'step-row-active'
-    : open             ? 'step-row-open'
-    :                    'glass-inset-hover'
-  }`
+    state === 'active' ? 'step-row-active' : open ? '' : 'glass-inset-hover'
+  } ${open ? 'step-row-open' : ''}`
 
 /** Title text of a step row or journey. */
 export const stepTextClass = (state: ProgressState) =>
