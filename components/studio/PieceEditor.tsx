@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useId } from 'react'
+import { Fragment, useId, useState } from 'react'
 import { IconCheck, IconPlus, IconTrash, IconWand, IconX } from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,8 @@ import { StatusMessage } from '@/components/patterns/status-message'
 import { gradePiece, lineAt, pieceSizeDone, type LineSize, type SideCurve, type StudioPattern, type StudioPiece } from '@/lib/studio/patterns'
 import type { StandardSize } from '@/lib/types'
 import { InlineNumber, InlineText } from './Inline'
+import { PieceShape } from './PieceShape'
+import { PIECE_SHAPES, applyShape, isBlankPiece } from '@/lib/studio/piece-shapes'
 import { CellNumber } from './SizeTable'
 
 /**
@@ -36,6 +38,9 @@ export function PieceEditor({
   onOpenSizes: () => void
 }) {
   const foldId = useId()
+  const blank = isBlankPiece(piece)
+  const [picking, setPicking] = useState(false)
+  const showPicker = blank || picking
   const { sizes } = pattern
   const index = pattern.pieces.findIndex((p) => p.id === piece.id)
   const doneSizes = sizes.filter((s) => pieceSizeDone(piece, s))
@@ -127,11 +132,54 @@ export function PieceEditor({
             </p>
           </div>
 
+          {showPicker && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-baseline justify-between gap-3 px-1">
+                <p className="text-sm font-medium">{blank ? 'Which shape is closest?' : 'Start again from a shape'}</p>
+                {!blank && (
+                  <Button variant="ghost" size="xs" onClick={() => setPicking(false)}>
+                    Keep my numbers
+                  </Button>
+                )}
+              </div>
+              <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                {PIECE_SHAPES.map((shape) => {
+                  const preview = applyShape(piece, shape, 'M')
+                  return (
+                    <li key={shape.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onPiece(applyShape(piece, shape, size))
+                          setPicking(false)
+                        }}
+                        className="glass-inset-hover flex w-full flex-col items-center gap-1 rounded-(--control-radius) bg-card p-2 text-xs font-medium"
+                      >
+                        <span aria-hidden className="block h-16 w-full">
+                          <PieceShape piece={preview} sizes={['M']} active="M" bare />
+                        </span>
+                        {shape.name}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+              <p className="px-1 text-xs text-muted-foreground">
+                {blank ? 'You change the numbers next. Or type them in yourself below.' : 'This replaces the numbers in every size.'}
+              </p>
+            </div>
+          )}
+
           {/* One plain row per line across the piece: where it is, and how wide the piece is there */}
           <div className="flex flex-col gap-2">
-            <p className="px-1 text-sm text-muted-foreground">
-              Measure straight across the piece. Add a line wherever the width or the shape changes, like under the arm, then choose how the side runs between lines.
-            </p>
+            {!showPicker && (
+              <div className="flex items-baseline justify-between gap-3 px-1">
+                <p className="text-sm text-muted-foreground">Change the numbers to your pattern. Add a line where the shape changes.</p>
+                <Button variant="ghost" size="xs" className="shrink-0" onClick={() => setPicking(true)}>
+                  Change shape
+                </Button>
+              </div>
+            )}
             <ol aria-label={`Measurements of ${piece.name}, size ${size}`} className="flex flex-col gap-2">
               {piece.lines.map((line, i) => {
                 const v = lineAt(piece, size, line.id)
@@ -194,11 +242,15 @@ export function PieceEditor({
                       Side
                       <ChipGroup<SideCurve>
                         label={`How the side runs below ${name}`}
-                        options={[
-                          { value: 'straight', label: 'Straight' },
-                          { value: 'in', label: 'Curve in' },
-                          { value: 'out', label: 'Curve out' },
-                        ]}
+                        options={(['straight', 'in', 'out'] as const).map((value) => ({
+                          value,
+                          label: (
+                            <span className="inline-flex items-center gap-1.5">
+                              <SideGlyph kind={value} />
+                              {value === 'straight' ? 'Straight' : value === 'in' ? 'Curve in' : 'Curve out'}
+                            </span>
+                          ),
+                        }))}
                         value={[line.curveBelow ?? 'straight']}
                         onValueChange={([c]) => setCurve(line.id, c)}
                       />
@@ -225,5 +277,15 @@ export function PieceEditor({
         </>
       )}
     </section>
+  )
+}
+
+/** A tiny drawing of the side: straight, bowing in toward the middle, or bowing out */
+function SideGlyph({ kind }: { kind: SideCurve }) {
+  const d = kind === 'straight' ? 'M8 2 L8 16' : kind === 'in' ? 'M10 2 Q2 9 10 16' : 'M5 2 Q13 9 5 16'
+  return (
+    <svg aria-hidden viewBox="0 0 16 18" className="size-4">
+      <path d={d} fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" />
+    </svg>
   )
 }
