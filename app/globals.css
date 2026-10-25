@@ -3,13 +3,13 @@
 @import "shadcn/tailwind.css";
 
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body-face);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-jetbrains);
   --font-heading: var(--font-heading-face);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -95,25 +95,61 @@
   --text-5xl--line-height: 3rem;
 }
 
+/* ─── Tokens: liquid glass (see .claude/skills/liquid-glass-frontend) ─────────────
+   The whole palette comes from THREE brand triplets (space-separated R G B, so they
+   compose at any opacity: rgb(var(--tri-primary) / 0.4)). Everything that has colour is a
+   warm brown: saddle brown, a lighter tan and caramel, on warm obsidian and ivory neutrals.
+   Main buttons are black (see --cta-fill). Status colours (success, error…) stay functional.
+   Light and dark share the brand; only the neutral surfaces and the aura change.
+   Components read the shadcn names below (background, card, primary…), which point
+   at the app surface tokens, so nothing in component code knows about themes. */
 :root {
-  /* Sigrid brand: "Nordic × Apple". Near-white and near-black like Totême and Byredo,
-     with Apple's crisp type, soft corners and frosted bars. Every text/background pair passes WCAG AA. */
-  --background: #FAF8F4;
-  --foreground: #1D1D1F;
-  --card: #FFFFFF;
-  --card-foreground: #1D1D1F;
-  --popover: #FFFFFF;
-  --popover-foreground: #1D1D1F;
-  --primary: #1D1D1F;
-  --primary-foreground: #FFFFFF;
-  --secondary: #ECEAE6;
-  --secondary-foreground: #1D1D1F;
-  --muted: #ECEAE6;
-  --muted-foreground: #5A5A5E;
-  --accent: #ECEAE6;
-  --accent-foreground: #1D1D1F;
-  /* Status colours: functional only, never decoration. Two tones each: the base token is the
-     deep tone for text and lines (AA); `-solid` is the accent for the bar, icons and dots. */
+  --tri-primary: 123 75 42;        /* saddle brown #7B4B2A: accents, markers, chosen states (6.1:1) */
+  --tri-primary-soft: 185 138 98;  /* tan #B98A62: the light behind the glass, accents on dark */
+  --tri-accent: 210 174 132;       /* caramel #D2AE84: the second colour in the light */
+  --bg-light: #EFEADE;             /* ivory */
+  --bg-dark: #15110D;              /* obsidian */
+
+  /* App surfaces, light: a tinted ivory, never pure grey */
+  --app-bg: var(--bg-light);
+  --app-panel: #FBF8F1;
+  --app-elev: #FFFFFF;
+  --app-border: rgba(28, 24, 19, 0.10);
+  --app-border-strong: rgba(28, 24, 19, 0.22);
+  --app-text: #211C16;
+  --app-text-soft: #6B6052;        /* 5.1:1 on the page */
+  --app-text-faint: #9A8E7C;       /* decoration only, never text you need to read */
+  --app-hover: rgba(28, 24, 19, 0.045);
+  --app-shadow: 0 24px 60px -38px rgba(76, 52, 34, 0.45);
+  --accent-ink: rgb(var(--tri-primary));   /* kickers and small accent text (6.1:1) */
+  --aura: 0.28;                    /* strength of the colour behind the glass */
+  /* Fills for the main button, lines and the italic headline word */
+  /* Every main button (CTA) is black with light text; in dark mode it turns light, or it would vanish */
+  --cta-fill: linear-gradient(#14110F, #14110F);
+  --cta-hover: linear-gradient(#2B2622, #2B2622);
+  --cta-ink: #FAF7F2;
+  --ink-fill: linear-gradient(rgb(var(--tri-primary)), rgb(var(--tri-primary)));  /* the italic headline word */
+  --atmo-blend: multiply;
+  --atmo-opacity: 0.55;
+  --sheen: rgb(255 255 255 / 0.55);
+  color-scheme: light;
+
+  /* shadcn names, pointed at the app tokens */
+  --background: var(--app-bg);
+  --foreground: var(--app-text);
+  --card: color-mix(in srgb, var(--app-elev) 72%, transparent);
+  --card-foreground: var(--app-text);
+  --popover: var(--app-panel);
+  --popover-foreground: var(--app-text);
+  --primary: rgb(var(--tri-primary));
+  --primary-foreground: #FFF8F0;   /* cream on brown (6.9:1) */
+  --secondary: #E7E0D1;
+  --secondary-foreground: var(--app-text);
+  --muted: #E7E0D1;
+  --muted-foreground: var(--app-text-soft);
+  --accent: color-mix(in srgb, rgb(var(--tri-primary)) 12%, var(--app-elev));
+  --accent-foreground: var(--app-text);
+  /* Status colours: functional only. Base = deep tone for text (AA), -solid = the accent */
   --destructive: #A2382A;
   --destructive-solid: #E0553F;
   --success: #2F6B42;
@@ -125,99 +161,110 @@
   --info: #2F5C8F;
   --info-solid: #4F86C6;
   --info-foreground: #FFFFFF;
-  --status-base: var(--card);
-  --border: #E3E1DC;
-  --input: #D3D1CC;
-  --ring: #1D1D1F;
-  --chart-1: #1D1D1F;
-  --chart-2: #8C7B6B;
+  --status-base: var(--app-panel);
+  --border: var(--app-border);
+  --input: var(--app-border-strong);
+  --ring: rgb(var(--tri-primary));
+  --chart-1: rgb(var(--tri-primary));
+  --chart-2: rgb(var(--tri-accent));
   --chart-3: #4B5E70;
   --chart-4: #465F44;
-  --chart-5: #D3D1CC;
-  /* Surfaces 12px, controls 10px, product photos 6px */
-  --radius: 12px;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #1D1D1F;
-  --sidebar-primary: #1D1D1F;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #ECEAE6;
-  --sidebar-accent-foreground: #1D1D1F;
-  --sidebar-border: #E3E1DC;
-  --sidebar-ring: #1D1D1F;
+  --chart-5: var(--app-text-faint);
+  /* Surfaces 22px, controls 14px (buttons are pills), photos 16px */
+  --radius: 22px;
+  --sidebar: var(--app-panel);
+  --sidebar-foreground: var(--app-text);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--muted);
+  --sidebar-accent-foreground: var(--app-text);
+  --sidebar-border: var(--app-border);
+  --sidebar-ring: var(--ring);
 
-  /* Typography: Inter (close to Apple's SF) for everything, Geist Mono for code */
-  --font-heading-face: var(--font-inter);
-  --font-body-face: var(--font-inter);
-  --heading-weight: 600;
+  /* Typography: Fraunces for display, Be Vietnam Pro for text, JetBrains Mono for kickers */
+  --font-heading-face: var(--font-fraunces), Georgia, serif;
+  --font-body-face: var(--font-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --heading-weight: 360;
   --heading-transform: none;
-  --heading-tracking: -0.028em;
-  --h1-size: 2.125rem;
-  --control-radius: 10px;
-  --image-radius: 6px;
+  --heading-tracking: -0.025em;
+  --h1-size: clamp(2.75rem, 6.2vw, 5.75rem);
+  --control-radius: 14px;
+  --image-radius: 16px;
 
-  --celebrate: var(--brand);
-  /* Brand accent: near-black ink for lines, markers and progress */
-  --brand: #1D1D1F;
-  /* Quiet accent text: counts and small labels (5.1:1 on the page) */
-  --brand-ink: #5A5A5E;
-  --brand-on-dark: #1D1D1F;
+  --celebrate: rgb(var(--tri-primary));
+  --brand: rgb(var(--tri-primary));
+  --brand-ink: var(--app-text-soft);
+  --brand-on-dark: var(--app-text);
 
-  /* The frame (icon rail, phone tab bar) is light and frosted now, not espresso */
-  --inverse: #FFFFFF;
-  --inverse-foreground: #1D1D1F;
-  --inverse-muted: #5A5A5E;
-  --spotlight: #ECEAE6;
+  --inverse: var(--app-panel);
+  --inverse-foreground: var(--app-text);
+  --inverse-muted: var(--app-text-soft);
+  --spotlight: var(--muted);
 
-  /* Hero panel ("Continue where you left off") */
-  --hero: #ECEAE6;
-  --hero-foreground: #1D1D1F;
-  --hero-muted: #5A5A5E;
-  --hero-stitch: #1D1D1F;
-  --hero-stitch-track: #D3D1CC;
-  --hero-action: #1D1D1F;
-  --hero-action-foreground: #FFFFFF;
+  --hero: var(--muted);
+  --hero-foreground: var(--app-text);
+  --hero-muted: var(--app-text-soft);
+  --hero-stitch: rgb(var(--tri-primary));
+  --hero-stitch-track: var(--app-border-strong);
+  --hero-action: rgb(var(--tri-primary));
+  --hero-action-foreground: var(--primary-foreground);
+
+  /* Frosted fill without blur: fields and chips on the page, bg-glass, the guide */
+  --glass-tint: color-mix(in srgb, var(--app-elev) 50%, transparent);
+  --glass: var(--glass-tint);
+  --glass-strong: color-mix(in srgb, var(--app-panel) 94%, transparent);
+
+  /* Heatmap: one hue light → dark, every step ≥ 3:1 on the panel */
+  --data-1: color-mix(in oklch, rgb(var(--tri-primary)) 55%, white);
+  --data-2: color-mix(in oklch, rgb(var(--tri-primary)) 85%, white);
+  --data-3: color-mix(in oklch, rgb(var(--tri-primary)) 75%, black);
+  --data-4: color-mix(in oklch, rgb(var(--tri-primary)) 45%, black);
+  /* Inactive step marks: 3:1 on the page */
+  --indicator: #8A7F70;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --success: oklch(0.696 0.17 162.48);
-  --success-foreground: oklch(0.145 0 0);
-  --warning: oklch(0.769 0.188 70.08);
-  --warning-foreground: oklch(0.145 0 0);
-  --info: oklch(0.707 0.165 254.624);
-  --info-foreground: oklch(0.145 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
+/* Dark: warm obsidian, a richer aura, light text. Set by next-themes on <html data-theme>. */
+:root[data-theme="dark"] {
+  --app-bg: var(--bg-dark);
+  --app-panel: #1E1813;
+  --app-elev: #2A2219;
+  --app-border: rgba(243, 238, 227, 0.10);
+  --app-border-strong: rgba(243, 238, 227, 0.20);
+  --app-text: #F0ECE1;
+  --app-text-soft: #A79C8C;        /* 6.9:1 on the page */
+  --app-text-faint: #6B6052;
+  --app-hover: rgba(243, 238, 227, 0.055);
+  --app-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.7);
+  --accent-ink: rgb(var(--tri-primary-soft));
+  --ink-fill: linear-gradient(rgb(var(--tri-primary-soft)), rgb(var(--tri-primary-soft)));
+  --aura: 0.32;
+  --atmo-blend: screen;
+  --atmo-opacity: 0.8;
+  --sheen: rgb(255 255 255 / 0.15);
+  --tri-primary: 185 138 98;       /* on dark the brown would vanish: tan instead (6.2:1) */
+  --primary-foreground: #15110D;
+  --cta-fill: linear-gradient(#F3EEE6, #F3EEE6);
+  --cta-hover: linear-gradient(#FFFFFF, #FFFFFF);
+  --cta-ink: #14110F;
+  color-scheme: dark;
 
+  --secondary: var(--app-elev);
+  --muted: var(--app-elev);
+  --accent: color-mix(in srgb, rgb(var(--tri-primary-soft)) 18%, var(--app-elev));
+  --destructive: #F08A78;
+  --success: #7CC492;
+  --warning: #E9B85A;
+  --info: #8DB5E6;
+  --success-foreground: #15110D;
+  --warning-foreground: #15110D;
+  --info-foreground: #15110D;
+  --ring: rgb(var(--tri-primary-soft));
+  --data-1: color-mix(in oklch, rgb(var(--tri-primary-soft)) 40%, var(--bg-dark));
+  --data-2: color-mix(in oklch, rgb(var(--tri-primary-soft)) 65%, var(--bg-dark));
+  --data-3: rgb(var(--tri-primary-soft));
+  --data-4: color-mix(in oklch, rgb(var(--tri-primary-soft)) 55%, white);
+  --indicator: #857A6A;
+}
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -257,80 +304,157 @@
   --color-hero-action-foreground: var(--hero-action-foreground);
 }
 
-/* ─── Brand layer: Nordic × Apple ─────────────────────────────────────────────
+/* ─── Brand layer: liquid glass ───────────────────────────────────────────────
    Unlayered on purpose so it beats shadcn's utility classes. See DESIGN.md.
-   Nordic: near-white, monochrome, small uppercase labels, product photos with air.
-   Apple: tight semibold headings, sentence-case controls, soft corners, frosted bars.
-   Still no gloss, gradients or shadows. */
+   Warm editorial atelier: a characterful serif doing the talking, mono kickers,
+   real frosted glass (heavy blur + saturate + a specular top edge) floating over a
+   slowly drifting clay-and-gold atmosphere with a faint grain. */
 
 /* Type */
-:root body { letter-spacing: -0.006em; font-feature-settings: "cv11", "ss01"; }
+:root body { letter-spacing: -0.004em; font-feature-settings: "ss01", "cv01"; }
+::selection { background: rgb(var(--tri-primary)); color: var(--primary-foreground); }
 :root .font-heading,
 :root :is(h1, h2) {
   font-family: var(--font-heading);
+  font-optical-sizing: auto;
   font-weight: var(--heading-weight);
   text-transform: var(--heading-transform);
   letter-spacing: var(--heading-tracking);
 }
-:root h1 { font-size: var(--h1-size); line-height: 1.1; }
-@media (min-width: 768px) { :root { --h1-size: 2.75rem; } }
-:root h2 { letter-spacing: -0.02em; }
+:root h1 { font-size: var(--h1-size); line-height: 0.95; text-wrap: balance; }
+:root h2 { font-weight: 400; letter-spacing: -0.018em; line-height: 1.1; }
+:root h3 { letter-spacing: -0.01em; }
+/* Display helpers: an italic brand line inside a headline, and the mono kicker */
+.display-italic {
+  font-style: italic; font-variation-settings: "WONK" 1, "SOFT" 50;
+  color: var(--accent-ink);
+  background: var(--ink-fill); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  padding-right: 0.08em; /* the italic overhang would be clipped by the text fill */
+}
+@media (forced-colors: active) { .display-italic { -webkit-text-fill-color: currentColor; background: none; } }
 :root .eyebrow,
-:root [data-slot="badge"] {
-  font-size: 0.75rem;
+:root .kicker {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
   line-height: 1rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
+:root .kicker { color: var(--accent-ink); }
+:root [data-slot="badge"] {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+/* Section titles: the display face at a real size, so sections feel like chapters */
+:root .page-section-title { font-size: clamp(1.625rem, 2.6vw, 2.25rem); font-weight: 380; }
 
-/* Controls: softly rounded, sentence case, like Apple */
-:root :is(.group\/button, [data-slot="toggle-group-item"], [data-slot="input-group"], [data-slot="select-trigger"], input, textarea) {
+/* Grain: analog warmth that hides banding in the aura. It lives INSIDE the atmosphere,
+   behind the content: a blended layer above the page would stop every glass surface
+   from blurring what's behind it. */
+.atmosphere::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  opacity: 0.09; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* ─── Atmosphere: drifting colour the glass refracts (components/patterns/atmosphere) ─── */
+.atmosphere { position: fixed; inset: 0; z-index: -10; overflow: hidden; pointer-events: none; opacity: var(--atmo-opacity); }
+/* One soft, still light in the top corner: just enough for the glass to have something to frost.
+   No drifting blobs and no moving fades. */
+.glow {
+  position: absolute; right: -10vw; top: -20vh; width: 70vw; height: 70vh; border-radius: 999px;
+  background: radial-gradient(closest-side, rgb(var(--tri-primary-soft) / 0.45), rgb(var(--tri-accent) / 0.2) 60%, transparent);
+  filter: blur(40px); mix-blend-mode: var(--atmo-blend);
+}
+@media (max-width: 767px) { .glow { width: 120vw; height: 50vh; right: -30vw; } }
+@media print { .atmosphere { display: none; } }
+
+/* Controls: pill buttons, soft fields */
+:root :is([data-slot="toggle-group-item"], [data-slot="input-group"], [data-slot="select-trigger"], input, textarea) {
   border-radius: var(--control-radius);
 }
-:root [data-slot="badge"] { border-radius: 6px; }
+:root .group\/button { border-radius: 999px; }
+:root .group\/button:is(.size-6, .size-7, .size-8, .size-9, [class*="size-icon"]) { border-radius: 999px; }
+:root [data-slot="badge"] { border-radius: 999px; }
 :root .group\/button:not(:is(.size-6, .size-7, .size-8, .size-9)) {
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   font-size: 0.9375rem;
   font-weight: 500;
 }
 :root .group\/button.h-9 { height: 2.75rem; padding-inline: 1.5rem; }
-:root .group\/button.h-8 { height: 2.5rem; padding-inline: 1rem; }
-:root .group\/button.h-7 { font-size: 0.8125rem; height: 2rem; padding-inline: 0.75rem; }
+:root .group\/button.h-8 { height: 2.5rem; padding-inline: 1.125rem; }
+:root .group\/button.h-7 { font-size: 0.8125rem; height: 2rem; padding-inline: 0.875rem; }
 @media (pointer: coarse) { :root .group\/button.h-7 { height: 2.5rem; } }
-/* ─── Form fields ───────────────────────────────────────────────────────────────
-   Fields are filled, never outlined: white on glass, sand on the plain page (see Surfaces).
-   While you type, a field turns white with a crisp ink outline and a faint ring.
-   Labels are 13px medium, 8px above the field. Sizes live in "Controls" below. */
-:root { --field-focus-ring: color-mix(in oklch, var(--foreground) 9%, transparent); }
+:root .group\/button { transition: background-color .3s ease, border-color .3s ease, color .3s ease, transform .25s var(--ease-out-soft), box-shadow .3s ease; }
+:root .group\/button:hover:not(:disabled) { transform: translateY(-1px); }
+:root .group\/button:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+
+/* Primary: brand-tinted frosted glass with a clay glow */
+:root .group\/button[data-variant="default"] {
+  background: var(--cta-fill);
+  color: var(--cta-ink);
+  border: 1px dashed color-mix(in srgb, var(--cta-ink) 18%, transparent);
+  -webkit-backdrop-filter: blur(26px) saturate(185%);
+  backdrop-filter: blur(26px) saturate(185%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 8px 20px -14px rgb(0 0 0 / 0.35);
+}
+:root .group\/button[data-variant="default"]:hover:not(:disabled) {
+  background: var(--cta-hover);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.32), 0 10px 24px -14px rgb(0 0 0 / 0.4);
+}
+:root .group\/button[data-variant="default"]:disabled {
+  opacity: 1;
+  background: var(--app-hover);
+  border-color: var(--app-border);
+  color: var(--app-text-faint);
+  box-shadow: none;
+}
+/* Ghost: a frosted tile that lifts in on hover, not a colour swap */
+:root .group\/button[data-variant="ghost"]:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--app-elev) 70%, transparent);
+  box-shadow: inset 0 1px 0 var(--sheen), inset 0 0 0 1px var(--app-border);
+}
+/* Destructive: quiet outlined text, never a coloured block */
+:root .group\/button.bg-destructive\/10 {
+  background: transparent;
+  border: 1px dashed color-mix(in oklch, var(--destructive) 40%, transparent);
+  color: var(--destructive);
+}
+:root .group\/button.bg-destructive\/10:hover { background: color-mix(in oklch, var(--destructive) 8%, transparent); }
+
+/* ─── Form fields: frosted fills, a clay focus ring ───────────────────────────── */
+:root { --field-focus-ring: rgb(var(--tri-primary) / 0.18); }
 :root :is([data-slot="input"], [data-slot="select-trigger"], [data-slot="input-group"], [data-slot="textarea"]) {
-  background-color: var(--card);
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  background-color: color-mix(in srgb, var(--app-elev) 70%, transparent);
+  border: 1px dashed var(--app-border) !important;
+  box-shadow: inset 0 1px 0 var(--sheen);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 :root :is([data-slot="input"], [data-slot="textarea"]):focus-visible,
-:root [data-slot="select-trigger"]:is(:focus-visible, [data-popup-open]) {
-  background-color: white !important;
-  box-shadow: 0 0 0 1px var(--foreground), 0 0 0 4px var(--field-focus-ring) !important;
+:root [data-slot="select-trigger"]:is(:focus-visible, [data-popup-open]),
+:root [data-slot="input-group"]:focus-within {
+  background-color: var(--app-elev) !important;
+  border-color: rgb(var(--tri-primary) / 0.7) !important;
+  box-shadow: 0 0 0 4px var(--field-focus-ring) !important;
+  outline: none !important;
 }
+:root [data-slot="input-group"] [data-slot="input-group-control"]:focus-visible { box-shadow: none !important; }
 :root [data-slot="input-group"] [data-slot="input-group-addon"] { color: var(--muted-foreground); }
 :root :is([data-slot="input"], [data-slot="input-group-control"], [data-slot="textarea"])::placeholder { color: var(--muted-foreground); }
 :root [data-slot="field"] { gap: 0.5rem; }
 :root [data-slot="field-label"] { font-size: 0.8125rem; line-height: 1.125rem; font-weight: 500; }
 :root [data-slot="field-group"] { gap: 1.25rem; }
 
-/* Slider: a fine track and small white handles */
-:root [data-slot="slider-range"] { background: var(--foreground); }
-:root [data-slot="slider-thumb"] { background: white; transition: box-shadow 0.15s ease; }
+/* Slider: a fine clay track, small glass handles */
+:root [data-slot="slider-range"] { background: rgb(var(--tri-primary)); }
+:root [data-slot="slider-thumb"] { background: var(--app-elev); box-shadow: inset 0 1px 0 var(--sheen), 0 2px 8px -2px rgb(0 0 0 / 0.35); transition: box-shadow 0.15s ease; }
 
-:root .group\/button.bg-primary:hover { background: color-mix(in oklch, var(--primary) 86%, var(--background)); }
-/* Destructive: quiet outlined text, never a coloured block */
-:root .group\/button.bg-destructive\/10 {
-  background: transparent;
-  border-color: color-mix(in oklch, var(--destructive) 35%, transparent);
-}
-:root .group\/button.bg-destructive\/10:hover { background: color-mix(in oklch, var(--destructive) 6%, transparent); }
-
-/* Badges become plain small caps text (status badges keep their colour, see below) */
+/* Badges become plain mono caps (status badges keep their colour, see below) */
 :root [data-slot="badge"]:not([data-status]) {
   border: 0;
   background: transparent;
@@ -338,21 +462,20 @@
   color: var(--muted-foreground);
 }
 
-/* ─── Status: bright, clean and precise ─────────────────────────────────────────
-   One recipe for badges, messages and toasts: a clean tint of the bright accent,
-   deep vivid text, and a glossy accent (dot or icon chip) with a soft glow. */
+/* ─── Status ─────────────────────────────────────────────────────────────────────
+   One recipe for badges, messages and toasts: a tint of the bright accent,
+   deep text, and a glowing dot or icon. */
 [data-status="success"] { --status: var(--success); --status-solid: var(--success-solid); }
 [data-status="error"] { --status: var(--destructive); --status-solid: var(--destructive-solid); }
 [data-status="warning"] { --status: var(--warning); --status-solid: var(--warning-solid); }
 [data-status="info"] { --status: var(--info); --status-solid: var(--info-solid); }
 [data-status="neutral"] { --status: var(--muted-foreground); --status-solid: color-mix(in oklch, var(--muted-foreground) 55%, var(--background)); }
 
-:root [data-slot="badge"][data-status] { border: 0; padding-inline: 0.5rem; border-radius: var(--radius); }
+:root [data-slot="badge"][data-status] { border: 0; padding-inline: 0.625rem; }
 :root [data-slot="badge"][data-status]:not([data-status="neutral"]) {
   color: var(--status);
   background: color-mix(in oklch, var(--status-solid) 18%, var(--status-base));
 }
-/* Badges without an icon get a small glowing dot */
 :root [data-slot="badge"][data-status]:not([data-status="neutral"]):not(:has(svg))::before {
   content: "";
   width: 0.375rem;
@@ -364,83 +487,77 @@
 }
 
 .status-message {
-  /* Tinted-linen fill, a hairline in the status colour and a solid accent bar on the left */
-  background: color-mix(in oklch, var(--status-solid) 20%, var(--status-base));
-  border-left: 3px solid var(--status-solid);
-  border-radius: var(--radius);
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--status-solid) 22%, transparent);
+  background: color-mix(in oklch, var(--status-solid) 16%, var(--status-base));
+  border-left: 3px dashed var(--status-solid) !important;
+  border-radius: var(--control-radius);
+  box-shadow: inset 0 1px 0 var(--sheen), inset 0 0 0 1px color-mix(in oklch, var(--status-solid) 22%, transparent);
 }
-/* Filled icon between the accent and the deep tone, so it holds on the fill */
 .status-icon { color: color-mix(in oklch, var(--status-solid) 40%, var(--status)); }
 .status-dismiss { color: color-mix(in oklch, var(--status-solid) 55%, var(--status)); }
 .status-dismiss:hover { background: color-mix(in oklch, var(--status-solid) 14%, transparent); color: var(--status); }
 
-/* Toasts: same accents, soft corners, hairline */
 [data-sonner-toast] { border-radius: var(--radius) !important; }
 [data-sonner-toast][data-type="success"] [data-icon] { color: var(--success-solid); }
 [data-sonner-toast][data-type="error"] [data-icon] { color: var(--destructive-solid); }
 [data-sonner-toast][data-type="warning"] [data-icon] { color: var(--warning-solid); }
 [data-sonner-toast][data-type="info"] [data-icon] { color: var(--info-solid); }
 
-/* Filter chips become text tabs with an underline */
+/* Filter chips become text tabs with a clay underline */
 :root [data-slot="toggle-group-item"]:not([data-shape="tile"]) {
   height: 2.25rem;
   padding-inline: 0;
   margin-right: 1.5rem;
   border: 0;
-  border-bottom: 1px solid transparent;
+  border-bottom: 1px dashed transparent;
   border-radius: 0;
   background: transparent !important;
   color: var(--muted-foreground) !important;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   font-size: 0.9375rem;
   font-weight: 500;
 }
 :root [data-slot="toggle-group-item"]:not([data-shape="tile"]):last-child { margin-right: 0; }
 :root [data-slot="toggle-group-item"]:not([data-shape="tile"])[data-pressed] {
   color: var(--foreground) !important;
-  border-bottom-color: var(--foreground);
+  border-bottom-color: rgb(var(--tri-primary));
 }
-/* Size tiles: square, hairline, ink when chosen */
-:root [data-slot="toggle-group-item"][data-shape="tile"] { border-radius: var(--control-radius); }
-/* Tabs: inactive tabs in muted ink, so they pass AA on the tab list */
+/* Size tiles: frosted, clay when chosen */
+:root [data-slot="toggle-group-item"][data-shape="tile"] { border-radius: var(--control-radius); border: 1px dashed var(--app-border); }
+:root [data-slot="toggle-group-item"][data-shape="tile"][data-pressed] {
+  background: var(--cta-fill) !important;
+  color: var(--cta-ink) !important;
+  border-color: rgb(var(--tri-primary-soft) / 0.6);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
 :root [data-slot="tabs-trigger"]:not([data-active]) { color: var(--muted-foreground); }
 
-/* Surfaces: flat, hairline-defined, no shadows */
-:root [data-slot="card"] {
-  border-radius: var(--radius);
-  box-shadow: none;
-  border: 1px solid var(--border);
-}
 /* Product tiles: no box at all, just image and text */
 :root [data-slot="card"][data-variant="product"] {
   border: 0;
   background: transparent;
+  box-shadow: none;
   --card-spacing: 0px;
   gap: 0.75rem;
   padding-bottom: 0;
 }
 :root [data-variant="product"] .product-image { border-radius: var(--image-radius); }
 :root [data-variant="product"] [data-slot="card-title"] {
-  font-family: var(--font-sans);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  letter-spacing: -0.012em;
-  line-height: 1.375rem;
+  font-family: var(--font-heading);
+  font-size: 1.1875rem;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.5rem;
 }
-/* Card footers: a hairline, not a grey band */
-:root [data-slot="card-footer"] { background: transparent; border-top: 1px solid var(--border); }
+:root [data-slot="card-footer"] { background: transparent; border-top: 1px dashed var(--app-border); }
 
-/* Progress: a thin rounded line */
-:root [data-slot="progress-track"] { height: 3px; border-radius: 9999px; background: var(--stitch-track, var(--border)); }
-:root [data-slot="progress-indicator"] { border-radius: 9999px; background: var(--stitch, var(--brand)); }
+/* Progress: a thin rounded clay line with a soft glow */
+:root [data-slot="progress-track"] { height: 3px; border-radius: 9999px; background: var(--stitch-track, var(--app-border-strong)); }
+:root [data-slot="progress-indicator"] { border-radius: 9999px; background: var(--stitch, var(--line-fill, var(--cta-fill))); box-shadow: 0 0 10px rgb(var(--tri-primary-soft) / 0.55); }
 
-/* Breadcrumbs: like Apple's path bar. 14px, earlier steps quiet with a soft hover pill,
-   clear chevrons between them, the current page in ink and medium weight */
+/* Breadcrumbs: like Apple's path bar, earlier steps quiet with a soft hover pill */
 :root [data-slot="breadcrumb-list"] {
   font-size: 0.875rem;
   font-weight: 400;
-  letter-spacing: -0.008em;
   color: var(--muted-foreground);
   gap: 0.125rem;
 }
@@ -448,112 +565,163 @@
   display: inline-flex;
   align-items: center;
   height: 2rem;
-  padding-inline: 0.5rem;
+  padding-inline: 0.625rem;
   margin-inline: -0.125rem;
   border-radius: 9999px;
   color: var(--muted-foreground);
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
-:root [data-slot="breadcrumb-link"]:hover { color: var(--foreground); background-color: color-mix(in oklch, var(--foreground) 6%, transparent); }
+:root [data-slot="breadcrumb-link"]:hover { color: var(--foreground); background-color: color-mix(in srgb, var(--app-elev) 60%, transparent); box-shadow: inset 0 1px 0 var(--sheen); }
 :root [data-slot="breadcrumb-link"]:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--field-focus-ring); color: var(--foreground); }
 :root [data-slot="breadcrumb-page"] { color: var(--foreground); font-weight: 500; padding-inline: 0.375rem; }
-:root [data-slot="breadcrumb-separator"] { color: color-mix(in oklch, var(--muted-foreground) 75%, transparent); }
+:root [data-slot="breadcrumb-separator"] { color: var(--app-text-faint); }
 :root [data-slot="breadcrumb-separator"] > svg { width: 0.875rem; height: 0.875rem; stroke-width: 2; }
-/* Back: a small round glass button in front of the trail */
-:root .top-bar > .group\/button[aria-label="Back"] { width: 2.25rem; height: 2.25rem; border-radius: 9999px; margin-left: 0; margin-right: 0.25rem; }
+:root .top-bar > .group\/button[aria-label="Back"] { width: 2.5rem; height: 2.5rem; margin-left: 0; margin-right: 0.25rem; }
 
-/* ─── Surfaces: flat glass, no strokes, no shadows ─────────────────────────────────
-   Three steps, nothing else separates things:
-     page    plain very light sand (--background)
-     glass   a cool sand-brown (--glass-tint), lightly frosted: navigation, panels, cards, menus
-     on it   plain white: rows, fields, chips, buttons, tiles
-   There are no borders, dividers or drop shadows anywhere. The only drawn line is the
-   keyboard focus ring. Product photos and reading text are never glass. */
-:root {
-  --glass-tint: #E4DBCE;
-  --glass-fill: color-mix(in oklch, var(--glass-tint) 86%, transparent);
-  /* Menus, sheets, toasts and tooltips hold a lot of text: a lighter, more solid fill */
-  --glass-fill-text: color-mix(in oklch, #EEE7DD 95%, transparent);
-  --glass-blur: blur(28px) saturate(120%);
-  --glass-sheen: linear-gradient(160deg, color-mix(in oklch, white 50%, transparent) 0%, color-mix(in oklch, white 10%, transparent) 40%, color-mix(in oklch, white 0%, transparent) 62%, color-mix(in oklch, white 8%, transparent) 100%);
-  /* Kept for older components that read them */
-  --glass: var(--glass-fill);
-  --glass-strong: var(--glass-fill-text);
-}
-html { background: var(--background); }
+/* ─── Liquid glass: the material ─────────────────────────────────────────────────
+   Glass = heavy blur + saturate (puts back the colour blur greys out) + a specular top
+   edge + the atmosphere behind it to refract. Four steps:
+     surface   panels, cards, alerts, the segmented control              (.glass-surface)
+     soft      floating bars and sheets: heaviest frost, lifts off       (.glass-surface-soft)
+     menu      popovers, dropdowns, tooltips, toasts: ~94% so text reads (.glass-menu)
+     inset     everything INSIDE glass: a tint + sheen, NO backdrop-filter, because
+               nesting backdrop-filter breaks compositing                (.glass-inset)
+   Product photos and reading text are never glass. */
+html { background: var(--app-bg); }
+/* Never scroll sideways: decoration (the soft light) may bleed past the edge, the page may not.
+   `clip` rather than `hidden`, so sticky side panels keep working. */
+html, body { overflow-x: clip; }
 body { background: transparent !important; isolation: isolate; }
+:root *, :root *::before, :root *::after { border-color: var(--app-border); }
 
-/* No strokes and no shadows, anywhere */
-:root *, :root *::before, :root *::after { border-color: transparent !important; }
-:root *:not(:focus-visible):not([data-slot="input"]:focus) { box-shadow: none !important; text-shadow: none !important; }
-:root :is(hr, [data-slot="separator"]) { background: transparent !important; }
-:root :is(.glass, .glass-strong, .glass-panel, [data-slot="sheet-content"], [data-slot="card"]) :is(footer, header, hr, [data-slot="separator"], fieldset, .border-t, .border-b, .divide-y > *) { border-width: 0 !important; }
-
-/* Glass */
-.glass, .glass-strong, .glass-panel, .glass-control, .glass-chip, .glass-bar,
-:root :is([data-slot="select-content"], [data-slot="popover-content"], [data-slot="dropdown-menu-content"], [data-slot="tooltip-content"], [data-slot="sheet-content"]),
-:root :is([data-slot="card"]:not([data-variant="product"]), [data-slot="alert"], [data-slot="empty"].border),
-:root .group\/button:is([data-variant="outline"], [data-variant="secondary"]),
-:root [data-sonner-toast] {
-  background-color: var(--glass-fill) !important;
-  background-image: var(--glass-sheen);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
+.glass-surface, .glass-panel, .glass-control,
+:root :is([data-slot="card"]:not([data-variant="product"]), [data-slot="alert"], [data-slot="empty"].border) {
+  background-color: color-mix(in srgb, var(--app-panel) 42%, transparent) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(190%);
+  backdrop-filter: blur(34px) saturate(190%);
+  border: 1px dashed var(--app-border) !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.15), inset 0 0 0 1px rgb(255 255 255 / 0.03);
   color: var(--foreground);
 }
-.glass-strong,
-:root :is([data-slot="popover-content"], [data-slot="dropdown-menu-content"], [data-slot="tooltip-content"], [data-slot="sheet-content"]),
-:root [data-sonner-toast] { background-color: var(--glass-fill-text) !important; }
-:root :is([data-slot="select-content"], .segment-thumb) { background-color: white !important; background-image: none !important; }
-:root .group\/button:is([data-variant="outline"], [data-variant="secondary"]):hover:not(:disabled) { background-color: white !important; }
-:root .group\/button:is([data-variant="outline"], [data-variant="secondary"])[aria-pressed="true"] { background-color: color-mix(in oklch, var(--foreground) 8%, white) !important; }
-:root [data-slot="sheet-overlay"] { background: color-mix(in oklch, var(--foreground) 14%, transparent); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
-:root [data-slot="tooltip-content"] :is(svg[class*="fill-foreground"], [class*="bg-foreground"]) { display: none; }
+.glass, .glass-bar, .glass-surface-soft,
+:root [data-slot="sheet-content"], :root [data-slot="dialog-content"], :root [data-slot="alert-dialog-content"], :root [data-slot="drawer-content"] {
+  background-color: color-mix(in srgb, var(--app-panel) 46%, transparent) !important;
+  -webkit-backdrop-filter: blur(44px) saturate(200%);
+  backdrop-filter: blur(44px) saturate(200%);
+  border: 1px dashed var(--app-border) !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), inset 0 -10px 28px rgb(0 0 0 / 0.06), 0 20px 55px -20px rgb(0 0 0 / 0.55);
+  color: var(--foreground);
+}
+/* Light: THINNER glass and MORE saturate, so the pastel aura reads through */
+:root:not([data-theme="dark"]) :is(.glass-surface, .glass-panel, .glass-control, [data-slot="card"]:not([data-variant="product"]), [data-slot="alert"], [data-slot="empty"].border) {
+  background-color: color-mix(in srgb, var(--app-panel) 34%, transparent) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(210%);
+  backdrop-filter: blur(30px) saturate(210%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), inset 0 0 0 1px rgb(255 255 255 / 0.25);
+}
+:root:not([data-theme="dark"]) :is(.glass, .glass-bar, .glass-surface-soft, [data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="drawer-content"]) {
+  background-color: color-mix(in srgb, var(--app-panel) 40%, transparent) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(220%);
+  backdrop-filter: blur(40px) saturate(220%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7), 0 20px 55px -20px rgba(76, 52, 34, 0.35);
+}
+/* Sheets and dialogs hold reading text: more solid than the bars */
+:root :is([data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="drawer-content"]) {
+  background-color: color-mix(in srgb, var(--app-panel) 82%, transparent) !important;
+}
 
-/* On glass: everything you can see or touch is plain white */
-:is(.glass, .glass-strong, .glass-panel, [data-slot="sheet-content"], [data-slot="card"]) :is(
-  .glass-panel, [data-slot="card"]:not([data-variant="product"]), [data-slot="alert"],
+/* Menus over busy content: keep the frost hint, raise the opacity so text reads */
+.glass-menu, .glass-strong,
+:root :is([data-slot="select-content"], [data-slot="popover-content"], [data-slot="dropdown-menu-content"], [data-slot="tooltip-content"]),
+:root [data-sonner-toast] {
+  background-color: color-mix(in srgb, var(--app-panel) 94%, transparent) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px dashed var(--app-border) !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), var(--app-shadow) !important;
+  color: var(--foreground) !important;
+}
+:root [data-slot="tooltip-content"] :is(svg[class*="fill-foreground"], [class*="bg-foreground"]) { display: none; }
+:root [data-slot="sheet-overlay"], :root [data-slot="dialog-overlay"], :root [data-slot="alert-dialog-overlay"] {
+  background: color-mix(in srgb, var(--app-bg) 30%, rgb(0 0 0 / 0.25));
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+/* Outline and secondary buttons: a frosted glass pill */
+:root .group\/button:is([data-variant="outline"], [data-variant="secondary"]) {
+  background-color: color-mix(in srgb, var(--app-elev) 22%, transparent) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(185%);
+  backdrop-filter: blur(26px) saturate(185%);
+  border: 1px dashed var(--app-border-strong) !important;
+  color: var(--foreground);
+  box-shadow: inset 0 1px 0 var(--sheen), inset 0 -8px 18px rgb(0 0 0 / 0.04), 0 10px 30px -16px rgb(0 0 0 / 0.35);
+}
+:root .group\/button:is([data-variant="outline"], [data-variant="secondary"]):hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--app-elev) 45%, transparent) !important;
+  border-color: color-mix(in srgb, var(--app-text) 32%, transparent) !important;
+}
+:root .group\/button:is([data-variant="outline"], [data-variant="secondary"])[aria-pressed="true"] {
+  background-color: color-mix(in srgb, rgb(var(--tri-primary)) 16%, var(--app-elev)) !important;
+}
+
+/* Inside glass: tiles, rows, fields and buttons become .glass-inset (no backdrop-filter) */
+.glass-inset,
+:is(.glass, .glass-bar, .glass-surface, .glass-surface-soft, .glass-panel, .glass-control, [data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="card"]:not([data-variant="product"])) :is(
+  .glass-panel, .glass-control, [data-slot="card"]:not([data-variant="product"]), [data-slot="alert"], [data-slot="inset"],
   .group\/button:is([data-variant="outline"], [data-variant="secondary"]),
   [data-slot="input"], [data-slot="select-trigger"], [data-slot="input-group"], [data-slot="textarea"],
-  [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed]),
-  :is(a, div, button, section)[class*="border"]:is([data-state], .bg-card, .bg-surface, .bg-background)
+  [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed])
 ) {
-  background-color: white !important;
-  background-image: none !important;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  background-color: color-mix(in srgb, var(--app-elev) 60%, transparent) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: inset 0 1px 0 var(--sheen);
 }
-:is(.glass, .glass-strong, .glass-panel) [class*="bg-muted"][class*="rounded-full"]:not([data-slot="avatar-fallback"]) { background-color: white; }
-/* …and inside those white blocks, tracks go back to the glass tint so they still show */
-:root :is([data-slot="inset"], .bg-card) [data-slot="progress-track"] { background-color: var(--glass-tint) !important; }
+:is(.glass, .glass-bar, .glass-surface, .glass-panel, [data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="card"]:not([data-variant="product"])) .group\/button:is([data-variant="outline"], [data-variant="secondary"]):hover:not(:disabled),
+.glass-inset-hover:hover {
+  background-color: color-mix(in srgb, var(--app-elev) 78%, transparent) !important;
+  box-shadow: inset 0 1px 0 var(--sheen), inset 0 0 0 1px var(--app-border);
+}
+:is(.glass, .glass-surface, .glass-panel) [class*="bg-muted"][class*="rounded-full"]:not([data-slot="avatar-fallback"]) { background-color: color-mix(in srgb, var(--app-elev) 60%, transparent); }
+:root :is([data-slot="inset"], .bg-card) [data-slot="progress-track"] { background-color: var(--app-border-strong) !important; }
+/* Small glass pill over a photo (PhotoLabel) */
+.glass-chip {
+  background-color: color-mix(in srgb, var(--app-panel) 55%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px dashed rgb(255 255 255 / 0.25);
+  box-shadow: inset 0 1px 0 var(--sheen);
+  color: var(--foreground);
+}
+/* Segmented control thumb: a lit glass bead */
+:root .segment-thumb {
+  background: color-mix(in srgb, var(--app-elev) 85%, transparent) !important;
+  box-shadow: inset 0 1px 0 var(--sheen), 0 4px 14px -6px rgb(0 0 0 / 0.35), inset 0 0 0 1px var(--app-border);
+}
 
-/* On the plain page: tiles and fields are filled sand, so they show without strokes */
-:root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed]) { background-color: var(--glass-tint); }
-:root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed]):hover { background-color: color-mix(in oklch, var(--glass-tint), var(--foreground) 6%); }
-:root :is(.page, main) > :not(.glass-panel) :is([data-slot="input"], [data-slot="input-group"], [data-slot="select-trigger"], [data-slot="textarea"]):not(:is(.glass, .glass-panel, [data-slot="card"], [data-slot="sheet-content"]) *) {
-  background-color: var(--glass-tint) !important;
-}
+/* On the plain page: tiles and fields are frosted fills */
+:root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed]) { background-color: color-mix(in srgb, var(--app-elev) 45%, transparent); }
+:root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed]):hover { background-color: color-mix(in srgb, var(--app-elev) 75%, transparent); }
 
 /* States */
-:root [data-slot="switch"]:not([data-checked]) { background-color: color-mix(in oklch, var(--foreground) 16%, transparent); }
-:root [data-slot="progress-track"] { background: var(--glass-tint); }
-:root .group\/button[data-variant="default"]:disabled {
-  opacity: 1;
-  background-color: color-mix(in oklch, var(--foreground) 9%, transparent);
-  color: color-mix(in oklch, var(--foreground) 45%, transparent);
-}
+:root [data-slot="switch"]:not([data-checked]) { background-color: var(--app-border-strong); }
+:root [data-slot="switch"][data-checked] { background-color: rgb(var(--tri-primary)); }
+:root [data-slot="checkbox"][data-checked], :root [data-slot="radio-group-item"][data-checked] { background-color: rgb(var(--tri-primary)); border-color: rgb(var(--tri-primary)) !important; color: var(--primary-foreground); }
 
 /* Reduced transparency: glass turns solid */
 @media (prefers-reduced-transparency: reduce) {
-  .glass, .glass-strong, .glass-panel, .glass-control, .glass-chip, .glass-bar,
-  :root :is([data-slot="select-content"], [data-slot="popover-content"], [data-slot="dropdown-menu-content"], [data-slot="tooltip-content"], [data-slot="sheet-content"]),
+  .glass, .glass-bar, .glass-surface, .glass-surface-soft, .glass-panel, .glass-control, .glass-chip, .glass-menu, .glass-strong,
+  :root :is([data-slot="select-content"], [data-slot="popover-content"], [data-slot="dropdown-menu-content"], [data-slot="tooltip-content"], [data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"]),
   :root :is([data-slot="card"]:not([data-variant="product"]), [data-slot="alert"], [data-slot="empty"].border),
-  :root .group\/button:is([data-variant="outline"], [data-variant="secondary"]),
+  :root .group\/button:is([data-variant="outline"], [data-variant="secondary"], [data-variant="default"]),
   :root [data-sonner-toast] {
-    background-image: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+    background-color: var(--app-panel) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
+  :root .group\/button[data-variant="default"] { background-color: rgb(var(--tri-primary)) !important; }
+  .atmosphere { display: none; }
 }
 
 /* Navigation */
@@ -612,6 +780,24 @@ body { background: transparent !important; isolation: isolate; }
   .col-main .tiles > * { grid-column: span var(--tile); }
 }
 
+/* The lead tile: twice as wide and tall as its siblings, so the grid reads as a bento, not a repeat */
+.tiles > .tile-lead { grid-column: span calc(var(--tile) * 2); grid-row: span 2; }
+.tiles > .tile-lead [data-slot="card-title"] { font-size: clamp(1.5rem, 2.4vw, 2rem) !important; line-height: 1.1 !important; }
+@media (max-width: 767px) { .tiles > .tile-lead .product-image { aspect-ratio: var(--aspect-cover); } }
+@media (min-width: 1280px) { .tiles > .tile-lead { grid-column: span 2; } .col-main .tiles > .tile-lead { grid-column: span calc(var(--tile) * 2); } }
+
+/* Hero band: stacked display headline left, copy + actions anchored to the bottom right */
+.hero-band { padding-top: 2.5rem; padding-bottom: 1rem; overflow-x: clip; }
+@media (min-width: 768px) { .hero-band { padding-top: 4.5rem; padding-bottom: 2rem; } }
+.hero-band-grid { position: relative; display: grid; gap: 2rem; align-items: center; }
+@media (min-width: 1024px) { .hero-band-grid { grid-template-columns: 1.1fr 0.9fr; gap: 4rem; } }
+:root .hero-title { font-size: clamp(3.5rem, 9vw, 8.5rem); line-height: 0.9; letter-spacing: -0.035em; font-weight: 340; }
+/* The masked headline line: the bottom padding keeps descenders inside the mask */
+.mask-line { display: block; overflow: hidden; padding-bottom: 0.14em; margin-bottom: -0.14em; }
+
+/* Photos on dark: ease the white studio backdrops down so they don't glare */
+:root[data-theme="dark"] :is(.product-image, [data-slot="aspect-ratio"]) img { filter: brightness(0.9) saturate(0.95); }
+
 /* Layout: 40px between sections on phones, 48px from md; the page title sits 32px above its content */
 :root .page { row-gap: 2.5rem; padding-bottom: 4rem; }
 /* Beside the rail: 16px + the rail's 8px inset = one 24px gutter on the left; 32px on the right */
@@ -636,10 +822,11 @@ body { background: transparent !important; isolation: isolate; }
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
-:root { --ease-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1); }
+:root { --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1); }  /* the house easing: one curve everywhere */
 
 /* Page sections rise in, one after another */
-.page > * { animation: sg-rise 0.7s var(--ease-out-soft) both; }
+.page > * { animation: sg-rise 0.8s var(--ease-out-soft) both; }
+.page > :is(.page-header, .top-bar) { animation: none; }
 .page > :nth-child(2) { animation-delay: 70ms; }
 .page > :nth-child(3) { animation-delay: 140ms; }
 .page > :nth-child(4) { animation-delay: 210ms; }
@@ -771,7 +958,7 @@ body { background: transparent !important; isolation: isolate; }
   border-radius: 6px;
   font-size: 0.875rem;
 }
-:root [data-slot="select-item"]:is(:focus, [data-highlighted]) { background: var(--glass-tint); color: var(--foreground); }
+:root [data-slot="select-item"]:is(:focus, [data-highlighted]) { background: color-mix(in srgb, var(--app-elev) 80%, transparent); box-shadow: inset 0 1px 0 var(--sheen); color: var(--foreground); }
 :root [data-slot="select-item"][data-selected] { font-weight: 500; }
 :root [data-slot="select-label"] {
   padding: 0.625rem 0.625rem 0.25rem;
@@ -782,8 +969,7 @@ body { background: transparent !important; isolation: isolate; }
   color: var(--muted-foreground);
 }
 :root [data-slot="select-separator"] { display: none; }
-:root [data-slot="select-content"] { background-color: white !important; background-image: none !important; }
-:root [data-slot="slider-thumb"] { width: 0.875rem !important; height: 0.875rem !important; background: white; }
+:root [data-slot="slider-thumb"] { width: 0.875rem !important; height: 0.875rem !important; }
 @media (pointer: coarse) { :root [data-slot="slider-thumb"] { width: 1.25rem !important; height: 1.25rem !important; } }
 :root [data-slot="slider-track"] { height: 2px !important; }
 :root [data-slot="input-group"] input { font-size: 0.875rem !important; }
@@ -800,15 +986,6 @@ body { background: transparent !important; isolation: isolate; }
 :root [data-slot="slider-thumb"]:has(:focus-visible) { outline: 2px solid var(--foreground); outline-offset: 2px; }
 
 /* ─── Design tokens added for patterns (use these, never arbitrary values) ─────── */
-:root {
-  /* Activity heatmap: one hue light → dark, every step ≥3:1 on white */
-  --data-1: #A88F6C;
-  --data-2: #86694B;
-  --data-3: #5E4733;
-  --data-4: #33261B;
-  /* Inactive step marks (onboarding progress dashes): 3.3:1 on the page */
-  --indicator: #8A898C;
-}
 @theme inline {
   --color-data-1: var(--data-1);
   --color-data-2: var(--data-2);
@@ -841,6 +1018,106 @@ body { background: transparent !important; isolation: isolate; }
 @utility hover-zoom { transition: transform 0.5s var(--ease-out-soft); }
 .group\/tile:hover .hover-zoom, .group\/maker:hover .hover-zoom { transform: scale(1.04); }
 @utility press { transition: transform 0.15s ease; &:active { transform: scale(0.97); } }
+
+/* Fabric shop, garment view: the thumb matches the field height; chips wrap beside the
+   results on wide screens and stay one scrolling row on phones and tablets */
+.garment-thumb { width: 1.875rem; height: 2.25rem; }
+@media (pointer: coarse) { .garment-thumb { width: 2.25rem; height: 2.75rem; } }
+/* Counts on chips: quiet, but readable on the chosen (filled) chip too */
+.chip-count { opacity: 0.7; }
+@media (min-width: 1024px) { .fabric-choices { flex-wrap: wrap; overflow: visible; mask-image: none; } }
+
+/* ─── Every line is a stitch ─────────────────────────────────────────────────────
+   Borders, dividers, tab and link underlines, progress tracks and the slider are all
+   dashed like a running stitch. Exceptions on purpose: the keyboard focus ring stays a solid
+   line (it must be impossible to miss), and the cut line on printed patterns stays solid. */
+*, ::before, ::after { border-style: dashed; }
+:root a, :root .underline, :root [class*="hover:underline"]:hover { text-decoration-style: dashed; text-decoration-thickness: 1px; }
+:root :is(hr, [data-slot="separator"]) {
+  height: 1px; border: 0 !important;
+  background: repeating-linear-gradient(90deg, var(--app-border-strong) 0 6px, transparent 6px 10px) !important;
+}
+:root [data-slot="separator"][data-orientation="vertical"] { width: 1px; height: auto; background: repeating-linear-gradient(180deg, var(--app-border-strong) 0 6px, transparent 6px 10px) !important; }
+/* The Panel's hairline progress is a thread of stitches too */
+.panel-progress { background: var(--cta-fill) !important; -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 7px, transparent 7px 11px); mask-image: repeating-linear-gradient(90deg, #000 0 7px, transparent 7px 11px); }
+/* Tracks: a faint row of stitches under the progress (or slider) thread */
+:root [data-slot="progress-track"], :root [data-slot="slider-track"], .stitch-track {
+  background: repeating-linear-gradient(90deg, var(--app-border-strong) 0 7px, transparent 7px 11px) !important;
+}
+
+/* ─── Stitches: the sewing signature ─────────────────────────────────────────────
+   A running stitch sewn just inside the main button and the chosen chips, like a label
+   stitched onto fabric; progress is drawn as stitches. The thread takes the button's own
+   text colour, so it works on every palette and theme. Glass stays glass underneath. */
+:root .group\/button[data-variant="default"],
+:root [data-slot="toggle-group-item"][data-shape="tile"][data-pressed] { position: relative; }
+:root .group\/button[data-variant="default"]:not(:disabled)::after,
+:root [data-slot="toggle-group-item"][data-shape="tile"][data-pressed]::after {
+  content: ""; position: absolute; inset: 3px; border-radius: inherit; pointer-events: none;
+  border: 1.5px dashed var(--stitch-cta, color-mix(in srgb, var(--cta-ink) 55%, transparent)) !important;
+  transition: inset .25s var(--ease-out-soft);
+}
+:root [data-slot="toggle-group-item"][data-shape="tile"][data-pressed]::after { inset: 2px; border-width: 1px; }
+/* On hover the stitch draws in a little tighter, as if the thread were pulled */
+:root .group\/button[data-variant="default"]:hover:not(:disabled)::after { inset: 4px; }
+/* Small buttons: a finer thread */
+:root .group\/button[data-variant="default"]:is(.h-7, .h-8, [class*="size-"])::after { inset: 2px; border-width: 1px; }
+/* Outline and secondary buttons (icon buttons too): the same running stitch, in a quieter
+   thread, so every button reads as sewn. Ghost buttons stay plain: quiet actions stay quiet. */
+:root .group\/button:is([data-variant="outline"], [data-variant="secondary"]) { position: relative; }
+:root .group\/button:is([data-variant="outline"], [data-variant="secondary"]):not(:disabled)::after {
+  content: ""; position: absolute; inset: 3px; border-radius: inherit; pointer-events: none;
+  border: 1px dashed color-mix(in srgb, var(--app-text) 28%, transparent) !important;
+  transition: inset .25s var(--ease-out-soft), border-color .25s ease;
+}
+:root .group\/button:is([data-variant="outline"], [data-variant="secondary"]):hover:not(:disabled)::after {
+  inset: 4px; border-color: color-mix(in srgb, var(--app-text) 45%, transparent) !important;
+}
+:root .group\/button:is([data-variant="outline"], [data-variant="secondary"]):is(.h-7, .h-8, [class*="size-"])::after { inset: 2px; }
+:root .group\/button:is([data-variant="outline"], [data-variant="secondary"])[aria-pressed="true"]::after { border-color: color-mix(in srgb, var(--accent-ink) 70%, transparent) !important; }
+
+/* Progress as a running stitch: dashes of thread over a faint fold line */
+:root [data-slot="progress-indicator"] {
+  -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 7px, transparent 7px 11px);
+  mask-image: repeating-linear-gradient(90deg, #000 0 7px, transparent 7px 11px);
+  box-shadow: none !important;
+}
+:root [data-slot="progress-track"] { height: 2px !important; overflow: visible; }
+:root [data-slot="progress-indicator"] { transform: scaleY(1.5); }
+
+/* ─── Sewing guide: the same glass language ───────────────────────────────────── */
+/* The sheet: heavy frost over the garment page, solid enough to read at arm's length */
+.guide-sheet, .done-dialog {
+  background-color: color-mix(in srgb, var(--app-panel) 80%, transparent);
+  -webkit-backdrop-filter: blur(44px) saturate(200%);
+  backdrop-filter: blur(44px) saturate(200%);
+  border: 1px dashed var(--app-border);
+  box-shadow: inset 0 1px 0 var(--sheen), 0 -20px 60px -30px rgb(0 0 0 / 0.45);
+  color: var(--foreground);
+}
+.done-dialog { max-height: 92vh; }
+.guide-overlay { background: color-mix(in srgb, var(--app-bg) 30%, rgb(0 0 0 / 0.3)); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.done-hero { background: var(--muted); }
+/* Inside the sheet, panels are insets: the sheet already frosts the page once */
+:is(.guide-sheet, .done-dialog) :is(.glass-panel, [data-slot="inset"]) {
+  background-color: color-mix(in srgb, var(--app-elev) 55%, transparent) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: 1px dashed var(--app-border) !important;
+  box-shadow: inset 0 1px 0 var(--sheen) !important;
+}
+:is(.guide-sheet, .done-dialog) .group\/button:is([data-variant="outline"], [data-variant="secondary"]) {
+  background-color: color-mix(in srgb, var(--app-elev) 60%, transparent) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.guide-canvas { background-color: color-mix(in srgb, var(--app-elev) 70%, transparent) !important; }
+/* Steps: the active one is tinted with the palette, an opened one sits on the inset */
+.step-row-active { background: color-mix(in srgb, rgb(var(--tri-primary)) 12%, transparent); box-shadow: inset 0 0 0 1px rgb(var(--tri-primary) / 0.25); }
+.step-row-open { background: color-mix(in srgb, var(--app-elev) 70%, transparent); }
+.step-dot-active { background: var(--line-fill, var(--cta-fill)) !important; color: var(--cta-ink) !important; box-shadow: 0 0 0 3px rgb(var(--tri-primary) / 0.15); }
+.step-dot-upcoming { background: color-mix(in srgb, var(--app-elev) 70%, transparent); box-shadow: inset 0 0 0 1px var(--app-border-strong); }
+.done-flash { background: var(--cta-fill) !important; color: var(--cta-ink) !important; box-shadow: 0 0 0 10px rgb(var(--tri-primary) / 0.12); }
 
 /* Side sheets: full width on phones, 448px from sm */
 :root .panel-sheet[data-side="right"] { width: 100%; }

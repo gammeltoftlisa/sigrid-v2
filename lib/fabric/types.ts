@@ -50,6 +50,8 @@ export interface SourceStatus {
 export interface FabricSearchResponse {
   listings: FabricListing[]
   sources: SourceStatus[]
+  /** Garment searches: which of the garment's recommended fabrics each listing matched, by listing id */
+  matches?: Record<string, string[]>
 }
 
 export interface FabricQuery {

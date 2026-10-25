@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { motion, animate, useMotionValue } from 'framer-motion'
+import { motion, animate, useMotionValue } from 'motion/react'
 import { IconYarn, IconScissors } from '@tabler/icons-react'
 import type { GuidePiece, StepAction, StepAnnotation, FabricSide, UserMeasurements, PieceDims } from '@/lib/types'
 

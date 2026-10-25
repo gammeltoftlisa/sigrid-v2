@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { cleanSearch, getDepartment } from '@/lib/fabric/catalog'
 import { getFabricNeed } from '@/lib/fabric/needs'
 import { searchAllSources } from '@/lib/fabric/sources'
-import type { FabricQuery } from '@/lib/fabric/types'
+import type { FabricListing, FabricQuery, FabricSearchResponse, SourceStatus } from '@/lib/fabric/types'
 import { clientIp, rateLimit } from '@/lib/rate-limit'
 
 // Each search calls every shop, so one visitor gets 30 a minute (the store makes a few per page)
@@ -12,7 +12,8 @@ const WINDOW_MS = 60_000
 
 /**
  * Searches every fabric source.
- *   ?garment=classic-tshirt&choice=cotton-jersey  one of a garment's recommended fabrics
+ *   ?garment=classic-tshirt                       every recommended fabric for a garment, with `matches`
+ *   ?garment=classic-tshirt&choice=cotton-jersey  just one of them
  *   ?department=linen                              a store department
  *   ?q=washed linen                                the store's search box
  *   (nothing)                                      browse the latest fabric in every shop
@@ -35,8 +36,11 @@ export async function GET(request: NextRequest) {
 
   if (garmentId) {
     const need = getFabricNeed(garmentId)
-    const choice = need.choices.find((c) => c.id === params.get('choice')) ?? need.choices[0]
-    query = { q: choice.query, match: choice.match, limit: 6, kind: 'fabric' }
+    const picked = need.choices.find((c) => c.id === params.get('choice'))
+    const result = await searchRecommended(picked ? [picked] : need.choices)
+    return Response.json(result, {
+      headers: { 'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600' },
+    })
   } else if (department) {
     query = { q: department.query, match: department.match, limit: 8, kind: department.kind }
   } else if (q.length >= 2) {
@@ -48,4 +52,35 @@ export async function GET(request: NextRequest) {
   return Response.json(result, {
     headers: { 'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600' },
   })
+}
+
+/**
+ * Searches each recommended fabric at once and merges them: the lists take turns so every
+ * fabric shows on the first screen, a listing that suits two of them shows once, and
+ * `matches` says which fabrics each listing suits so the page can filter without asking again.
+ */
+async function searchRecommended(choices: { id: string; query: string; match: string[] }[]): Promise<FabricSearchResponse> {
+  const results = await Promise.all(
+    choices.map((c) => searchAllSources({ q: c.query, match: c.match, limit: 6, kind: 'fabric' })),
+  )
+  const listings: FabricListing[] = []
+  const matches: Record<string, string[]> = {}
+  for (let i = 0; results.some((r) => i < r.listings.length); i++) {
+    results.forEach((r, n) => {
+      const l = r.listings[i]
+      if (!l) return
+      if (!matches[l.id]) {
+        matches[l.id] = []
+        listings.push(l)
+      }
+      if (!matches[l.id].includes(choices[n].id)) matches[l.id].push(choices[n].id)
+    })
+  }
+  // One status per shop: it answered if it answered any of the searches
+  const sources = new Map<string, SourceStatus>()
+  for (const s of results.flatMap((r) => r.sources)) {
+    const seen = sources.get(s.id)
+    sources.set(s.id, seen ? { ...seen, ok: seen.ok || s.ok, count: seen.count + s.count, note: seen.ok || s.ok ? undefined : seen.note } : s)
+  }
+  return { listings, sources: [...sources.values()], matches }
 }

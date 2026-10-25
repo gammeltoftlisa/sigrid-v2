@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { IconX } from '@tabler/icons-react'
-import IconButton from './IconButton'
+import { Button } from '@/components/ui/button'
 import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
 
 interface Props {
@@ -19,18 +19,20 @@ export default function FlowHeader({ garmentName, garmentId, onClose, children }
   return (
     <div className="w-full shrink-0 flex items-center justify-between gap-3 px-4 py-3 md:px-5">
       <div className="flex items-center gap-2 min-w-0">
+        {/* Phones: just the garment, so nothing gets cut off; the full trail from sm */}
+        <span className="truncate text-sm font-medium sm:hidden">{garmentName}</span>
         <PageBreadcrumbs
           items={[
             { label: garmentName, href: garmentId ? `/garment/${garmentId}` : undefined },
             { label: 'Sewing guide' },
           ]}
-          className="whitespace-nowrap"
+          className="hidden whitespace-nowrap sm:flex"
         />
         {children}
       </div>
-      <IconButton label="Close project" onClick={onClose}>
-        <IconX size={16} />
-      </IconButton>
+      <Button variant="outline" size="icon-lg" aria-label="Close project" title="Close project" onClick={onClose}>
+        <IconX />
+      </Button>
     </div>
   )
 }

@@ -2,9 +2,9 @@
 
 import { useState, use, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { IconPrinter, IconChevronDown, IconNeedleThread } from '@tabler/icons-react'
-import { textLink } from '@/components/legacy/interaction'
+import { Button } from '@/components/ui/button'
 import { getGarmentById, getGarmentGuide, standardSizes } from '@/lib/data'
 import type { StandardSize, UserMeasurements } from '@/lib/types'
 import { loadProject, saveProject } from '@/lib/projects'
@@ -19,6 +19,7 @@ import CompletionDialog from '@/components/sewing/CompletionDialog'
 import StepInstruction from '@/components/sewing/StepInstruction'
 import { groupIntoJourneys } from '@/lib/journeys'
 import { progressStateOf } from '@/components/legacy/progress'
+import { ease } from '@/components/patterns/reveal'
 
 const DEFAULT_MEASUREMENTS: UserMeasurements = {
   bust: 88, waist: 70, hips: 96, height: 168, inseam: 78,
@@ -105,7 +106,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   if (!guide || guide.steps.length === 0) {
     return (
       <motion.div
-        className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-background rounded-t-3xl overflow-hidden"
+        className="guide-sheet fixed inset-x-0 bottom-0 top-3 flex flex-col rounded-t-pane-lg overflow-hidden"
         initial={{ y: animateIn ? '100%' : 0 }}
         animate={{ y: exiting ? '100%' : 0 }}
         transition={{ type: 'spring', stiffness: 320, damping: 32 }}
@@ -113,12 +114,12 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
       >
         <FlowHeader garmentName={garment.name} onClose={() => setExiting(true)} />
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
-          <IconNeedleThread size={44} stroke={1.5} className="text-ink-3" />
-          <h2 className="text-heading font-bold text-ink">This guide is still being written</h2>
-          <p className="text-body text-ink-2">We’re writing the steps for this garment carefully. They’ll appear here when they’re ready.</p>
-          <button onClick={() => setExiting(true)} className={`mt-2 text-label ${textLink}`}>
+          <IconNeedleThread className="size-10 text-muted-foreground" stroke={1.5} aria-hidden />
+          <h2 className="text-3xl">This guide is still <em className="display-italic">being written</em></h2>
+          <p className="max-w-prose text-base text-muted-foreground">We’re writing the steps for this garment carefully. They’ll appear here when they’re ready.</p>
+          <Button variant="outline" className="mt-2" onClick={() => setExiting(true)}>
             Go back
-          </button>
+          </Button>
         </div>
       </motion.div>
     )
@@ -173,7 +174,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <motion.div
-      className="fixed inset-x-0 bottom-0 top-3 flex flex-col bg-background rounded-t-3xl overflow-hidden"
+      className="guide-sheet fixed inset-x-0 bottom-0 top-3 flex flex-col rounded-t-pane-lg overflow-hidden"
       initial={{ y: animateIn ? '100%' : 0 }}
       animate={{ y: exiting ? '100%' : 0 }}
       transition={{ type: 'spring', stiffness: 320, damping: 32 }}
@@ -182,22 +183,13 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
       <FlowHeader garmentName={garment.name} garmentId={id} onClose={() => setExiting(true)}>
         {size && (
           <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={() => setSizeSheetOpen(true)}
-              aria-label={`Size ${sizeLabel(size)}. Change size`}
-              className="inline-flex items-center gap-1 h-8 pl-3 pr-2.5 rounded-full bg-glass text-xs font-medium text-foreground tabular-nums hover:bg-white transition-colors duration-150"
-            >
+            <Button variant="outline" size="sm" className="tabular-nums" onClick={() => setSizeSheetOpen(true)} aria-label={`Size ${sizeLabel(size)}. Change size`}>
               {sizeLabel(size)}
-              <IconChevronDown size={12} />
-            </button>
-            <button
-              onClick={printPattern}
-              aria-label="Print pattern"
-              title="Print pattern"
-              className="w-8 h-8 rounded-full bg-glass text-foreground flex items-center justify-center hover:bg-white transition-colors duration-150"
-            >
-              <IconPrinter size={14} />
-            </button>
+              <IconChevronDown data-icon="inline-end" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={printPattern} aria-label="Print pattern" title="Print pattern">
+              <IconPrinter />
+            </Button>
           </div>
         )}
       </FlowHeader>
@@ -231,7 +223,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
           {/* Canvas column */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 relative min-h-0 rounded-(--radius) bg-card overflow-hidden">
+            <div data-slot="inset" className="guide-canvas flex-1 relative min-h-0 rounded-(--radius) overflow-hidden">
               {allDone ? (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.96 }}
@@ -241,11 +233,11 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                   <div className="w-28 h-28 md:w-36 md:h-36 rounded-(--radius) bg-muted flex items-center justify-center p-6 md:p-8">
                     <GarmentArt name={garment.name} className="w-full h-full" />
                   </div>
-                  <div>
-                    <p className="text-heading font-bold text-ink">All {steps.length} steps done</p>
-                    <p className="text-caption text-ink-3 mt-1">{garment.name} is finished.</p>
+                  <div className="flex flex-col gap-2">
+                    <p className="kicker">All {steps.length} steps done</p>
+                    <p className="font-heading text-4xl">{garment.name} is <em className="display-italic">finished.</em></p>
                   </div>
-                  <button onClick={() => setDoneOpen(true)} className={`text-label ${textLink}`}>View summary</button>
+                  <Button variant="outline" onClick={() => setDoneOpen(true)}>View summary</Button>
                 </motion.div>
               ) : (
               <AnimatePresence mode="wait" custom={direction}>
@@ -256,7 +248,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                  transition={{ duration: 0.32, ease }}
                   className="w-full h-full"
                 >
                   <PatternCanvas
@@ -280,12 +272,12 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                     transition={{ duration: 0.25 }}
                   >
                     <motion.div
-                      className="w-20 h-20 rounded-full bg-success flex items-center justify-center"
+                      className="done-flash size-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
                       initial={{ scale: 0.6 }} animate={{ scale: 1 }} exit={{ scale: 1.3 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                     >
                       <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                        <path d="M20 7L9 18L4 13" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M20 7L9 18L4 13" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </motion.div>
                   </motion.div>

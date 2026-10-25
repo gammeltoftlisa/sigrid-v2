@@ -1,10 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { IconArrowDown, IconArrowRight } from '@tabler/icons-react'
 
+import { Button } from '@/components/ui/button'
 import { CategoryTabs } from '@/components/patterns/category-tabs'
+import { HeroBand } from '@/components/patterns/hero-band'
 import { GarmentCard } from '@/components/patterns/garment-card'
-import { PageContainer, PageHeader } from '@/components/patterns/page-header'
+import { PageContainer } from '@/components/patterns/page-header'
 import { PageSection } from '@/components/patterns/page-section'
 import { KeepHeight } from '@/components/patterns/keep-height'
 import { ProjectGrid } from '@/components/patterns/project-grid'
@@ -17,9 +21,9 @@ const categories = ['All', 'Tops', 'Bottoms', 'Dresses', 'Outerwear'] as const s
 
 function greeting() {
   const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 18) return 'Good afternoon'
-  return 'Good evening'
+  if (h < 12) return 'morning'
+  if (h < 18) return 'afternoon'
+  return 'evening'
 }
 
 export default function HomePage() {
@@ -29,21 +33,48 @@ export default function HomePage() {
   const projects = mounted ? listProjects() : []
   const inProgress = projects.filter((p) => !p.finished)
   const current = inProgress[0] ?? null
-  const hello = mounted ? greeting() : 'Hello'
+  const partOfDay = mounted ? greeting() : 'day'
+  const today = mounted ? new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : ''
 
   const filtered = category === 'All' ? garments : garments.filter((g) => g.category === category)
+  const started = new Set(projects.map((p) => p.garment.id))
+  // Feature the first garment you haven't started yet
+  const leadId = filtered.find((g) => !started.has(g.id))?.id
 
   return (
     <PageContainer>
-      <PageHeader
-        className="pt-8 md:pt-10"
-        title={hello}
-        description={current ? undefined : 'Choose a garment. Every pattern comes in your size.'}
+      <HeroBand
+        kicker={today || 'Your sewing table'}
+        lines={['Good', <em key="part" className="display-italic">{partOfDay}.</em>]}
+        description={
+          current
+            ? `${current.garment.name} is waiting where you left it. Pick up the next step whenever you’re ready.`
+            : 'Choose a garment. Every pattern comes in your size, with each step explained.'
+        }
+        actions={
+          current ? (
+            <>
+              <Button size="lg" nativeButton={false} render={<Link href={`/garment/${current.garment.id}/guide`} />}>
+                Continue sewing
+                <IconArrowRight data-icon="inline-end" />
+              </Button>
+              <Button size="lg" variant="outline" nativeButton={false} render={<a href="#garments" />}>
+                Start something new
+              </Button>
+            </>
+          ) : (
+            <Button size="lg" nativeButton={false} render={<a href="#garments" />}>
+              Browse garments
+              <IconArrowDown data-icon="inline-end" />
+            </Button>
+          )
+        }
       />
 
-      {inProgress.length > 0 && <ProjectGrid label={inProgress.length === 1 ? 'Your project' : 'Your projects'} projects={inProgress} />}
+      {/* The current project is in the hero; the panel only lists the others */}
+      {inProgress.length > 1 && <ProjectGrid label="Your other projects" projects={inProgress.slice(1)} />}
 
-      <PageSection title={current ? 'Start something new' : 'Garments'}>
+      <PageSection id="garments" title={current ? 'Start something new' : 'Garments'}>
         <CategoryTabs label="Filter by category" options={categories} value={category} onValueChange={setCategory} />
         <KeepHeight>
           {filtered.length > 0 ? (
@@ -51,6 +82,9 @@ export default function HomePage() {
               {filtered.map((g) => (
                 <GarmentCard
                   key={g.id}
+                  lead={category === 'All' && g.id === leadId}
+                  tag={started.has(g.id) ? 'In progress' : undefined}
+                  description={g.description}
                   href={`/garment/${g.id}`}
                   name={g.name}
                   difficulty={g.difficulty}

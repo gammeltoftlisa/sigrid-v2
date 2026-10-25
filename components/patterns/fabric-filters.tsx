@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { IconX } from '@tabler/icons-react'
+import { IconChevronDown, IconX } from '@tabler/icons-react'
 import { cn } from 'cn'
 
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -222,6 +223,57 @@ export function FabricFilterGroups({
           </Select>
         </Section>
       )}
+    </div>
+  )
+}
+
+/**
+ * The same filters as one row of small pills, for the side panel: each opens a glass popover
+ * with its options, and shows how many are chosen. Takes one line of height instead of four groups.
+ */
+export function FabricFilterPills({
+  listings,
+  filters,
+  onChange,
+  notions,
+}: {
+  listings: FabricListing[]
+  filters: FabricFilters
+  onChange: (f: FabricFilters) => void
+  notions?: boolean
+}) {
+  const f = facets(listings, filters)
+  const pill = (label: string, active: number, body: React.ReactNode) => (
+    <Popover key={label}>
+      <PopoverTrigger
+        render={<Button variant="outline" size="sm" aria-pressed={active > 0} />}
+      >
+        {label}
+        {active > 0 && <span className="chip-count tabular-nums">{active}</span>}
+        <IconChevronDown data-icon="inline-end" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="gap-3 p-3" aria-label={label}>
+        <p className="eyebrow text-muted-foreground">{label}</p>
+        {body}
+      </PopoverContent>
+    </Popover>
+  )
+  const pills = [
+    !notions && f.conditions.length > 0 &&
+      pill('Condition', filters.conditions.length, (
+        <Chips label="Condition" options={f.conditions} value={filters.conditions} onChange={(v) => onChange({ ...filters, conditions: v as FabricCondition[] })} />
+      )),
+    !notions && f.fibres.length > 0 &&
+      pill('Fibre', filters.fibres.length, <Chips label="Main fibre" options={f.fibres} value={filters.fibres} onChange={(v) => onChange({ ...filters, fibres: v })} />),
+    !notions && f.price &&
+      pill('Price', filters.price ? 1 : 0, <PriceFilter bounds={f.price} value={filters.price} onChange={(price) => onChange({ ...filters, price })} />),
+    f.shops.length > 0 &&
+      pill('Shop', filters.shops.length, <Chips label="Shop" options={f.shops} value={filters.shops} onChange={(v) => onChange({ ...filters, shops: v })} />),
+  ].filter(Boolean)
+  if (pills.length === 0) return null
+  return (
+    <div role="group" aria-label="Filters" className="flex flex-wrap gap-2">
+      {pills}
     </div>
   )
 }

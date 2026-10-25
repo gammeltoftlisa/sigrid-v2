@@ -1,13 +1,17 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Geist_Mono } from 'next/font/google'
+import { Be_Vietnam_Pro, Fraunces, JetBrains_Mono } from 'next/font/google'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
 import { MotionProvider } from '@/components/motion-provider'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Atmosphere } from '@/components/patterns/atmosphere'
 import './globals.css'
 
-// Brand typeface for headings and text (close to Apple's SF); mono only for code
-const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
-const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
+// Display: an expressive serif with optical sizing and the WONK/SOFT axes for italic accents.
+// Text: a clean humanist sans. Mono: kickers, labels and code.
+const display = Fraunces({ variable: '--font-fraunces', subsets: ['latin', 'latin-ext'], axes: ['SOFT', 'WONK', 'opsz'], display: 'swap' })
+const body = Be_Vietnam_Pro({ variable: '--font-vietnam', subsets: ['latin', 'latin-ext'], weight: ['300', '400', '500', '600'], display: 'swap' })
+const mono = JetBrains_Mono({ variable: '--font-jetbrains', subsets: ['latin'], weight: ['400', '500'], display: 'swap' })
 
 export const metadata: Metadata = {
   title: 'Sigrid – Sewing for everyone',
@@ -17,7 +21,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#FAF8F4',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#EFEADE' },
+    { media: '(prefers-color-scheme: dark)', color: '#15110D' },
+  ],
 }
 
 export default function RootLayout({
@@ -26,14 +33,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}>
       <body className="min-h-full bg-background font-sans text-foreground">
-        <MotionProvider>
-          <TooltipProvider>
-            {children}
-            <Toaster position="bottom-center" />
-          </TooltipProvider>
-        </MotionProvider>
+        <ThemeProvider>
+          <MotionProvider>
+            <TooltipProvider>
+              <Atmosphere />
+              {children}
+              <Toaster position="bottom-center" />
+            </TooltipProvider>
+          </MotionProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

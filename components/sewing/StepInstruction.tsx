@@ -1,11 +1,12 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { IconBulb, IconRuler2, IconCircleCheck } from '@tabler/icons-react'
 import type { SewingStep2D } from '@/lib/types'
 import type { ProgressState } from '@/components/legacy/progress'
 import { ACTION_LABELS } from './actions'
 import { TOOLS } from './tools'
+import { ease } from '@/components/patterns/reveal'
 
 interface Props {
   step: SewingStep2D
@@ -34,36 +35,35 @@ export default function StepInstruction({ step, index, journeyTitle, numberInJou
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -4 }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
+        transition={{ duration: 0.3, ease }}
         className="glass-panel rounded-(--radius) px-5 py-4"
       >
         <div className="flex items-center justify-between gap-3 mb-2">
-          <p className="text-xs text-muted-foreground">
-            {journeyTitle && <span className="font-medium text-foreground">{journeyTitle}</span>}
-            {journeyTitle && ' · '}
+          <p className="kicker">
+            {journeyTitle && `${journeyTitle} · `}
             Step {numberInJourney} of {journeyLength}
           </p>
           {state === 'done' && (
-            <span className="inline-flex items-center gap-1 text-caption font-semibold text-primary">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
               <IconCircleCheck size={15} />
               Done
             </span>
           )}
           {state === 'upcoming' && (
-            <span className="text-caption font-semibold text-ink-3">Coming up</span>
+            <span className="text-xs font-medium text-muted-foreground">Coming up</span>
           )}
         </div>
 
-        <div className="flex items-center gap-2.5 mb-2">
-          <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-card">
+        <div className="flex items-baseline gap-3 mb-2">
+          <span className="eyebrow shrink-0 rounded-full bg-card px-2.5 py-1 text-muted-foreground">
             {ACTION_LABELS[step.action]}
           </span>
-          <h2 className={`text-lg font-semibold leading-tight ${state === 'done' ? 'text-muted-foreground' : 'text-foreground'}`}>
+          <h2 className={`text-3xl ${state === 'done' ? 'text-muted-foreground' : 'text-foreground'}`}>
             {step.title}
           </h2>
         </div>
 
-        <p className="text-sm text-muted-foreground leading-relaxed max-w-prose">{step.instruction}</p>
+        <p className="text-base text-muted-foreground max-w-prose">{step.instruction}</p>
 
         {(step.measurement || tool) && (
           <div className="flex flex-wrap gap-2 mt-4">
@@ -84,7 +84,7 @@ export default function StepInstruction({ step, index, journeyTitle, numberInJou
 
         {step.tip && (
           <div className="flex items-start gap-2 mt-3 rounded-(--control-radius) bg-card px-4 py-3">
-            <IconBulb size={18} className="text-warning-solid shrink-0 mt-0.5" />
+            <IconBulb size={18} className="text-primary shrink-0 mt-0.5" />
             <p className="text-sm text-foreground leading-relaxed">{step.tip}</p>
           </div>
         )}

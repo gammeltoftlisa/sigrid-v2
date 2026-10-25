@@ -1,7 +1,7 @@
 'use client'
 
 import { useId } from 'react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { cn } from 'cn'
 
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'

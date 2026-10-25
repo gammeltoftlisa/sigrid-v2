@@ -42,7 +42,7 @@ export function Panel({
           </div>
         </div>
         {progress !== undefined && (
-          <div className="h-0.5 overflow-hidden rounded-full bg-foreground/10" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100} aria-label={`${label} progress`}>
+          <div className="stitch-track h-0.5 overflow-hidden rounded-full" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100} aria-label={`${label} progress`}>
             <div className="panel-progress h-full bg-brand" style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
           </div>
         )}

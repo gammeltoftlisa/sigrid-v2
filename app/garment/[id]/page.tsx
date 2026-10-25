@@ -27,7 +27,6 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const router = useRouter()
   const garment = getGarmentById(id)
   const fabricNeed = getFabricNeed(id)
-  const fabric = fabricNeed.choices[0]
   const creator = garment.isCreator && garment.creatorId ? creators.find((c) => c.id === garment.creatorId) : null
   const [following, setFollowing] = useState(false)
   const guide = getGarmentGuide(id)
@@ -61,6 +60,9 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
 
   const fabricSize = project?.size ?? (profileSize && garment.sizes.includes(profileSize) ? profileSize : null)
   const fabricMeters = metersFor(fabricNeed, fabricSize ?? (garment.sizes.includes('M') ? 'M' : garment.sizes[0]))
+
+  // Every fabric the pattern recommends: "Cotton jersey · Organic cotton jersey · Viscose jersey"
+  const fabricNames = fabricNeed.choices.map((c) => c.name).join(' · ')
 
   const onCta = () => (inProgress ? enterGuide() : setSizeSheetOpen(true))
   const ctaLabel = inProgress ? 'Continue sewing' : finished ? 'Sew it again' : `Start sewing · €${garment.price}`
@@ -121,7 +123,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
 
             {/* One container: the rows scroll inside it if needed, the main button is always visible at its bottom */}
             <Panel
-              className="md:min-h-0 md:flex-1"
+              className="md:min-h-0"
               bodyClassName="md:overflow-y-auto"
               footer={<div className="hidden md:block">{cta}</div>}
               label={finished ? 'Finished' : project ? 'Your project' : 'Overview'}
@@ -155,7 +157,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
               <PanelRow
                 href={`/fabric?garment=${id}`}
                 leading={<StepDot state="upcoming"><IconShirt className="size-3.5" /></StepDot>}
-                title={fabric.name}
+                title={fabricNames}
                 detail={`${formatMeters(fabricMeters)}${fabricSize ? ` for ${sizeLabel(fabricSize)}` : ''} · Find fabric`}
               />
               {tools.length > 0 && (

@@ -26,8 +26,8 @@ function StatTile({ label, value, unit, hero }: { label: string; value: string |
     <Inset className="flex flex-col gap-1 p-4">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span className="flex items-baseline gap-1">
-        {hero && <IconFlame className="size-5 self-center text-warning-solid" aria-hidden />}
-        <span className={cn('font-semibold tabular-nums tracking-tight', hero ? 'text-4xl' : 'text-3xl')}>{value}</span>
+        {hero && <IconFlame className="size-5 self-center text-primary" aria-hidden />}
+        <span className={cn('font-heading tabular-nums', hero ? 'text-5xl' : 'text-4xl')}>{value}</span>
         {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
       </span>
     </Inset>

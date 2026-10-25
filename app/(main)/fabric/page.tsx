@@ -15,7 +15,8 @@ import { FabricBagButton, FabricBagSheet } from '@/components/patterns/fabric-ba
 import { PanelSheet } from '@/components/patterns/panel-sheet'
 import { FabricCard } from '@/components/patterns/fabric-card'
 import { KeepHeight } from '@/components/patterns/keep-height'
-import { ActiveFilters, FabricFilterGroups } from '@/components/patterns/fabric-filters'
+import { ActiveFilters, FabricFilterGroups, FabricFilterPills } from '@/components/patterns/fabric-filters'
+import { FabricChoices, GarmentThumb } from '@/components/patterns/fabric-choices'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
 import { Panel } from '@/components/patterns/panel'
 import { StatusMessage } from '@/components/patterns/status-message'
@@ -64,7 +65,8 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   const mode: Mode = params.garment ? 'For a garment' : 'All fabric'
   const garment = params.garment ? getGarmentById(params.garment) : null
   const need = garment ? getFabricNeed(garment.id) : null
-  const choice = need ? (need.choices.find((c) => c.id === params.choice) ?? need.choices[0]) : null
+  // A recommended fabric to narrow to, or null for all of them
+  const choice = need?.choices.find((c) => c.id === params.choice) ?? null
   const department = garment ? undefined : getDepartment(params.department)
   const search = garment || department ? '' : cleanSearch(params.q)
 
@@ -84,8 +86,9 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   const meters = need && size ? metersFor(need, size) : undefined
 
   // What to ask the API for
+  // A garment asks for all its recommended fabrics at once; picking one filters on the page
   const apiQuery = garment
-    ? `garment=${garment.id}&choice=${choice!.id}`
+    ? `garment=${garment.id}`
     : department
       ? `department=${department.id}`
       : search
@@ -113,6 +116,15 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   // Condition, shop and price filters stay when the category or search changes, like in a store
   const [filters, setFilters] = useState<FabricFilters>(noFilters)
   const [sort, setSort] = useState<Sort>('match')
+  // Show a page of results at a time, so phones don't get one endless list
+  const PAGE = 12
+  const [shownCount, setShownCount] = useState(PAGE)
+  const listKey = `${requestKey}-${choice?.id}-${sort}-${JSON.stringify(filters)}`
+  const [prevListKey, setPrevListKey] = useState(listKey)
+  if (listKey !== prevListKey) {
+    setPrevListKey(listKey)
+    setShownCount(PAGE)
+  }
   const [filtersOpen, setFiltersOpen] = useState(false)
   // A new category or search is usually a different fibre, so the fibre filter starts over
   const clearFibres = () => setFilters((f) => ({ ...f, fibres: [] }))
@@ -120,7 +132,17 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   const isNotions = department?.kind === 'notion'
   const all = load.state === 'done' ? load.data.listings : []
   const activeFilters = isNotions ? { ...filters, conditions: [], fibres: [], price: null } : filters
-  const shown = all.filter((l) => passes(l, activeFilters))
+  const matches = load.state === 'done' ? load.data.matches : undefined
+  const suitsChoice = (l: FabricListing) => !choice || !matches || (matches[l.id] ?? []).includes(choice.id)
+  const shown = all.filter((l) => suitsChoice(l) && passes(l, activeFilters))
+  // How many listings suit each recommended fabric, after the other filters
+  const choiceCounts =
+    need && matches
+      ? Object.fromEntries([
+          ['all', all.filter((l) => passes(l, activeFilters)).length],
+          ...need.choices.map((c) => [c.id, all.filter((l) => (matches[l.id] ?? []).includes(c.id) && passes(l, activeFilters)).length]),
+        ])
+      : undefined
   const shopNames = new Map(all.map((l) => [l.sourceId, l.sourceName]))
   const filterCount = activeFilterCount(activeFilters)
   const priceOf = (l: FabricListing) => approxEur(meters ? costFor(l, meters) : (pricePerMeter(l) ?? l.unitPrice), l.currency)
@@ -167,10 +189,10 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
     </p>
   )
 
-  // Desktop: filters live inside the left panel. Phones open the same filters in a sheet.
+  // Desktop: filters are one row of pills in the left panel (each opens its options). Phones open them in a sheet.
   const filtersInPanel = (
     <div className="hidden lg:block">
-      <FabricFilterGroups listings={all} filters={filters} onChange={setFilters} notions={isNotions} />
+      <FabricFilterPills listings={all} filters={filters} onChange={setFilters} notions={isNotions} />
     </div>
   )
   const clearAction =
@@ -193,9 +215,14 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
 
       <div className="grid-12">
         <div className="col-side flex flex-col gap-6">
-          {garment && need && choice && size && meters ? (
-            <Panel label="What you’re making" action={clearAction}>
-              <div className="flex gap-2">
+          {garment && need && size && meters ? (
+            <Panel
+              label="What you’re making"
+              meta={<span aria-label={`You need ${formatMeters(meters)}`}>Need {formatMeters(meters)}</span>}
+              action={clearAction}
+            >
+              <div className="flex items-center gap-2">
+                <GarmentThumb id={garment.id} name={garment.name} />
                 <Select
                   items={garments.map((g) => ({ value: g.id, label: g.name }))}
                   value={garment.id}
@@ -213,8 +240,9 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
                   </SelectContent>
                 </Select>
                 <Select items={sizes.map((s) => ({ value: s, label: sizeLabel(s) }))} value={size} onValueChange={(v) => setPickedSize(v as StandardSize)}>
-                  <SelectTrigger aria-label="Size" className="w-28 bg-background tabular-nums">
-                    <SelectValue />
+                  <SelectTrigger aria-label={`Size ${sizeLabel(size)}`} className="w-18 shrink-0 bg-background tabular-nums">
+                    {/* Just the letter in the narrow field; the list shows the EU size too */}
+                    <SelectValue>{(v: StandardSize) => v}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {sizes.map((s) => (
@@ -225,26 +253,12 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
                   </SelectContent>
                 </Select>
               </div>
-              <Select
-                  items={need.choices.map((c) => ({ value: c.id, label: `${c.name} · ${c.ease}` }))}
-                  value={choice.id}
-                  onValueChange={(v) => router.replace(hrefFor({ garment: garment.id, choice: v as string }), { scroll: false })}
-                >
-                  <SelectTrigger aria-label="Fabric type" className="w-full bg-background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {need.choices.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name} · {c.ease}
-                        {c.isEco && <span className="sr-only">, lower-impact choice</span>}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-              </Select>
-              <p className="px-1 text-sm text-muted-foreground">
-                You need <span className="font-medium text-foreground tabular-nums">{formatMeters(meters)}</span>.
-              </p>
+              <FabricChoices
+                choices={need.choices}
+                value={choice?.id ?? null}
+                counts={choiceCounts}
+                onValueChange={(id) => router.replace(hrefFor({ garment: garment.id, choice: id ?? undefined }), { scroll: false })}
+              />
               {filtersInPanel}
             </Panel>
           ) : (
@@ -344,7 +358,13 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
                     <IconZoomQuestion />
                   </EmptyMedia>
                   <EmptyTitle>Nothing here right now</EmptyTitle>
-                  <EmptyDescription>{filterCount > 0 ? 'Remove a filter to see more.' : 'Try another word or category.'}</EmptyDescription>
+                  <EmptyDescription>
+                    {filterCount > 0
+                      ? 'Remove a filter to see more.'
+                      : choice
+                        ? `No shop has ${choice.name.toLowerCase()} right now. Try all recommended fabrics.`
+                        : 'Try another word or category.'}
+                  </EmptyDescription>
                 </EmptyHeader>
                 {filterCount > 0 && (
                   <EmptyContent>
@@ -355,10 +375,18 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
                 )}
               </Empty>
             ) : (
-              <div key={`${requestKey}-${sort}-${JSON.stringify(filters)}`} className="tile-grid tiles">
-                {listings.map((l, i) => (
-                  <FabricCard key={l.id} eager={i < 4} listing={l} meters={meters} size={size} inBag={inBag.has(l.id)} onToggleBag={() => toggleBag(l)} />
-                ))}
+              <div className="flex flex-col items-center gap-6">
+                <div key={listKey} className="tile-grid tiles w-full">
+                  {listings.slice(0, shownCount).map((l, i) => (
+                    <FabricCard key={l.id} eager={i < 4} listing={l} meters={meters} size={size} inBag={inBag.has(l.id)} onToggleBag={() => toggleBag(l)} />
+                  ))}
+                </div>
+                {listings.length > shownCount && (
+                  <Button variant="outline" size="lg" onClick={() => setShownCount((n) => n + PAGE)}>
+                    Show {Math.min(PAGE, listings.length - shownCount)} more
+                    <span className="text-muted-foreground tabular-nums">· {shownCount} of {listings.length}</span>
+                  </Button>
+                )}
               </div>
             ))}
 
