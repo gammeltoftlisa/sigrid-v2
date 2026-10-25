@@ -19,16 +19,32 @@ export function PieceShape({ piece, sizes, active }: { piece: StudioPiece; sizes
   const shapes = sizes.map((s) => ({ size: s, o: outline(piece, s) })).filter((x) => x.o)
   const complete = !!outline(piece, active)
   // What's filled in so far in this size, so the drawing grows with each number you type
+  // Draw whatever is typed, in any order: a missing width or position is estimated and marked as a guess
   const current = (() => {
-    const out: { label: string; down: number; width: number }[] = []
+    const vals = piece.lines.map((l) => lineAt(piece, active, l.id))
+    const known = vals.map((v) => v.width).filter((w): w is number => !!w)
+    const anyBelow = vals.some((v, i) => i > 0 && (v.width || v.down))
+    const guessW = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 30
+    const step = Math.max(10, Math.max(guessW, ...known) * 0.6)
+    const out: { label: string; down: number; width: number; guessDown?: boolean; guessWidth?: boolean }[] = []
     piece.lines.forEach((l, i) => {
-      const v = lineAt(piece, active, l.id)
+      const v = vals[i]
+      const label = l.label || (i === 0 ? 'Top edge' : i === piece.lines.length - 1 ? 'Hem' : `Line ${i + 1}`)
+      // The top edge joins in as soon as anything below it is typed, so there's a shape to show
+      if (!v.width && !v.down && !(i === 0 && anyBelow)) return
       const last = out[out.length - 1]
-      if (!v.width || v.down === null || (last && v.down <= last.down)) return
-      out.push({ label: l.label || (i === 0 ? 'Top edge' : i === piece.lines.length - 1 ? 'Hem' : `Line ${i + 1}`), down: v.down, width: v.width })
+      const downOk = i === 0 || (v.down !== null && (!last || v.down > last.down))
+      out.push({
+        label,
+        down: i === 0 ? 0 : downOk ? v.down! : (last?.down ?? 0) + step,
+        width: v.width ?? guessW,
+        guessDown: !downOk,
+        guessWidth: !v.width,
+      })
     })
     return out
   })()
+  const guessing = current.some((l) => l.guessDown || l.guessWidth)
 
   if (shapes.length === 0 && current.length === 0) {
     return (
@@ -76,7 +92,7 @@ export function PieceShape({ piece, sizes, active }: { piece: StudioPiece; sizes
               fillOpacity={complete ? 1 : 0.6}
               stroke="var(--foreground)"
               strokeWidth={1.5}
-              strokeDasharray={complete ? undefined : '5 4'}
+              strokeDasharray={complete && !guessing ? undefined : '5 4'}
               strokeLinejoin="round"
             />
           )}
@@ -90,7 +106,7 @@ export function PieceShape({ piece, sizes, active }: { piece: StudioPiece; sizes
               <g key={l.label + i}>
                 {inner && <line x1={xL(l.width)} x2={xR(l.width)} y1={yy} y2={yy} stroke="var(--muted-foreground)" strokeDasharray="3 3" strokeWidth={1} />}
                 <text x={(xL(l.width) + xR(l.width)) / 2} y={ty} textAnchor="middle" fontSize={11} fill="var(--foreground)">
-                  {l.label} · {l.width} cm
+                  {l.label} · {l.guessWidth ? 'how wide?' : `${l.width} cm`}{l.guessDown ? ' · how far down?' : ''}
                 </text>
               </g>
             )
@@ -106,7 +122,7 @@ export function PieceShape({ piece, sizes, active }: { piece: StudioPiece; sizes
                 <line x1={x - 4} x2={x + 4} y1={y(0)} y2={y(0)} stroke="var(--muted-foreground)" strokeWidth={1} />
                 <line x1={x - 4} x2={x + 4} y1={y(last.down)} y2={y(last.down)} stroke="var(--muted-foreground)" strokeWidth={1} />
                 <text x={x} y={y(last.down / 2)} textAnchor="middle" fontSize={11} fill="var(--foreground)" transform={`rotate(-90 ${x} ${y(last.down / 2)})`} dy={piece.onFold ? 12 : -4}>
-                  {last.down} cm
+                  {current.some((l) => l.guessDown) ? 'how long?' : `${last.down} cm`}
                 </text>
               </g>
             )
