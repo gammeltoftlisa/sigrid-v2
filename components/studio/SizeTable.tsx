@@ -28,6 +28,9 @@ export function CellNumber({ value, onChange, label }: { value: number | null | 
       inputMode="decimal"
       value={text}
       aria-invalid={false}
+      aria-required
+      data-required
+      data-empty={!text}
       className="h-9 min-w-16 tabular-nums"
       onChange={(e) => {
         setText(e.target.value)

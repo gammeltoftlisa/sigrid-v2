@@ -56,7 +56,7 @@ import {
 import type { StandardSize } from '@/lib/types'
 import { PieceEditor } from './PieceEditor'
 import { PieceShape } from './PieceShape'
-import { InlinePick, InlineText, InlineTextarea } from './Inline'
+import { InlinePick, InlineText, InlineTextarea, TodoMark } from './Inline'
 import { SectionPicker } from './SectionPicker'
 import { sectionIconKey, type SectionIconKey } from './section-icons'
 
@@ -272,7 +272,7 @@ export function StudioGuide({
                     <span className={cn('flex-1 truncate text-sm leading-tight', on ? 'font-medium text-foreground' : 'text-foreground')}>
                       {p.name === 'New piece' ? <span className="text-muted-foreground">New piece</span> : p.name}
                     </span>
-                    {done && <IconCheck className="size-3.5 text-muted-foreground" aria-label="All sizes measured" />}
+                    {done ? <IconCheck className="size-3.5 text-muted-foreground" aria-label="All sizes measured" /> : <TodoMark>Measure</TodoMark>}
                   </button>
                 )
               })}
@@ -296,6 +296,7 @@ export function StudioGuide({
                     onChange={(next) => setSection(sec, next)}
                   />
                   <InlineText
+                    required
                     label="Section name"
                     value={sec.group}
                     placeholder="Section name"
@@ -353,6 +354,7 @@ export function StudioGuide({
                             <span className={cn('flex-1 truncate text-sm leading-tight', isCurrent ? 'font-medium text-foreground' : 'text-foreground')}>
                               {s.title === 'New step' ? <span className="text-muted-foreground">New step</span> : s.title}
                             </span>
+                            {(!s.title.trim() || s.title === 'New step' || !s.instruction.trim()) && <TodoMark className="mr-1">To write</TodoMark>}
                           </button>
                           {/* Everything you can do with a step; also how to move it by keyboard or on a phone */}
                           <DropdownMenu>
@@ -530,6 +532,7 @@ export function StudioGuide({
             <div className="mb-2 flex items-center gap-2.5">
               <span className="eyebrow shrink-0 rounded-full bg-card px-2.5 py-1 text-muted-foreground">{ACTION_LABELS[step.action]}</span>
               <InlineText
+                required
                 label="Step title"
                 value={step.title === 'New step' ? '' : step.title}
                 placeholder="Start with what to do, e.g. Pin the side seams"
@@ -539,6 +542,7 @@ export function StudioGuide({
             </div>
 
             <InlineTextarea
+              required
               label="Step instruction"
               value={step.instruction}
               placeholder="Explain it in short sentences. Give numbers with units: sew 1.5 cm from the edge."
@@ -560,7 +564,7 @@ export function StudioGuide({
             </div>
 
             <div className="mt-3 flex items-start gap-2 rounded-(--control-radius) bg-card px-4 py-3">
-              <IconBulb size={18} className="mt-0.5 shrink-0 text-warning-solid" aria-hidden />
+              <IconBulb size={18} className="mt-0.5 shrink-0 text-primary" aria-hidden />
               <InlineText
                 label="Tip"
                 value={step.tip ?? ''}

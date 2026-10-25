@@ -10,8 +10,9 @@ import { PhotoLabel } from '@/components/patterns/photo-label'
 import { GarmentImage } from '@/components/garment/GarmentArt'
 import { TOOLS, type Tool } from '@/components/sewing/tools'
 import { baseSize, plural, type StudioPattern } from '@/lib/studio/patterns'
+import { isDone } from '@/lib/studio/wizard'
 import type { Difficulty, GarmentCategory } from '@/lib/types'
-import { InlineNumber, InlinePick, InlineText, InlineTextarea } from './Inline'
+import { InlineNumber, InlinePick, InlineText, InlineTextarea, TodoMark } from './Inline'
 
 type Change = (patch: Partial<StudioPattern>) => void
 
@@ -32,11 +33,15 @@ function EditRow({ leading, title, detail }: { leading: React.ReactNode; title: 
 }
 
 /** A PanelRow that opens something in the studio */
-function OpenRow(props: React.ComponentProps<typeof PanelRow> & { onOpen: () => void; action: string }) {
-  const { onOpen, action, ...row } = props
+function OpenRow(props: React.ComponentProps<typeof PanelRow> & { onOpen: () => void; action: string; todo?: boolean }) {
+  const { onOpen, action, todo, ...row } = props
   return (
-    <button type="button" onClick={onOpen} className="text-left">
-      <PanelRow {...row} trailing={<span className="shrink-0 text-xs font-medium">{action}</span>} className="glass-inset-hover" />
+    <button type="button" onClick={onOpen} data-missing={todo || undefined} className="rounded-(--control-radius) text-left">
+      <PanelRow
+        {...row}
+        trailing={todo ? <TodoMark>{action}</TodoMark> : <span className="shrink-0 text-xs font-medium">{action}</span>}
+        className="glass-inset-hover"
+      />
     </button>
   )
 }
@@ -92,13 +97,14 @@ export function StudioPatternPage({
               <h1 className="min-w-0 flex-1">
                 <InlineText
                   inheritFont
+                  required
                   label="Pattern name"
                   value={pattern.name === 'Untitled pattern' ? '' : pattern.name}
                   placeholder="Pattern name"
                   onChange={(name) => onChange({ name: name || 'Untitled pattern' })}
                 />
               </h1>
-              <InlineNumber label="Price" unit="€" unitBefore value={pattern.price} placeholder="0" onChange={(price) => onChange({ price })} className="shrink-0 text-xl font-medium" />
+              <InlineNumber required label="Price" unit="€" unitBefore value={pattern.price} placeholder="0" onChange={(price) => onChange({ price })} className="shrink-0 text-xl font-medium" />
             </div>
             <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
               <InlinePick label="Difficulty" text={pattern.difficulty} placeholder="Difficulty">
@@ -111,6 +117,7 @@ export function StudioPatternPage({
               </InlinePick>
               ·
               <InlineText
+                required
                 label="Time to sew"
                 value={pattern.estimatedTime}
                 placeholder="time, e.g. 3–4 hours"
@@ -121,6 +128,8 @@ export function StudioPatternPage({
               <button
                 type="button"
                 onClick={onOpenSizes}
+                data-required
+                data-empty={sizes.length === 0}
                 className="-mx-1 inline-flex items-center gap-0.5 rounded-md px-1 py-0.5 transition-colors hover:bg-foreground/5"
               >
                 {sizeRange || 'Add sizes'}
@@ -137,6 +146,7 @@ export function StudioPatternPage({
               </InlinePick>
             </p>
             <InlineTextarea
+              required
               label="Description"
               value={pattern.description}
               placeholder="Describe the garment in two or three sentences: the shape, what makes it nice, what you learn."
@@ -150,13 +160,14 @@ export function StudioPatternPage({
             <OpenRow
               onOpen={onOpenGuide}
               action={pattern.steps.length ? 'Edit guide' : 'Write guide'}
+              todo={!isDone('guide', pattern)}
               leading={<StepDot state="upcoming"><IconListCheck className="size-3.5" /></StepDot>}
               title={plural(pattern.steps.length, 'step')}
               detail="Stop after any step, your progress is saved."
             />
             <EditRow
               leading={<StepDot state="upcoming"><IconShirt className="size-3.5" /></StepDot>}
-              title={<InlineText label="Fabric" value={fabric.name} placeholder="Fabric, e.g. linen or cotton poplin" onChange={(name) => onChange({ fabric: { ...fabric, name } })} />}
+              title={<InlineText required label="Fabric" value={fabric.name} placeholder="Fabric, e.g. linen or cotton poplin" onChange={(name) => onChange({ fabric: { ...fabric, name } })} />}
               detail={
                 <>
                   <span>{meters ? `${meters} m for ${base}` : 'Fabric per size is set under sizes'} · Find fabric</span>
@@ -167,6 +178,7 @@ export function StudioPatternPage({
             <OpenRow
               onOpen={onOpenSizes}
               action={sizes.length ? 'Edit' : 'Add'}
+              todo={!isDone('sizes', pattern)}
               leading={<StepDot state="upcoming"><IconRuler2 className="size-3.5" /></StepDot>}
               title={sizes.length ? `Size chart · ${sizes.join(', ')}` : 'Sizes'}
               detail={sizes.length ? 'Body measurements and fabric for each size' : 'Choose the sizes and their measurements'}
@@ -201,6 +213,7 @@ export function StudioPatternPage({
             <OpenRow
               onOpen={onOpenPieces}
               action={pattern.pieces.length ? 'Edit' : 'Add'}
+              todo={!isDone('pieces', pattern)}
               leading={<StepDot state="upcoming"><IconPrinter className="size-3.5" /></StepDot>}
               title={`Pattern · ${plural(pattern.pieces.length, 'piece')}`}
               detail="Ready once you choose a size"

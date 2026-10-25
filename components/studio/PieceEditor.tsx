@@ -76,6 +76,7 @@ export function PieceEditor({
           {piece.label}
         </span>
         <InlineText
+          required
           label="Piece name"
           value={piece.name === 'New piece' ? '' : piece.name}
           placeholder="Name the piece, e.g. Front"

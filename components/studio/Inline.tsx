@@ -22,6 +22,7 @@ export function InlineText({
   placeholder,
   className,
   inheritFont,
+  required,
 }: {
   value: string
   onChange: (v: string) => void
@@ -29,6 +30,8 @@ export function InlineText({
   label: string
   placeholder?: string
   className?: string
+  /** Needed before the pattern can be sold: shows a basting line while empty */
+  required?: boolean
   /** Take the type style of the element around it (e.g. sit inside an h1) */
   inheritFont?: boolean
 }) {
@@ -36,6 +39,8 @@ export function InlineText({
     <input
       style={inheritFont ? { font: 'inherit', letterSpacing: 'inherit' } : undefined}
       aria-label={label}
+      aria-required={required || undefined}
+      data-required={required || undefined}
       data-empty={!value}
       value={value}
       placeholder={placeholder}
@@ -52,16 +57,20 @@ export function InlineTextarea({
   label,
   placeholder,
   className,
+  required,
 }: {
   value: string
   onChange: (v: string) => void
   label: string
   placeholder?: string
   className?: string
+  required?: boolean
 }) {
   return (
     <textarea
       aria-label={label}
+      aria-required={required || undefined}
+      data-required={required || undefined}
       data-empty={!value}
       value={value}
       rows={1}
@@ -84,6 +93,7 @@ export function InlineNumber({
   placeholder,
   unitBefore,
   className,
+  required,
 }: {
   value: number | null
   onChange: (n: number | null) => void
@@ -94,6 +104,7 @@ export function InlineNumber({
   /** For prices: "€12" */
   unitBefore?: boolean
   className?: string
+  required?: boolean
 }) {
   const [text, setText] = useState(value ? String(value) : '')
   const [last, setLast] = useState(value)
@@ -106,6 +117,8 @@ export function InlineNumber({
       {unit && unitBefore && <span className="text-muted-foreground">{unit}</span>}
       <input
         aria-label={unit ? `${label} (${unit})` : label}
+        aria-required={required || undefined}
+        data-required={required || undefined}
         data-empty={!text}
         inputMode="decimal"
         value={text}
@@ -139,8 +152,10 @@ export function InlinePick({
   placeholder,
   children,
   className,
+  required,
 }: {
   label: string
+  required?: boolean
   /** What the line shows now; empty shows the placeholder */
   text: string
   placeholder: string
@@ -151,6 +166,7 @@ export function InlinePick({
     <Popover>
       <PopoverTrigger
         aria-label={`${label}: ${text || 'not set'}`}
+        data-required={required || undefined}
         data-empty={!text}
         className={cn(base, 'inline-flex w-auto items-center gap-0.5 text-left', !text && 'text-muted-foreground', className)}
       >
@@ -163,4 +179,9 @@ export function InlinePick({
       </PopoverContent>
     </Popover>
   )
+}
+
+/** A small "To do" mark for rows and list items that still need something */
+export function TodoMark({ children = 'To do', className }: { children?: React.ReactNode; className?: string }) {
+  return <span className={cn('todo-mark', className)}>{children}</span>
 }
