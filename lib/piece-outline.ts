@@ -2,13 +2,17 @@
  * A pattern piece's real outline, described the way the studio measures it: lines across the
  * piece from top to bottom (cm from the top, cm wide), how each side bows between two lines
  * (cm at its middle: plus out, minus in), an optional scooped top edge, and whether it's cut on
- * the fold (then it's the half piece, with the fold on the left).
+ * the fold (then it's the half piece, with the fold on the left, or on the right when mirrored).
  */
 export interface PieceOutline {
   lines: { down: number; width: number; curve?: number }[]
   onFold?: boolean
+  /** A half drawn the other way round, its straight edge on the right (the left half of a pair) */
+  mirror?: boolean
   /** Depth of a scooped top edge at the middle, in cm */
   necklineDepth?: number
+  /** How far the bottom edge bows down at its middle, in cm (minus bows up); used when a collar bends onto a neckline */
+  hemCurve?: number
 }
 
 /**
@@ -18,6 +22,8 @@ export interface PieceOutline {
  */
 export function outlinePath(o: PieceOutline, { left, top, scale }: { left: number; top: number; scale: number }): string {
   const f = (n: number) => n.toFixed(1)
+  // x values, flipped about the fold for a mirrored half
+  const fx = (n: number) => f(o.onFold && o.mirror ? 2 * left - n : n)
   const xL = (w: number) => (o.onFold ? left : left - (w * scale) / 2)
   const xR = (w: number) => (o.onFold ? left + w * scale : left + (w * scale) / 2)
   const y = (d: number) => top + d * scale
@@ -34,29 +40,32 @@ export function outlinePath(o: PieceOutline, { left, top, scale }: { left: numbe
   const firstGap = o.lines.length > 1 ? R[1].y - R[0].y : 0
   const depth = o.necklineDepth ? Math.min(o.necklineDepth * scale, firstGap * 0.8) : 0
 
-  let d = o.onFold ? `M${f(left)},${f(R[0].y + depth)}` : `M${f(L[0].x)},${f(L[0].y)}`
+  let d = o.onFold ? `M${fx(left)},${f(R[0].y + depth)}` : `M${fx(L[0].x)},${f(L[0].y)}`
   if (depth) {
     d += o.onFold
-      ? ` Q${f((left + R[0].x) / 2)},${f(R[0].y + depth)} ${f(R[0].x)},${f(R[0].y)}`
-      : ` Q${f(left)},${f(R[0].y + depth * 2)} ${f(R[0].x)},${f(R[0].y)}`
-  } else d += ` L${f(R[0].x)},${f(R[0].y)}`
+      ? ` Q${fx((left + R[0].x) / 2)},${f(R[0].y + depth)} ${fx(R[0].x)},${f(R[0].y)}`
+      : ` Q${fx(left)},${f(R[0].y + depth * 2)} ${fx(R[0].x)},${f(R[0].y)}`
+  } else d += ` L${fx(R[0].x)},${f(R[0].y)}`
   for (let k = 0; k < o.lines.length - 1; k++) {
     const cm = o.lines[k].curve ?? 0
-    if (!cm) d += ` L${f(R[k + 1].x)},${f(R[k + 1].y)}`
+    if (!cm) d += ` L${fx(R[k + 1].x)},${f(R[k + 1].y)}`
     else {
       const c = control(R[k], R[k + 1], cm)
-      d += ` Q${f(c.x)},${f(c.y)} ${f(R[k + 1].x)},${f(R[k + 1].y)}`
+      d += ` Q${fx(c.x)},${f(c.y)} ${fx(R[k + 1].x)},${f(R[k + 1].y)}`
     }
   }
   const n = o.lines.length - 1
-  d += ` L${f(L[n].x)},${f(L[n].y)}`
+  const sag = (o.hemCurve ?? 0) * scale
+  if (!sag) d += ` L${fx(L[n].x)},${f(L[n].y)}`
+  // A quadratic sits halfway to its control point, so it goes twice the sag below the edge
+  else d += ` Q${fx(o.onFold ? (R[n].x + L[n].x) / 2 : left)},${f(R[n].y + sag * 2)} ${fx(L[n].x)},${f(L[n].y)}`
   if (!o.onFold) {
     for (let k = n - 1; k >= 0; k--) {
       const cm = o.lines[k].curve ?? 0
-      if (!cm) d += ` L${f(L[k].x)},${f(L[k].y)}`
+      if (!cm) d += ` L${fx(L[k].x)},${f(L[k].y)}`
       else {
         const c = control(R[k], R[k + 1], cm)
-        d += ` Q${f(2 * left - c.x)},${f(c.y)} ${f(L[k].x)},${f(L[k].y)}`
+        d += ` Q${fx(2 * left - c.x)},${f(c.y)} ${fx(L[k].x)},${f(L[k].y)}`
       }
     }
   }

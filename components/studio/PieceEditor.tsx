@@ -83,6 +83,15 @@ export function PieceEditor({
           onChange={(name) => onPiece({ ...piece, name: name || 'New piece' })}
           className="min-w-40 flex-1 text-lg leading-tight font-semibold"
         />
+        <QuietPick
+          label="Cut from"
+          value={piece.material ?? 'fabric'}
+          options={[
+            { value: 'fabric', glyph: 'M3 5 H13 V13 H3 Z', text: 'Fabric' },
+            { value: 'interfacing', glyph: 'M3 5 H13 V13 H3 Z M3 9 H13', text: 'Interfacing' },
+          ]}
+          onChange={(material) => onPiece({ ...piece, material })}
+        />
         <span className="flex items-baseline text-sm text-muted-foreground">
           Cut
           <InlineNumber label="How many to cut" unit="×" value={piece.quantity} placeholder="1" onChange={(n) => onPiece({ ...piece, quantity: n ? Math.round(n) : 1 })} className="text-foreground" />

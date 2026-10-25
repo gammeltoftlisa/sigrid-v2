@@ -134,6 +134,8 @@ export interface GuidePiece {
   dims: PieceDims | ((m: UserMeasurements) => PieceDims)
   /** The real outline (curves, fold, neckline), when known; otherwise it's drawn from dims */
   outline?: PieceOutline
+  /** Cut from interfacing instead of the main fabric */
+  material?: 'fabric' | 'interfacing'
   grainLine?: 'vertical' | 'horizontal'
   seamAllowance?: number
 }
@@ -152,6 +154,13 @@ export interface SewingStep2D {
   title: string
   instruction: string
   pieceId?: string
+  /**
+   * Every piece the step is about, when it joins several (the first is also `pieceId`).
+   * "<id>#2" is the second cut of a piece that's cut twice (drawn mirrored), e.g. two overlay halves.
+   */
+  pieceIds?: string[]
+  /** How the pieces of a joining step meet: edge to edge at the sides, onto the top edge (a collar), or laid on top */
+  join?: JoinKind
   secondPieceId?: string
   fabricSide?: FabricSide
   annotation?: StepAnnotation
@@ -159,6 +168,8 @@ export interface SewingStep2D {
   measurement?: string
   tip?: string
 }
+
+export type JoinKind = 'side' | 'top' | 'layer'
 
 export interface GarmentGuide {
   garmentId: string

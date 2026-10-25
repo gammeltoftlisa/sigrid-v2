@@ -68,6 +68,8 @@ export interface StudioPiece {
   /** The outline drawn in the guide: the base size, kept in step by withDerived() */
   dims: PieceDims
   quantity: number
+  /** Cut from interfacing instead of the main fabric */
+  material?: 'fabric' | 'interfacing'
   grainLine: 'vertical' | 'horizontal'
   seamAllowance: number
   /** Derived by withDerived(): the base size's real outline, for the sewer's guide */

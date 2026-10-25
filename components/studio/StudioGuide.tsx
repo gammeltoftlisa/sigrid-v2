@@ -55,6 +55,8 @@ import {
 } from '@/lib/studio/patterns'
 import type { StandardSize } from '@/lib/types'
 import { PieceEditor } from './PieceEditor'
+import { assemblyAt, isSecondCut, pieceOf, stepPieceIds } from '@/lib/assembly'
+import type { JoinKind } from '@/lib/types'
 import { PieceShape } from './PieceShape'
 import { InlinePick, InlineText, InlineTextarea, TodoMark } from './Inline'
 import { SectionPicker } from './SectionPicker'
@@ -62,7 +64,6 @@ import { sectionIconKey, type SectionIconKey } from './section-icons'
 
 type Change = (patch: Partial<StudioPattern>) => void
 
-const NO_PIECE = 'none'
 
 const focusLater = (label: string) =>
   requestAnimationFrame(() => document.querySelector<HTMLElement>(`[aria-label="${label}"]`)?.focus())
@@ -120,7 +121,13 @@ export function StudioGuide({
   const deletePiece = (id: string) => {
     const before = { pieces, steps }
     const rest = pieces.filter((p) => p.id !== id)
-    onChange({ pieces: rest, steps: steps.map((s) => (s.pieceId === id ? { ...s, pieceId: undefined } : s)) })
+    onChange({
+      pieces: rest,
+      steps: steps.map((s) => {
+        const ids = stepPieceIds(s).filter((p) => pieceOf(p) !== id)
+        return { ...s, pieceId: ids[0], pieceIds: ids.length > 1 ? ids : undefined, secondPieceId: undefined }
+      }),
+    })
     onPieceFocus(rest[0]?.id ?? '')
     toast('Piece deleted', { action: { label: 'Undo', onClick: () => onChange(before) } })
   }
@@ -129,6 +136,15 @@ export function StudioGuide({
   const sections = sectionsOf(steps)
   const section = sections.find((s) => s.indices.includes(current))
   const piece = step?.pieceId ? pieces.find((p) => p.id === step.pieceId && isDrawable(p)) : undefined
+  // The pieces this step is about; joined ones are drawn together, as the sewer will see them
+  const stepIds = step ? stepPieceIds(step) : []
+  const assembly = step ? assemblyAt(steps, current) : null
+  const drawablePieces = pieces.filter(isDrawable)
+  const labelOf = (pid: string) => {
+    const p = pieces.find((x) => x.id === pieceOf(pid))
+    return p ? `${p.label}${isSecondCut(pid) ? '²' : ''}` : '?'
+  }
+  const drawingText = stepIds.length === 0 ? 'none' : stepIds.map(labelOf).join(' + ')
 
   const setSteps = (next: StudioStep[]) => onChange({ steps: next })
   const update = (patch: Partial<StudioStep>) => setSteps(steps.map((s, i) => (i === current ? { ...s, ...patch } : s)))
@@ -543,21 +559,48 @@ export function StudioGuide({
       ) : step ? (
         <div className="contents md:flex md:min-h-0 md:flex-1 md:flex-col">
           <div className="relative order-1 h-56 shrink-0 overflow-hidden guide-canvas rounded-(--radius) md:order-none md:h-auto md:min-h-0 md:flex-1">
-            <PatternCanvas key={`${step.id}-${step.pieceId}-${step.action}`} piece={piece ?? null} action={step.action} measurements={standardSizes.M} title={step.title} />
+            <PatternCanvas key={`${step.id}-${stepIds.join('+')}-${step.action}`} piece={piece ?? null} assembly={assembly} pieces={drawablePieces} action={step.action} measurements={standardSizes.M} title={step.title} />
             <div className="glass absolute top-3 left-3 flex items-center gap-1 rounded-full py-1 pr-2 pl-3 text-xs">
               Drawing
-              <InlinePick className="mx-0 font-medium" label="Drawing" text={piece ? `${piece.label} · ${piece.name}` : 'none'} placeholder="none">
+              <InlinePick className="mx-0 font-medium" label="Drawing" text={stepIds.length === 1 && piece ? `${piece.label} · ${piece.name}` : drawingText} placeholder="none">
                 {pieces.length === 0 ? (
                   <Button variant="outline" size="sm" onClick={() => onPieceFocus('')}>
                     Add pattern pieces
                   </Button>
                 ) : (
-                  <ChipGroup
-                    label="Drawing"
-                    options={[{ value: NO_PIECE, label: 'None' }, ...pieces.map((p) => ({ value: p.id, label: `${p.label} · ${p.name}` }))]}
-                    value={[step.pieceId ?? NO_PIECE]}
-                    onValueChange={([v]) => update({ pieceId: v === NO_PIECE ? undefined : v })}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <ChipGroup
+                      multiple
+                      label="Drawing"
+                      options={pieces.flatMap((p) => [
+                        { value: p.id, label: `${p.label} · ${p.name}` },
+                        // A piece cut twice can join its own second cut (two halves, two collar layers)
+                        ...(p.quantity >= 2 ? [{ value: `${p.id}#2`, label: `${p.label}² · second ${p.name.toLowerCase()}` }] : []),
+                      ])}
+                      value={stepIds}
+                      onValueChange={(ids) => {
+                        // Keep the order they were picked in: the first one is the base the others join
+                        const ordered = [...stepIds.filter((x) => ids.includes(x)), ...ids.filter((x) => !stepIds.includes(x))]
+                        update({ pieceId: pieceOf(ordered[0] ?? '') || undefined, pieceIds: ordered.length > 1 ? ordered : undefined, secondPieceId: undefined })
+                      }}
+                    />
+                    {stepIds.length > 1 && (
+                      <div className="flex flex-col gap-1.5">
+                        <p className="text-xs text-muted-foreground">How {stepIds.slice(1).map(labelOf).join(' + ')} {stepIds.length > 2 ? 'go' : 'goes'} onto {labelOf(stepIds[0])}</p>
+                        <ChipGroup<JoinKind>
+                          label="How the pieces meet"
+                          options={[
+                            { value: 'side', label: 'Side by side' },
+                            { value: 'top', label: 'Onto the top edge' },
+                            { value: 'layer', label: 'Laid on top' },
+                          ]}
+                          value={[step.join ?? 'side']}
+                          onValueChange={([join]) => update({ join })}
+                        />
+                      </div>
+                    )}
+                    <p className="max-w-72 text-xs text-muted-foreground">Pick two or more when this step joins pieces; the first is the one the others go onto. What earlier steps joined stays together.</p>
+                  </div>
                 )}
               </InlinePick>
             </div>

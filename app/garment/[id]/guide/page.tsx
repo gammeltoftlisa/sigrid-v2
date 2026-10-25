@@ -18,6 +18,7 @@ import { GarmentArt } from '@/components/garment/GarmentArt'
 import CompletionDialog from '@/components/sewing/CompletionDialog'
 import StepInstruction from '@/components/sewing/StepInstruction'
 import { groupIntoJourneys } from '@/lib/journeys'
+import { assemblyAt } from '@/lib/assembly'
 import { progressStateOf } from '@/components/legacy/progress'
 import { ease } from '@/components/patterns/reveal'
 
@@ -172,6 +173,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const step  = steps[viewStep]
   const viewJourney = journeys.find((j) => j.stepIndices.includes(viewStep))
   const piece = step.pieceId ? (guide.pieces.find((p) => p.id === step.pieceId) ?? null) : null
+  // Steps that join pieces show them together, with what earlier steps already joined
+  const assembly = assemblyAt(guide.steps, viewStep)
 
   return (
     <motion.div
@@ -256,6 +259,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                 >
                   <PatternCanvas
                     piece={piece}
+                    assembly={assembly}
+                    pieces={guide.pieces}
                     action={step.action}
                     annotation={step.annotation}
                     fabricSide={step.fabricSide}
