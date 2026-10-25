@@ -1,13 +1,13 @@
 'use client'
 
-import { useId } from 'react'
+import { Fragment, useId } from 'react'
 import { IconCheck, IconPlus, IconTrash, IconWand, IconX } from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { ChipGroup } from '@/components/patterns/chip-group'
 import { StatusMessage } from '@/components/patterns/status-message'
-import { gradePiece, lineAt, pieceSizeDone, type LineSize, type StudioPattern, type StudioPiece } from '@/lib/studio/patterns'
+import { gradePiece, lineAt, pieceSizeDone, type LineSize, type SideCurve, type StudioPattern, type StudioPiece } from '@/lib/studio/patterns'
 import type { StandardSize } from '@/lib/types'
 import { InlineNumber, InlineText } from './Inline'
 import { CellNumber } from './SizeTable'
@@ -46,6 +46,7 @@ export function PieceEditor({
     row[lineId] = { ...(row[lineId] ?? { down: null, width: null }), [key]: n }
     onPiece({ ...piece, bySize: { ...piece.bySize, [size]: row } })
   }
+  const setCurve = (lineId: string, curveBelow: SideCurve) => onPiece({ ...piece, lines: piece.lines.map((l) => (l.id === lineId ? { ...l, curveBelow } : l)) })
   const renameLine = (lineId: string, label: string) => onPiece({ ...piece, lines: piece.lines.map((l) => (l.id === lineId ? { ...l, label } : l)) })
   const addLine = () => {
     const id = `l${Date.now().toString(36)}`
@@ -129,7 +130,7 @@ export function PieceEditor({
           {/* One plain row per line across the piece: where it is, and how wide the piece is there */}
           <div className="flex flex-col gap-2">
             <p className="px-1 text-sm text-muted-foreground">
-              Measure straight across the piece. Add a line wherever the width changes, like at the waist.
+              Measure straight across the piece. Add a line wherever the width or the shape changes, like under the arm, then choose how the side runs between lines.
             </p>
             <ol aria-label={`Measurements of ${piece.name}, size ${size}`} className="flex flex-col gap-2">
               {piece.lines.map((line, i) => {
@@ -138,7 +139,8 @@ export function PieceEditor({
                 const last = i === piece.lines.length - 1
                 const name = line.label || (first ? 'Top edge' : last ? 'Hem' : `Line ${i + 1}`)
                 return (
-                  <li key={line.id} data-slot="inset" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-(--control-radius) px-3 py-2">
+                  <Fragment key={line.id}>
+                  <li data-slot="inset" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-(--control-radius) px-3 py-2">
                     <InlineText
                       label={`Name of measurement line ${i + 1}`}
                       value={line.label}
@@ -165,7 +167,44 @@ export function PieceEditor({
                         <span aria-hidden className="size-7" />
                       )}
                     </div>
+                    {first && (
+                      <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground">
+                        Neckline
+                        <ChipGroup<'straight' | 'scoop'>
+                          label="Shape of the top edge"
+                          options={[
+                            { value: 'straight', label: 'Straight' },
+                            { value: 'scoop', label: 'Scoop' },
+                          ]}
+                          value={[piece.neckline ?? 'straight']}
+                          onValueChange={([neckline]) => onPiece({ ...piece, neckline, necklineDepth: piece.necklineDepth ?? (neckline === 'scoop' ? 8 : null) })}
+                        />
+                        {piece.neckline === 'scoop' && (
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-20"><CellNumber label="How deep the neckline is, in cm" value={piece.necklineDepth} onChange={(necklineDepth) => onPiece({ ...piece, necklineDepth })} /></span>
+                            cm deep
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </li>
+                  {!last && (
+                    <li aria-label={`Side from ${name} down to the next line`} className="flex items-center gap-3 pl-6 text-xs text-muted-foreground">
+                      <span aria-hidden className="h-6 border-l-2 border-dashed border-muted-foreground/40" />
+                      Side
+                      <ChipGroup<SideCurve>
+                        label={`How the side runs below ${name}`}
+                        options={[
+                          { value: 'straight', label: 'Straight' },
+                          { value: 'in', label: 'Curve in' },
+                          { value: 'out', label: 'Curve out' },
+                        ]}
+                        value={[line.curveBelow ?? 'straight']}
+                        onValueChange={([c]) => setCurve(line.id, c)}
+                      />
+                    </li>
+                  )}
+                  </Fragment>
                 )
               })}
             </ol>

@@ -28,7 +28,12 @@ export interface BodySize {
 export interface PieceLine {
   id: string
   label: string
+  /** How the side runs from this line down to the next one (straight if unset) */
+  curveBelow?: SideCurve
 }
+
+/** "in" bows toward the middle of the piece (an armhole, a waist), "out" away from it (hips, a sleeve cap) */
+export type SideCurve = 'straight' | 'in' | 'out'
 
 export interface LineSize {
   /** cm from the top edge; the first line is the top edge itself (0) */
@@ -48,6 +53,10 @@ export interface StudioPiece {
   shape: 'rectangle' | 'trapezoid'
   /** Cut on the fold: the drawing shows the half piece, with the fold on the left */
   onFold: boolean
+  /** The top edge: straight, or scooped down in the middle (a neckline) */
+  neckline?: 'straight' | 'scoop'
+  /** How deep the scoop is at the middle, in cm */
+  necklineDepth?: number | null
   /** Measurement lines, top to bottom */
   lines: PieceLine[]
   /** For every size: each line's position and width */

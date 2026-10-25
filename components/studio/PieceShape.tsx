@@ -26,7 +26,7 @@ export function PieceShape({ piece, sizes, active }: { piece: StudioPiece; sizes
     const anyBelow = vals.some((v, i) => i > 0 && (v.width || v.down))
     const guessW = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 30
     const step = Math.max(10, Math.max(guessW, ...known) * 0.6)
-    const out: { label: string; down: number; width: number; guessDown?: boolean; guessWidth?: boolean }[] = []
+    const out: { label: string; line: number; down: number; width: number; guessDown?: boolean; guessWidth?: boolean }[] = []
     piece.lines.forEach((l, i) => {
       const v = vals[i]
       const label = l.label || (i === 0 ? 'Top edge' : i === piece.lines.length - 1 ? 'Hem' : `Line ${i + 1}`)
@@ -36,6 +36,7 @@ export function PieceShape({ piece, sizes, active }: { piece: StudioPiece; sizes
       const downOk = i === 0 || (v.down !== null && (!last || v.down > last.down))
       out.push({
         label,
+        line: i,
         down: i === 0 ? 0 : downOk ? v.down! : (last?.down ?? 0) + step,
         width: v.width ?? guessW,
         guessDown: !downOk,
@@ -66,10 +67,58 @@ export function PieceShape({ piece, sizes, active }: { piece: StudioPiece; sizes
   const xL = (w: number) => (piece.onFold ? left : left - (w * scale) / 2)
   const xR = (w: number) => (piece.onFold ? left + w * scale : left + (w * scale) / 2)
   const y = (d: number) => top + d * scale
-  const path = (o: NonNullable<ReturnType<typeof outline>>) => {
-    const right = o.map((l) => `${xR(l.width)},${y(l.down)}`)
-    const leftSide = [...o].reverse().map((l) => `${xL(l.width)},${y(l.down)}`)
-    return [...right, ...leftSide].join(' ')
+  /**
+   * The outline as an SVG path: the top edge (straight, or scooped for a neckline), then down the
+   * right side line by line (straight, or bowing in or out), across the hem and back up the left,
+   * mirrored. On the fold the left side is the fold itself, a straight line.
+   */
+  const path = (o: { down: number; width: number; line?: number }[]) => {
+    const f = (n: number) => n.toFixed(1)
+    const R = o.map((l) => ({ x: xR(l.width), y: y(l.down) }))
+    const L = o.map((l) => ({ x: xL(l.width), y: y(l.down) }))
+    const kindAt = (k: number) => piece.lines[o[k].line ?? k]?.curveBelow ?? 'straight'
+    // Control point of a curved side, bowed toward the middle ("in") or away from it ("out")
+    const control = (a: { x: number; y: number }, b: { x: number; y: number }, kind: 'in' | 'out') => {
+      const dx = b.x - a.x
+      const dy = b.y - a.y
+      const len = Math.hypot(dx, dy) || 1
+      const off = 0.22 * len * (kind === 'in' ? 1 : -1)
+      return { x: (a.x + b.x) / 2 + (-dy / len) * off, y: (a.y + b.y) / 2 + (dx / len) * off }
+    }
+    const firstGap = o.length > 1 ? R[1].y - R[0].y : 0
+    const depth = piece.neckline === 'scoop' && piece.necklineDepth ? Math.min(piece.necklineDepth * scale, firstGap * 0.8) : 0
+
+    let d = piece.onFold ? `M${f(left)},${f(R[0].y + depth)}` : `M${f(L[0].x)},${f(L[0].y)}`
+    // Top edge
+    if (depth) {
+      const from = piece.onFold ? left : L[0].x
+      d += piece.onFold
+        ? ` Q${f((from + R[0].x) / 2)},${f(R[0].y + depth)} ${f(R[0].x)},${f(R[0].y)}`
+        : ` Q${f(left)},${f(R[0].y + depth * 2)} ${f(R[0].x)},${f(R[0].y)}`
+    } else d += ` L${f(R[0].x)},${f(R[0].y)}`
+    // Down the right side
+    for (let k = 0; k < o.length - 1; k++) {
+      const kind = kindAt(k)
+      if (kind === 'straight') d += ` L${f(R[k + 1].x)},${f(R[k + 1].y)}`
+      else {
+        const c = control(R[k], R[k + 1], kind)
+        d += ` Q${f(c.x)},${f(c.y)} ${f(R[k + 1].x)},${f(R[k + 1].y)}`
+      }
+    }
+    // Across the hem, then up the left side (mirrored), or straight up the fold
+    const n = o.length - 1
+    d += ` L${f(L[n].x)},${f(L[n].y)}`
+    if (!piece.onFold) {
+      for (let k = n - 1; k >= 0; k--) {
+        const kind = kindAt(k)
+        if (kind === 'straight') d += ` L${f(L[k].x)},${f(L[k].y)}`
+        else {
+          const c = control(R[k], R[k + 1], kind)
+          d += ` Q${f(2 * left - c.x)},${f(c.y)} ${f(L[k].x)},${f(L[k].y)}`
+        }
+      }
+    }
+    return d + ' Z'
   }
 
   return (
@@ -78,7 +127,7 @@ export function PieceShape({ piece, sizes, active }: { piece: StudioPiece; sizes
       {shapes
         .filter((x) => x.size !== active)
         .map((x) => (
-          <polygon key={x.size} points={path(x.o!)} fill="none" stroke="var(--muted-foreground)" strokeOpacity={0.6} strokeWidth={1} />
+          <path key={x.size} d={path(x.o!)} fill="none" stroke="var(--muted-foreground)" strokeOpacity={0.6} strokeWidth={1} />
         ))}
 
       {current.length > 0 && (
@@ -86,8 +135,8 @@ export function PieceShape({ piece, sizes, active }: { piece: StudioPiece; sizes
           {current.length === 1 ? (
             <line x1={xL(current[0].width)} x2={xR(current[0].width)} y1={y(0)} y2={y(0)} stroke="var(--foreground)" strokeWidth={2} strokeLinecap="round" />
           ) : (
-            <polygon
-              points={path(current)}
+            <path
+              d={path(current)}
               fill="var(--muted)"
               fillOpacity={complete ? 1 : 0.6}
               stroke="var(--foreground)"
