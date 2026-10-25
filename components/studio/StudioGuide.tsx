@@ -99,6 +99,8 @@ export function StudioGuide({
   }
   const [pieceSize, setPieceSize] = useState<StandardSize>(baseSize(pattern.sizes))
   const focusedPiece = pieceFocus ? pieces.find((p) => p.id === pieceFocus) : undefined
+  // The measurement line being worked on, highlighted in the drawing
+  const [activeLine, setActiveLine] = useState<string | null>(null)
   const activeSize = pattern.sizes.includes(pieceSize) ? pieceSize : baseSize(pattern.sizes)
   const addPiece = () => {
     const piece = newPiece(pieces)
@@ -481,7 +483,7 @@ export function StudioGuide({
         focusedPiece ? (
           <div className="contents md:flex md:min-h-0 md:flex-1 md:flex-col">
             <div className="relative order-1 h-72 shrink-0 overflow-hidden guide-canvas rounded-(--radius) md:order-none md:h-auto md:min-h-0 md:flex-1">
-              <PieceShape piece={focusedPiece} sizes={pattern.sizes} active={activeSize} />
+              <PieceShape piece={focusedPiece} sizes={pattern.sizes} active={activeSize} highlight={activeLine} />
             </div>
             <section aria-label="Piece measurements" className="glass-panel order-2 shrink-0 overflow-y-auto rounded-(--radius) px-5 py-4 md:order-none md:mt-3 md:max-h-1/2">
               <PieceEditor
@@ -492,6 +494,7 @@ export function StudioGuide({
                 onPiece={updatePiece}
                 onDelete={() => deletePiece(focusedPiece.id)}
                 onOpenSizes={onOpenSizes}
+                onActiveLine={setActiveLine}
               />
             </section>
           </div>

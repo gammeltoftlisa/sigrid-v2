@@ -1089,15 +1089,17 @@ body { background: transparent !important; isolation: isolate; }
    A required field that's still empty shows a brown basting line underneath and a soft brown
    tint, like a seam that isn't sewn yet; its placeholder turns brown. It goes quiet while you
    type and disappears once it's filled. Optional fields never get it. */
-:root [data-required][data-empty="true"]:not(:focus) {
+:root:root [data-required][data-empty="true"]:not(:focus),
+:root:root :is(.glass, .glass-panel, .guide-sheet, [data-slot="inset"], [data-slot="sheet-content"], [data-slot="dialog-content"]) [data-required][data-empty="true"]:not(:focus) {
   background-color: rgb(var(--tri-primary) / 0.08) !important;
+  background-image: none !important;
   border-bottom: 2px dashed rgb(var(--tri-primary) / 0.8) !important;
   border-bottom-left-radius: 2px; border-bottom-right-radius: 2px;
 }
 :root [data-required][data-empty="true"]::placeholder { color: var(--accent-ink); opacity: 0.9; }
 :root :is(button, [role="button"])[data-required][data-empty="true"] { color: var(--accent-ink) !important; }
 /* Number cells in the size tables: the whole field gets the brown stitch */
-:root [data-slot="input"][data-required][data-empty="true"]:not(:focus) {
+:root:root [data-slot="input"][data-required][data-empty="true"]:not(:focus) {
   border: 1px dashed rgb(var(--tri-primary) / 0.65) !important;
 }
 /* Rows that still need something: a brown stitched edge, and a small "To do" mark */
@@ -1110,6 +1112,9 @@ body { background: transparent !important; isolation: isolate; }
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-ink);
 }
 .todo-mark::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 999px; background: rgb(var(--tri-primary)); }
+
+/* Studio pieces: the line you're working on is marked in its row and in the drawing */
+.piece-line:focus-within { outline: 1.5px dashed rgb(var(--tri-primary) / 0.7); outline-offset: -1.5px; }
 
 /* ─── Sewing guide: the same glass language ───────────────────────────────────── */
 /* The sheet: heavy frost over the garment page, solid enough to read at arm's length */

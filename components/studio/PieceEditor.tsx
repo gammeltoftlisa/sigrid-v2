@@ -30,6 +30,7 @@ export function PieceEditor({
   onPiece,
   onDelete,
   onOpenSizes,
+  onActiveLine,
 }: {
   pattern: StudioPattern
   piece: StudioPiece
@@ -39,6 +40,8 @@ export function PieceEditor({
   onPiece: (next: StudioPiece) => void
   onDelete: () => void
   onOpenSizes: () => void
+  /** The line being worked on (focused or hovered), so the drawing can highlight it */
+  onActiveLine?: (lineId: string | null) => void
 }) {
   const foldId = useId()
   const blank = isBlankPiece(piece)
@@ -70,15 +73,6 @@ export function PieceEditor({
 
   return (
     <section aria-label={`Piece ${piece.label}`} className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">Pattern pieces</span> · Piece {index + 1} of {pattern.pieces.length}
-        </p>
-        <Button variant="ghost" size="icon-sm" aria-label={`Delete piece ${piece.label}`} onClick={onDelete}>
-          <IconTrash />
-        </Button>
-      </div>
-
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-sm font-semibold">
           {piece.label}
@@ -99,6 +93,9 @@ export function PieceEditor({
           <Switch id={foldId} checked={piece.onFold} onCheckedChange={(onFold) => onPiece({ ...piece, onFold })} />
           On the fold
         </label>
+        <Button variant="ghost" size="icon-sm" aria-label={`Delete piece ${piece.label}${pattern.pieces.length > 1 ? `, ${index + 1} of ${pattern.pieces.length}` : ''}`} onClick={onDelete}>
+          <IconTrash />
+        </Button>
       </div>
 
       {sizes.length === 0 ? (
@@ -130,9 +127,14 @@ export function PieceEditor({
               value={[size]}
               onValueChange={([s]) => onSize(s)}
             />
-            <p className="text-xs text-muted-foreground tabular-nums">
-              {doneSizes.length} of {sizes.length} sizes filled in
-            </p>
+            {sizes.length > 1 && doneSizes.length < sizes.length ? (
+              <Button variant="outline" size="xs" disabled={!sizeDone} onClick={() => onPiece(gradePiece(pattern, piece, size))}>
+                <IconWand data-icon="inline-start" />
+                {sizeDone ? `Fill ${sizes.filter((s) => s !== size && !pieceSizeDone(piece, s)).join(', ')} from ${size}` : `Finish ${size}, then fill the rest`}
+              </Button>
+            ) : (
+              sizes.length > 1 && <p className="text-xs text-muted-foreground">Every size filled in</p>
+            )}
           </div>
 
           {showPicker && (
@@ -177,7 +179,7 @@ export function PieceEditor({
           <div className="flex flex-col gap-2">
             {!showPicker && (
               <div className="flex items-baseline justify-between gap-3 px-1">
-                <p className="text-sm text-muted-foreground">Change the numbers to your pattern. Add a line where the shape changes.</p>
+                <p className="text-sm text-muted-foreground">Change the numbers to fit your pattern.</p>
                 <Button variant="ghost" size="xs" className="shrink-0" onClick={() => setPicking(true)}>
                   Change shape
                 </Button>
@@ -191,7 +193,14 @@ export function PieceEditor({
                 const name = line.label || (first ? 'Top edge' : last ? 'Hem' : `Line ${i + 1}`)
                 return (
                   <Fragment key={line.id}>
-                  <li data-slot="inset" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-(--control-radius) px-3 py-2">
+                  <li
+                    data-slot="inset"
+                    onFocus={() => onActiveLine?.(line.id)}
+                    onMouseEnter={() => onActiveLine?.(line.id)}
+                    onMouseLeave={() => onActiveLine?.(null)}
+                    onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && onActiveLine?.(null)}
+                    className="piece-line flex flex-wrap items-center gap-x-4 gap-y-2 rounded-(--control-radius) px-3 py-2"
+                  >
                     <InlineText
                       label={`Name of measurement line ${i + 1}`}
                       value={line.label}
@@ -203,7 +212,7 @@ export function PieceEditor({
                       {!first && (
                         <span className="flex items-center gap-1.5">
                           <span className="w-20"><CellNumber label={`${name}: cm down from the top, size ${size}`} value={v.down} onChange={(n) => setCell(line.id, 'down', n)} /></span>
-                          cm down
+                          cm from top
                         </span>
                       )}
                       <span className="flex items-center gap-1.5">
@@ -258,12 +267,7 @@ export function PieceEditor({
               <IconPlus data-icon="inline-start" />
               Add a line
             </Button>
-            {sizes.length > 1 && doneSizes.length < sizes.length && (
-              <Button variant="outline" size="sm" disabled={!sizeDone} onClick={() => onPiece(gradePiece(pattern, piece, size))}>
-                <IconWand data-icon="inline-start" />
-                {sizeDone ? `Fill the other sizes from ${size}` : `Finish ${size} to fill the others`}
-              </Button>
-            )}
+            <span className="text-xs text-muted-foreground">where the width or shape changes, like at the waist</span>
           </div>
         </>
       )}
@@ -312,7 +316,7 @@ function CurveField({ label, value, onChange }: { label: string; value: number; 
         className="h-8 w-16 rounded-(--control-radius) px-2 text-sm tabular-nums"
       />
       cm
-      <span className="text-muted-foreground">· plus curves out, minus curves in</span>
+      <span className="text-muted-foreground" title="A plus number curves the side out, a minus number curves it in">+ out · − in</span>
       <Button
         variant="ghost"
         size="icon-xs"

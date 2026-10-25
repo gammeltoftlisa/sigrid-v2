@@ -15,7 +15,21 @@ const PAD = 44
  * carries its measurements. A piece cut on the fold shows its half, with the
  * fold on the left.
  */
-export function PieceShape({ piece, sizes, active, bare }: { piece: StudioPiece; sizes: StandardSize[]; active: StandardSize; /** Just the outline, for small previews */ bare?: boolean }) {
+export function PieceShape({
+  piece,
+  sizes,
+  active,
+  bare,
+  highlight,
+}: {
+  piece: StudioPiece
+  sizes: StandardSize[]
+  active: StandardSize
+  /** Just the outline, for small previews */
+  bare?: boolean
+  /** The line being worked on: drawn in the accent, with its label in bold */
+  highlight?: string | null
+}) {
   const shapes = sizes.map((s) => ({ size: s, o: outline(piece, s) })).filter((x) => x.o)
   const complete = !!outline(piece, active)
   // What's filled in so far in this size, so the drawing grows with each number you type
@@ -153,10 +167,22 @@ export function PieceShape({ piece, sizes, active, bare }: { piece: StudioPiece;
             const yy = y(l.down)
             const inner = i > 0 && i < current.length - 1
             const ty = i === 0 ? yy - 8 : i === current.length - 1 ? yy + 16 : yy - 5
+            const on = highlight === piece.lines[l.line]?.id
             return (
               <g key={l.label + i}>
-                {inner && <line x1={xL(l.width)} x2={xR(l.width)} y1={yy} y2={yy} stroke="var(--muted-foreground)" strokeDasharray="3 3" strokeWidth={1} />}
-                <text x={(xL(l.width) + xR(l.width)) / 2} y={ty} textAnchor="middle" fontSize={11} fill="var(--foreground)">
+                {(inner || on) && (
+                  <line
+                    x1={xL(l.width)}
+                    x2={xR(l.width)}
+                    y1={yy}
+                    y2={yy}
+                    stroke={on ? 'var(--primary)' : 'var(--muted-foreground)'}
+                    strokeDasharray={on ? undefined : '3 3'}
+                    strokeWidth={on ? 3 : 1}
+                    strokeLinecap="round"
+                  />
+                )}
+                <text x={(xL(l.width) + xR(l.width)) / 2} y={ty} textAnchor="middle" fontSize={on ? 12 : 11} fontWeight={on ? 600 : 400} fill={on ? 'var(--primary)' : 'var(--foreground)'}>
                   {l.label} · {l.guessWidth ? 'how wide?' : `${l.width} cm`}{l.guessDown ? ' · how far down?' : ''}
                 </text>
               </g>
