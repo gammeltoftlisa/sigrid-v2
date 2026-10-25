@@ -67,7 +67,7 @@ export function PieceShape({
         {/* Empty: point to the shape picker below */}
         <IconRulerMeasure className="size-8 text-muted-foreground" aria-hidden />
         <p className="text-sm font-medium">{piece.name === 'New piece' ? 'Your piece' : piece.name} appears here</p>
-        <p className="max-w-xs text-sm text-muted-foreground">Pick the closest shape below. It’s drawn here, and every number you change shows straight away.</p>
+        <p className="max-w-xs text-sm text-muted-foreground">Type a width below, or start from a shape. It’s drawn here straight away.</p>
       </div>
     )
   }

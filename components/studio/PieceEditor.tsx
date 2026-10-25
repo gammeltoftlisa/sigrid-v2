@@ -138,40 +138,31 @@ export function PieceEditor({
           </div>
 
           {showPicker && (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-baseline justify-between gap-3 px-1">
-                <p className="text-sm font-medium">{blank ? 'Which shape is closest?' : 'Start again from a shape'}</p>
-                {!blank && (
-                  <Button variant="ghost" size="xs" onClick={() => setPicking(false)}>
-                    Keep my numbers
-                  </Button>
-                )}
-              </div>
-              <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                {PIECE_SHAPES.map((shape) => {
-                  const preview = applyShape(piece, shape, 'M')
-                  return (
-                    <li key={shape.id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onPiece(applyShape(piece, shape, size))
-                          setPicking(false)
-                        }}
-                        className="glass-inset-hover flex w-full flex-col items-center gap-1 rounded-(--control-radius) bg-card p-2 text-xs font-medium"
-                      >
-                        <span aria-hidden className="block h-16 w-full">
-                          <PieceShape piece={preview} sizes={['M']} active="M" bare />
-                        </span>
-                        {shape.name}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-              <p className="px-1 text-xs text-muted-foreground">
-                {blank ? 'You change the numbers next. Or type them in yourself below.' : 'This replaces the numbers in every size.'}
-              </p>
+            /* One slim, optional row: start from a shape, or just type the numbers below */
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-1 text-xs text-muted-foreground">
+              {blank ? 'Start from a shape:' : 'Replace with:'}
+              {PIECE_SHAPES.map((shape) => (
+                <Button
+                  key={shape.id}
+                  variant="ghost"
+                  size="xs"
+                  title={blank ? undefined : 'Replaces the numbers in every size'}
+                  onClick={() => {
+                    onPiece(applyShape(piece, shape, size))
+                    setPicking(false)
+                  }}
+                >
+                  <span aria-hidden className="block h-4 w-3.5">
+                    <PieceShape piece={applyShape(piece, shape, 'M')} sizes={['M']} active="M" bare />
+                  </span>
+                  {shape.name}
+                </Button>
+              ))}
+              {!blank && (
+                <Button variant="ghost" size="xs" className="text-muted-foreground" onClick={() => setPicking(false)}>
+                  Cancel
+                </Button>
+              )}
             </div>
           )}
 
