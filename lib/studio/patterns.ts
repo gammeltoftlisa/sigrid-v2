@@ -1,5 +1,6 @@
 import type { Difficulty, GarmentCategory, GarmentGuide, PieceDims, SewingStep2D, StandardSize } from '@/lib/types'
 import type { Tool } from '@/components/sewing/tools'
+import type { PieceOutline } from '@/lib/piece-outline'
 import { standardSizes } from '@/lib/data'
 import { allSizes } from '@/lib/sizes'
 import type { DeepPartial } from 'ai'
@@ -69,6 +70,8 @@ export interface StudioPiece {
   quantity: number
   grainLine: 'vertical' | 'horizontal'
   seamAllowance: number
+  /** Derived by withDerived(): the base size's real outline, for the sewer's guide */
+  outline?: PieceOutline
 }
 
 export interface StudioStep extends SewingStep2D {
@@ -236,7 +239,17 @@ export function withDerived(p: StudioPattern): StudioPattern {
       if (!o) return { ...piece, dims: { topWidth: 0, bottomWidth: 0, height: 0 } }
       const top = o[0].width
       const bottom = o[o.length - 1].width
-      return { ...piece, shape: top === bottom ? 'rectangle' : 'trapezoid', dims: { topWidth: top, bottomWidth: bottom, height: o[o.length - 1].down } }
+      return {
+        ...piece,
+        shape: top === bottom ? 'rectangle' : 'trapezoid',
+        dims: { topWidth: top, bottomWidth: bottom, height: o[o.length - 1].down },
+        // The real shape, so the sewer's guide draws what the maker drew
+        outline: {
+          lines: o.map((l, k) => ({ down: l.down, width: l.width, curve: curveCm(piece.lines[k]?.curveBelow) })),
+          onFold: piece.onFold,
+          necklineDepth: piece.neckline === 'scoop' ? (piece.necklineDepth ?? 0) : 0,
+        },
+      }
     }),
   }
 }
@@ -507,7 +520,8 @@ export function newPiece(pieces: StudioPiece[]): StudioPiece {
     name: 'New piece',
     shape: 'rectangle',
     onFold: false,
-    lines: defaultLines(),
+    // Own line ids per piece, so nothing about one piece's lines can carry over to another
+    lines: defaultLines().map((l) => ({ ...l, id: `${l.id}-${n}` })),
     bySize: {},
     dims: { topWidth: 0, bottomWidth: 0, height: 0 },
     quantity: 1,

@@ -108,6 +108,14 @@ export function StudioGuide({
     onPieceFocus(piece.id)
     focusLater('Piece name')
   }
+  // Reorder the pieces; their letters follow the new order (steps link to pieces by id, so nothing breaks)
+  const movePiece = (from: number, dir: -1 | 1) => {
+    const to = from + dir
+    if (to < 0 || to >= pieces.length) return
+    const next = [...pieces]
+    ;[next[from], next[to]] = [next[to], next[from]]
+    onChange({ pieces: next.map((p, i) => ({ ...p, label: String.fromCharCode(65 + (i % 26)) })) })
+  }
   const updatePiece = (next: StudioPiece) => onChange({ pieces: pieces.map((p) => (p.id === next.id ? next : p)) })
   const deletePiece = (id: string) => {
     const before = { pieces, steps }
@@ -252,30 +260,42 @@ export function StudioGuide({
               </span>
             </button>
             <div className="px-2 pb-1">
-              {pieces.map((p) => {
+              {pieces.map((p, i) => {
                 const on = pieceFocus === p.id
                 const done = pattern.sizes.length > 0 && pattern.sizes.every((s) => pieceSizeDone(p, s))
                 return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => onPieceFocus(p.id)}
-                    aria-current={on ? 'step' : undefined}
-                    className={cn('mb-1 flex w-full items-center gap-2 rounded-(--control-radius) py-2 pr-2.5 pl-8 text-left transition-colors', on ? 'step-row-active' : 'glass-inset-hover')}
-                  >
-                    <span
-                      className={cn(
-                        'flex size-5 shrink-0 items-center justify-center rounded-full text-2xs font-semibold',
-                        on ? 'step-dot-active' : 'step-dot-upcoming text-muted-foreground',
-                      )}
+                  <div key={p.id} className={cn('group/piece mb-1 flex items-center rounded-(--control-radius) pr-1 transition-colors', on ? 'step-row-active' : 'glass-inset-hover')}>
+                    <button
+                      type="button"
+                      onClick={() => onPieceFocus(p.id)}
+                      aria-current={on ? 'step' : undefined}
+                      className="flex min-w-0 flex-1 items-center gap-2 py-2 pr-1.5 pl-8 text-left outline-none"
                     >
-                      {p.label}
-                    </span>
-                    <span className={cn('flex-1 truncate text-sm leading-tight', on ? 'font-medium text-foreground' : 'text-foreground')}>
-                      {p.name === 'New piece' ? <span className="text-muted-foreground">New piece</span> : p.name}
-                    </span>
-                    {done ? <IconCheck className="size-3.5 text-muted-foreground" aria-label="All sizes measured" /> : <TodoMark>Measure</TodoMark>}
-                  </button>
+                      <span
+                        className={cn(
+                          'flex size-5 shrink-0 items-center justify-center rounded-full text-2xs font-semibold',
+                          on ? 'step-dot-active' : 'step-dot-upcoming text-muted-foreground',
+                        )}
+                      >
+                        {p.label}
+                      </span>
+                      <span className={cn('flex-1 truncate text-sm leading-tight', on ? 'font-medium text-foreground' : 'text-foreground')}>
+                        {p.name === 'New piece' ? <span className="text-muted-foreground">New piece</span> : p.name}
+                      </span>
+                      {done ? <IconCheck className="size-3.5 text-muted-foreground" aria-label="All sizes measured" /> : <TodoMark>Measure</TodoMark>}
+                    </button>
+                    {/* Move the piece in the list; shown on hover, focus, on phones and on the open piece */}
+                    {pieces.length > 1 && (
+                      <span className={cn('flex shrink-0 opacity-0 transition-opacity group-hover/piece:opacity-100 group-focus-within/piece:opacity-100 pointer-coarse:opacity-100', on && 'opacity-100')}>
+                        <Button variant="ghost" size="icon-xs" aria-label={`Move ${p.name} up`} disabled={i === 0} onClick={() => movePiece(i, -1)}>
+                          <IconArrowUp />
+                        </Button>
+                        <Button variant="ghost" size="icon-xs" aria-label={`Move ${p.name} down`} disabled={i === pieces.length - 1} onClick={() => movePiece(i, 1)}>
+                          <IconArrowDown />
+                        </Button>
+                      </span>
+                    )}
+                  </div>
                 )
               })}
               {pieces.length > 0 && (
@@ -487,6 +507,8 @@ export function StudioGuide({
             </div>
             <section aria-label="Piece measurements" className="glass-panel order-2 shrink-0 overflow-y-auto rounded-(--radius) px-5 py-4 md:order-none md:mt-3 md:max-h-1/2">
               <PieceEditor
+                // A fresh editor per piece, so nothing typed or opened on one piece shows on the next
+                key={focusedPiece.id}
                 pattern={pattern}
                 piece={focusedPiece}
                 size={activeSize}

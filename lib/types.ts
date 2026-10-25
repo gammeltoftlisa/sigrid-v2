@@ -1,3 +1,5 @@
+import type { PieceOutline } from './piece-outline'
+
 export type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
 export type FitType = 'Oversized' | 'Relaxed' | 'Regular' | 'Fitted' | 'Tailored'
 export type GarmentCategory = 'Tops' | 'Bottoms' | 'Dresses' | 'Outerwear'
@@ -126,6 +128,8 @@ export interface GuidePiece {
   name?: string
   shape: 'rectangle' | 'trapezoid'
   dims: PieceDims | ((m: UserMeasurements) => PieceDims)
+  /** The real outline (curves, fold, neckline), when known; otherwise it's drawn from dims */
+  outline?: PieceOutline
   grainLine?: 'vertical' | 'horizontal'
   seamAllowance?: number
 }

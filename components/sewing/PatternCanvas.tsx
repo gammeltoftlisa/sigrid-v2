@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, animate, useMotionValue } from 'motion/react'
 import { IconYarn, IconScissors } from '@tabler/icons-react'
+import { outlinePath, outlineSize, type PieceOutline } from '@/lib/piece-outline'
 import type { GuidePiece, StepAction, StepAnnotation, FabricSide, UserMeasurements, PieceDims } from '@/lib/types'
 
 interface Props {
@@ -37,6 +38,19 @@ function computePoints(dims: PieceDims): { points: string; pxPerCm: number; ox: 
   const offset = (pw - tw) / 2
   const points = `${ox + offset},${oy} ${ox + offset + tw},${oy} ${ox + pw},${oy + ph} ${ox},${oy + ph}`
   return { points, pxPerCm: scale, ox, oy, pw, ph }
+}
+
+/** The piece's real outline fitted into the drawing, with its bounding box for the annotations */
+function fitOutline(o: PieceOutline) {
+  const size = outlineSize(o)
+  const pxPerCm = Math.min((VIEWBOX_W - PAD * 2) / size.width, (VIEWBOX_H - PAD * 2) / size.height)
+  const pw = size.width * pxPerCm
+  const ph = size.height * pxPerCm
+  const ox = (VIEWBOX_W - pw) / 2
+  const oy = (VIEWBOX_H - ph) / 2
+  // On the fold the fold sits at the left edge; otherwise the outline is centred
+  const left = o.onFold ? ox : VIEWBOX_W / 2
+  return { d: outlinePath(o, { left, top: oy, scale: pxPerCm }), points: '', pxPerCm, ox, oy, pw, ph }
 }
 
 function edgeCoords(edge: string, ox: number, oy: number, pw: number, ph: number, dims: PieceDims) {
@@ -248,7 +262,8 @@ export default function PatternCanvas({ piece, action, annotation, fabricSide, m
   }
 
   const dims = resolveDims(piece, measurements)
-  const { points, pxPerCm, ox, oy, pw, ph } = computePoints(dims)
+  const shape = piece.outline && piece.outline.lines.length >= 2 ? fitOutline(piece.outline) : null
+  const { points, pxPerCm, ox, oy, pw, ph } = shape ?? computePoints(dims)
 
   const isWrong = fabricSide === 'wrong'
   const fillColor = isWrong ? 'var(--sig-surface-2)' : 'var(--sig-primary-soft)'
@@ -287,10 +302,22 @@ export default function PatternCanvas({ piece, action, annotation, fabricSide, m
         </pattern>
       </defs>
 
-      {/* Main shape — fabric fill */}
-      <polygon points={points} fill={fillColor} stroke="var(--sig-border)" strokeWidth={1.5} />
-      {/* Linen texture overlay */}
-      <polygon points={points} fill="url(#linen)" />
+      {/* Main shape — fabric fill (the real outline when the piece has one) */}
+      {shape ? (
+        <>
+          <path d={shape.d} fill={fillColor} stroke="var(--sig-border)" strokeWidth={1.5} strokeLinejoin="round" />
+          <path d={shape.d} fill="url(#linen)" />
+          {piece.outline?.onFold && (
+            <line x1={shape.ox} x2={shape.ox} y1={shape.oy} y2={shape.oy + shape.ph} stroke="var(--sig-ink-3)" strokeWidth={1.5} strokeDasharray="6 4" />
+          )}
+        </>
+      ) : (
+        <>
+          <polygon points={points} fill={fillColor} stroke="var(--sig-border)" strokeWidth={1.5} />
+          {/* Linen texture overlay */}
+          <polygon points={points} fill="url(#linen)" />
+        </>
+      )}
 
       {/* Wrong-side label */}
       {isWrong && (
@@ -304,7 +331,18 @@ export default function PatternCanvas({ piece, action, annotation, fabricSide, m
         </motion.text>
       )}
 
-      {/* Seam allowance dashed inset */}
+      {/* Seam allowance dashed inset: the outline drawn a seam allowance smaller around its middle */}
+      {shape ? (
+        <path
+          d={shape.d}
+          fill="none"
+          stroke="var(--sig-border)"
+          strokeWidth={1}
+          strokeDasharray="4 3"
+          opacity={0.7}
+          transform={`translate(${ox + pw / 2} ${oy + ph / 2}) scale(${Math.max(0.5, 1 - (2 * seamPx) / pw)} ${Math.max(0.5, 1 - (2 * seamPx) / ph)}) translate(${-(ox + pw / 2)} ${-(oy + ph / 2)})`}
+        />
+      ) : (
       <polygon
         points={innerPoints}
         fill="none"
@@ -313,6 +351,7 @@ export default function PatternCanvas({ piece, action, annotation, fabricSide, m
         strokeDasharray="4 3"
         opacity={0.7}
       />
+      )}
 
       {/* Grain line */}
       {piece.grainLine === 'vertical' && (

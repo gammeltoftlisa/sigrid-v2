@@ -3,6 +3,7 @@
 import { IconRulerMeasure } from '@tabler/icons-react'
 
 import { curveCm, lineAt, outline, type StudioPiece } from '@/lib/studio/patterns'
+import { outlinePath } from '@/lib/piece-outline'
 import type { StandardSize } from '@/lib/types'
 
 const W = 360
@@ -87,55 +88,15 @@ export function PieceShape({
    * right side line by line (straight, or bowing in or out), across the hem and back up the left,
    * mirrored. On the fold the left side is the fold itself, a straight line.
    */
-  const path = (o: { down: number; width: number; line?: number }[]) => {
-    const f = (n: number) => n.toFixed(1)
-    const R = o.map((l) => ({ x: xR(l.width), y: y(l.down) }))
-    const L = o.map((l) => ({ x: xL(l.width), y: y(l.down) }))
-    const curveAt = (k: number) => curveCm(piece.lines[o[k].line ?? k]?.curveBelow)
-    // Control point of a curved side: a quadratic bows half as far as its control point, so it
-    // sits twice the curve away from the middle of the side; plus bows out, minus bows in
-    const control = (a: { x: number; y: number }, b: { x: number; y: number }, cm: number) => {
-      const dx = b.x - a.x
-      const dy = b.y - a.y
-      const len = Math.hypot(dx, dy) || 1
-      const off = -2 * cm * scale
-      return { x: (a.x + b.x) / 2 + (-dy / len) * off, y: (a.y + b.y) / 2 + (dx / len) * off }
-    }
-    const firstGap = o.length > 1 ? R[1].y - R[0].y : 0
-    const depth = piece.neckline === 'scoop' && piece.necklineDepth ? Math.min(piece.necklineDepth * scale, firstGap * 0.8) : 0
-
-    let d = piece.onFold ? `M${f(left)},${f(R[0].y + depth)}` : `M${f(L[0].x)},${f(L[0].y)}`
-    // Top edge
-    if (depth) {
-      const from = piece.onFold ? left : L[0].x
-      d += piece.onFold
-        ? ` Q${f((from + R[0].x) / 2)},${f(R[0].y + depth)} ${f(R[0].x)},${f(R[0].y)}`
-        : ` Q${f(left)},${f(R[0].y + depth * 2)} ${f(R[0].x)},${f(R[0].y)}`
-    } else d += ` L${f(R[0].x)},${f(R[0].y)}`
-    // Down the right side
-    for (let k = 0; k < o.length - 1; k++) {
-      const cm = curveAt(k)
-      if (!cm) d += ` L${f(R[k + 1].x)},${f(R[k + 1].y)}`
-      else {
-        const c = control(R[k], R[k + 1], cm)
-        d += ` Q${f(c.x)},${f(c.y)} ${f(R[k + 1].x)},${f(R[k + 1].y)}`
-      }
-    }
-    // Across the hem, then up the left side (mirrored), or straight up the fold
-    const n = o.length - 1
-    d += ` L${f(L[n].x)},${f(L[n].y)}`
-    if (!piece.onFold) {
-      for (let k = n - 1; k >= 0; k--) {
-        const cm = curveAt(k)
-        if (!cm) d += ` L${f(L[k].x)},${f(L[k].y)}`
-        else {
-          const c = control(R[k], R[k + 1], cm)
-          d += ` Q${f(2 * left - c.x)},${f(c.y)} ${f(L[k].x)},${f(L[k].y)}`
-        }
-      }
-    }
-    return d + ' Z'
-  }
+  const path = (o: { down: number; width: number; line?: number }[]) =>
+    outlinePath(
+      {
+        lines: o.map((l, k) => ({ down: l.down, width: l.width, curve: curveCm(piece.lines[l.line ?? k]?.curveBelow) })),
+        onFold: piece.onFold,
+        necklineDepth: piece.neckline === 'scoop' ? (piece.necklineDepth ?? 0) : 0,
+      },
+      { left, top: y(0), scale },
+    )
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-full w-full" role="img" aria-label={`${piece.name}, size ${active}`}>
