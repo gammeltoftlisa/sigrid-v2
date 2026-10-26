@@ -359,8 +359,8 @@ export class SceneView {
         <ellipse cx="0" cy="${c(-4.55)}" rx="${c(0.03)}" ry="${c(0.22)}" fill="#3A342D"/></g></svg>`
     }
     if (t.kind === 'scissors') {
-      // snips: opens quickly, closes as it cuts
-      const open = (f < 0.3 ? f / 0.3 : 1 - (f - 0.3) / 0.7) * 0.2 + 0.03
+      // a calm snip: opens and closes smoothly as it moves along
+      const open = ((1 - Math.cos(f * Math.PI * 2)) / 2) * 0.2 + 0.03
       const half = (sign: number) => `<g transform="translate(${c(-6)},0) rotate(${((-sign * open * 180) / Math.PI).toFixed(2)})">
           <path d="M0,${c(-0.5 * sign)} L${c(5.7)},${c(-0.08 * sign)} Q${c(6.1)},0 ${c(5.7)},${c(0.05 * sign)} L0,${c(0.3 * sign)} Z" fill="${steel}" stroke="#6F757C" stroke-width=".7"/>
           <path d="M${c(0.4)},${c(-0.18 * sign)} L${c(5.4)},${c(-0.06 * sign)}" stroke="#fff" stroke-width=".8" opacity=".6"/>

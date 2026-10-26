@@ -33,10 +33,17 @@ export const RULES = {
   stitch: 3.5,
   /** Sewing with the machine or by hand */
   needle: 'machine' as 'machine' | 'hand',
-  /** How fast the tools travel, cm a second: steady, whatever the length of the seam */
-  sewSpeed: 14,
-  cutSpeed: 22,
-  chalkSpeed: 16,
+  /** How fast the tools travel, cm a second: steady and calm, whatever the length of the seam */
+  sewSpeed: 7,
+  cutSpeed: 14,
+  chalkSpeed: 9,
+  /** The tools move calmly: the needle goes up and down this many times a second, the scissors
+   * snip once every this many cm, the iron takes this long for one glide out and back (ms) */
+  needleRate: 2.2,
+  snipEvery: 6,
+  pressTime: 3600,
+  /** Pins go in one at a time, this many ms apart */
+  pinEvery: 480,
   /** Cutting follows the scissors less closely than sewing, so they don't race across the screen */
   cutZoom: 1.12,
   /** Pieces sewn earlier fade back while the new ones move */
@@ -243,7 +250,7 @@ function fold(key: string, hinge: number, part: 'above' | 'below'): Beat {
 }
 function pins(id: string, pts: Pt[], on: string, top = on): Beat {
   return {
-    base: 300 * RULES.pins + 300,
+    base: RULES.pinEvery * RULES.pins + 400,
     cam: 'pts',
     pts,
     apply: (st, t) => {
@@ -260,7 +267,7 @@ function pins(id: string, pts: Pt[], on: string, top = on): Beat {
 }
 function sew(id: string, pts: Pt[], on: string, top = on): Beat {
   return {
-    base: travel(pts, RULES.sewSpeed, 1600, 9000),
+    base: travel(pts, RULES.sewSpeed, 2200, 16000),
     cam: 'tool',
     pts,
     apply: (st, t) => {
@@ -270,14 +277,15 @@ function sew(id: string, pts: Pt[], on: string, top = on): Beat {
       for (const pin of st.pins) if (pin.line === id) pin.out = clamp((p - pin.u + 0.04) / 0.07)
       if (t < 1) {
         const q = at(pts, p)
-        st.tool = { on, kind: RULES.needle, x: q.x, y: q.y, ang: q.ang, z: z + 1, phase: (p * q.len) / (RULES.stitch / 10) }
+        // a calm up and down, not one per stitch
+        st.tool = { on, kind: RULES.needle, x: q.x, y: q.y, ang: q.ang, z: z + 1, phase: ((t * travel(pts, RULES.sewSpeed, 2200, 16000)) / 1000) * RULES.needleRate }
       }
     },
   }
 }
-function press(pts: Pt[], on: string, during?: (st: SceneState, t: number) => void, base = 1700): Beat {
+function press(pts: Pt[], on: string, during?: (st: SceneState, t: number) => void): Beat {
   return {
-    base,
+    base: RULES.pressTime,
     // an iron is bigger than most pieces: no zooming in on it
     cam: 'wide',
     pts,
@@ -285,14 +293,14 @@ function press(pts: Pt[], on: string, during?: (st: SceneState, t: number) => vo
       const u = t < 0.5 ? inOut(t * 2) : inOut(2 - t * 2)
       const q = at(pts, u)
       const z = st.p[on].z + 2
-      if (t < 1) st.tool = { on, kind: 'iron', x: q.x, y: q.y, ang: at(pts, 0).ang, z: z + 2 * (1 - Math.sin(Math.PI * clamp(t * 1.2))), phase: t * 14 }
+      if (t < 1) st.tool = { on, kind: 'iron', x: q.x, y: q.y, ang: at(pts, 0).ang, z: z + 2 * (1 - Math.sin(Math.PI * clamp(t * 1.2))), phase: ((t * RULES.pressTime) / 1000) * 0.7 }
       during?.(st, t)
     },
   }
 }
 function trace(id: string, kind: 'cut' | 'chalk', pts: Pt[], on: string): Beat {
   return {
-    base: kind === 'cut' ? travel(pts, RULES.cutSpeed, 2400, 14000) : travel(pts, RULES.chalkSpeed, 1000, 5000),
+    base: kind === 'cut' ? travel(pts, RULES.cutSpeed, 3000, 24000) : travel(pts, RULES.chalkSpeed, 1600, 8000),
     cam: 'tool',
     zoom: kind === 'cut' ? RULES.cutZoom : undefined,
     pts,
@@ -302,7 +310,7 @@ function trace(id: string, kind: 'cut' | 'chalk', pts: Pt[], on: string): Beat {
       st.lines.push({ id, kind, pts, p, z, op: 1, on })
       if (t < 1) {
         const q = at(pts, p)
-        st.tool = { on, kind: kind === 'cut' ? 'scissors' : 'chalk', x: q.x, y: q.y, ang: q.ang, z: z + 1, phase: (p * q.len) / 1.4 }
+        st.tool = { on, kind: kind === 'cut' ? 'scissors' : 'chalk', x: q.x, y: q.y, ang: q.ang, z: z + 1, phase: (p * q.len) / RULES.snipEvery }
       }
     },
   }
