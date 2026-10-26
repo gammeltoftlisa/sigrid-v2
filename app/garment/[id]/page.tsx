@@ -114,7 +114,8 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex w-full flex-1 flex-col gap-6 px-4 pt-6 pb-44 sm:px-6 md:min-h-0 md:px-0 md:pt-2 md:pb-0">
             <header className="flex flex-col gap-2">
               <div className="flex items-baseline justify-between gap-4">
-                <h1>{garment.name}</h1>
+                {/* Smaller than a page hero: it shares the screen with the photo */}
+                <h1 className="[--h1-size:clamp(2.25rem,3.4vw,3.5rem)]">{garment.name}</h1>
                 <p className="text-xl font-medium tabular-nums">€{garment.price}</p>
               </div>
               <p className="text-xs text-muted-foreground">
