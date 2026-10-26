@@ -252,20 +252,63 @@ function flip(key: string, origin: Pt, from: number, to: number, base = 1200): B
 function fold(key: string, hinge: number, part: 'above' | 'below'): Beat {
   return { base: 1200, focus: [key], apply: (st, t) => { const p = st.p[key]; p.fold = { y: hinge, part, deg: (part === 'below' ? 180 : -180) * inOut(t) }; p.moving = t < 1 } }
 }
-function pins(id: string, pts: Pt[], on: string, top = on): Beat {
+/** Pin length, cm */
+const PIN = 3.4
+const inside = (poly: Pt[], x: number, y: number) => {
+  let c = false
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i]
+    const [xj, yj] = poly[j]
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi || 1e-9) + xi) c = !c
+  }
+  return c
+}
+/**
+ * Where a pin goes: across the seam, its head just past the nearest raw edge of the fabric it
+ * holds, the shaft going back in across the seam. `polys` are the outlines it can be in (the top
+ * layer first). Returns its centre and the way it points (head to tip).
+ */
+function pinPose(q: { x: number; y: number; ang: number }, polys: Pt[][]) {
+  const nx = -Math.sin(q.ang)
+  const ny = Math.cos(q.ang)
+  for (const poly of polys) {
+    if (!inside(poly, q.x, q.y)) continue
+    let best: { d: number; sx: number; sy: number } | null = null
+    for (const sign of [1, -1]) {
+      for (let d = 0; d <= 6; d += 0.1) {
+        if (!inside(poly, q.x + sign * nx * d, q.y + sign * ny * d)) {
+          if (!best || d < best.d) best = { d, sx: sign * nx, sy: sign * ny }
+          break
+        }
+      }
+    }
+    if (!best) break
+    // the head 0.5 cm past the edge, the pin pointing back in
+    const hx = q.x + best.sx * (best.d + 0.5)
+    const hy = q.y + best.sy * (best.d + 0.5)
+    const ang = Math.atan2(-best.sy, -best.sx)
+    return { x: hx - best.sx * (PIN / 2), y: hy - best.sy * (PIN / 2), ang }
+  }
+  return { x: q.x, y: q.y, ang: q.ang + Math.PI / 2 }
+}
+const polyOf = (p: Placed) => sampleCmds(outlineCommands(p.o, lineX(p)), p.x, p.y)
+
+function pins(id: string, pts: Pt[], on: string, top = on, polys: Pt[][] = []): Beat {
+  const n = RULES.pins
+  const poses = Array.from({ length: n }, (_, i) => {
+    const u = (i + 0.5) / n
+    return { u, ...pinPose(at(pts, u), polys) }
+  })
   return {
     base: RULES.pinEvery * RULES.pins + 400,
     cam: 'pts',
     pts,
     apply: (st, t) => {
-      const n = RULES.pins
       const z = st.p[top].z + 0.7
-      for (let i = 0; i < n; i++) {
-        const u = (i + 0.5) / n
-        const q = at(pts, u)
+      poses.forEach((q, i) => {
         const local = clamp((t * 1.1 - (i / n) * 0.8) / 0.28)
-        st.pins.push({ line: id, u, x: q.x, y: q.y, ang: q.ang + Math.PI / 2 + 0.22, drop: inOut(local), out: 0, z, on })
-      }
+        st.pins.push({ line: id, u: q.u, x: q.x, y: q.y, ang: q.ang, drop: inOut(local), out: 0, z, on })
+      })
     },
   }
 }
@@ -431,7 +474,7 @@ export function buildScene(step: Pick<SewingStep2D, 'action' | 'annotation' | 'f
       // Two halves: side by side, the second folds over the first, sewn, opened out
       const seam = seamOf(contact, to, group, 1.3)
       beats.push(approach(contact.id, { dx: 1, dy: 0, liftK: 0.25 }), flip(contact.id, [0, contact.h / 2], 0, -180))
-      if (action !== 'press') beats.push(pins('seam', seam, to.id, contact.id))
+      if (action !== 'press') beats.push(pins('seam', seam, to.id, contact.id, [polyOf(contact), polyOf(to)]))
       if (action !== 'pin') {
         beats.push(sew('seam', seam, to.id, contact.id), {
           base: 1200,
@@ -468,7 +511,7 @@ export function buildScene(step: Pick<SewingStep2D, 'action' | 'annotation' | 'f
           st.p[to.id].tint = clamp((t - 0.2) / 0.6)
         }))
       } else {
-        if (action !== 'press') beats.push(pins('seam', seam, to.id, topKey))
+        if (action !== 'press') beats.push(pins('seam', seam, to.id, topKey, [polyOf(byId(topKey) ?? contact), polyOf(contact), polyOf(to)]))
         if (action === 'press') beats.push(press(seam, to.id))
         else if (action !== 'pin') beats.push(sew('seam', seam, to.id, topKey))
       }
@@ -490,7 +533,7 @@ export function buildScene(step: Pick<SewingStep2D, 'action' | 'annotation' | 'f
       const seam = seamOf(last, lastTo, [last], last.join?.via === 'side' ? 0.4 : 0.9)
       const i = seams.findIndex((l) => l.id === `old-${last.id}`)
       if (i >= 0 && action !== 'press') seams.splice(i, 1)
-      if (action === 'pin') beats.push(pins('seam', seam, lastTo.id, last.id))
+      if (action === 'pin') beats.push(pins('seam', seam, lastTo.id, last.id, [polyOf(last), polyOf(lastTo)]))
       else if (action === 'press') beats.push(press(seam, lastTo.id))
       else beats.push(sew('seam', seam, lastTo.id, last.id))
     } else if (action === 'cut' && laid.length === 1) {
@@ -584,10 +627,10 @@ export function buildScene(step: Pick<SewingStep2D, 'action' | 'annotation' | 'f
       beats.push(fold(target.id, hinge, edge === 'bottom' ? 'below' : 'above'))
       beats.push(press(edgeOf(target, edge, amount * 0.6), target.id))
     } else if (action === 'press' || action === 'fold') beats.push(press(edgeOf(target, edge, Math.min(2, target.h * 0.15)), target.id))
-    else if (action === 'pin') beats.push(pins('pin', edgeOf(target, edge, 1.3), target.id))
+    else if (action === 'pin') beats.push(pins('pin', edgeOf(target, edge, 1.3), target.id, target.id, [polyOf(target)]))
     else if (action === 'sew' || action === 'attach') {
       const line = edgeOf(target, edge, Math.min(1.5, target.h * 0.12))
-      beats.push(pins('sew', line, target.id), sew('sew', line, target.id))
+      beats.push(pins('sew', line, target.id, target.id, [polyOf(target)]), sew('sew', line, target.id))
     }
   }
   if (beats.length) beats.push(wide())

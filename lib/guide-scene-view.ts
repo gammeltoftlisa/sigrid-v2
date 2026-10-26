@@ -266,18 +266,23 @@ export class SceneView {
     }
   }
 
-  /** A dressmaker's pin lying in the fabric: ball head, the shaft in and out of the weave */
+  /**
+   * A dressmaker's pin, head first (pointing +x): the head just past the raw edge, the shaft
+   * going into the fabric, under it for a stretch, and the point coming back out
+   */
   private pinSVG() {
     const s = this.s
     const L = 3.4 * s
-    const r = Math.max(2.6, 0.32 * s)
-    const w = Math.max(1, s * 0.085)
+    const r = Math.max(2.8, 0.34 * s)
+    const w = Math.max(1.8, s * 0.14)
     const id = this.id
+    const a = -L / 2
     return `<svg width="1" height="1" overflow="visible">
-      <line x1="${-L / 2}" y1="0" x2="${-L / 2 + L * 0.36}" y2="0" stroke="url(#${id}-steel)" stroke-width="${w}" stroke-linecap="round"/>
-      <line x1="${-L / 2 + L * 0.36}" y1="0" x2="${L / 2 - L * 0.26}" y2="0" stroke="#8F959C" stroke-width="${w * 0.8}" opacity=".22"/>
-      <path d="M${L / 2 - L * 0.26},${-w / 2} L${L / 2},0 L${L / 2 - L * 0.26},${w / 2} Z" fill="url(#${id}-steel)"/>
-      <circle cx="${-L / 2}" cy="0" r="${r}" fill="url(#${id}-ball)"/>
+      <line x1="${a}" y1="0" x2="${a + L * 0.5}" y2="0" stroke="url(#${id}-steel)" stroke-width="${w}" stroke-linecap="round"/>
+      <line x1="${a}" y1="${w * 0.15}" x2="${a + L * 0.5}" y2="${w * 0.15}" stroke="#4A4F55" stroke-width="${w * 0.4}" opacity=".7"/>
+      <line x1="${a + L * 0.5}" y1="0" x2="${a + L * 0.72}" y2="0" stroke="#6F757C" stroke-width="${w * 0.7}" stroke-dasharray="${w} ${w * 1.4}" opacity=".5"/>
+      <path d="M${a + L * 0.72},${-w / 2} L${L / 2},0 L${a + L * 0.72},${w / 2} Z" fill="url(#${id}-steel)" stroke="#6F757C" stroke-width=".4"/>
+      <circle cx="${a}" cy="0" r="${r}" fill="url(#${id}-ball)"/>
     </svg>`
   }
 
