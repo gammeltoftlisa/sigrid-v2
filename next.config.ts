@@ -50,6 +50,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
+  experimental: {
+    // Set by Next's security upgrade (16.4.0 → 16.4.3)
+    agentUpgrade: "security",
+  },
 };
 
 export default nextConfig;
