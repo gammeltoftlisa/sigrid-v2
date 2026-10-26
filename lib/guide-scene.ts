@@ -31,6 +31,14 @@ export const RULES = {
   /** Pins per seam, stitch length (mm) */
   pins: 5,
   stitch: 3.5,
+  /** Sewing with the machine or by hand */
+  needle: 'machine' as 'machine' | 'hand',
+  /** How fast the tools travel, cm a second: steady, whatever the length of the seam */
+  sewSpeed: 14,
+  cutSpeed: 22,
+  chalkSpeed: 16,
+  /** Cutting follows the scissors less closely than sewing, so they don't race across the screen */
+  cutZoom: 1.12,
   /** Pieces sewn earlier fade back while the new ones move */
   dimEarlier: true,
   /** The finished frame holds this long before the scene plays again, ms */
@@ -82,7 +90,7 @@ export interface PieceState {
 }
 export interface Line { id: string; kind: 'stitch' | 'seam' | 'chalk' | 'cut' | 'fold'; pts: Pt[]; p: number; z: number; op: number; on: string }
 export interface Pin { line: string; u: number; x: number; y: number; ang: number; drop: number; out: number; z: number; on: string }
-export interface Tool { on: string; kind: 'machine' | 'iron' | 'scissors' | 'chalk'; x: number; y: number; ang: number; z: number; phase: number }
+export interface Tool { on: string; kind: 'machine' | 'hand' | 'iron' | 'scissors' | 'chalk'; x: number; y: number; ang: number; z: number; phase: number }
 export interface SceneState {
   p: Record<string, PieceState>
   lines: Line[]
@@ -99,7 +107,11 @@ interface Beat {
   focus?: string[]
   cam?: 'wide' | 'pts' | 'tool'
   pts?: Pt[]
+  /** How close the camera goes, instead of RULES.zoom */
+  zoom?: number
 }
+/** How long a tool takes along a path at a steady speed, ms */
+const travel = (pts: Pt[], speed: number, min: number, max: number) => clamp((at(pts, 1).len / speed) * 1000, min, max)
 export interface Scene {
   frame: Box4
   pieces: ScenePiece[]
@@ -246,9 +258,9 @@ function pins(id: string, pts: Pt[], on: string, top = on): Beat {
     },
   }
 }
-function sew(id: string, pts: Pt[], on: string, top = on, base = 2000): Beat {
+function sew(id: string, pts: Pt[], on: string, top = on): Beat {
   return {
-    base,
+    base: travel(pts, RULES.sewSpeed, 1600, 9000),
     cam: 'tool',
     pts,
     apply: (st, t) => {
@@ -258,7 +270,7 @@ function sew(id: string, pts: Pt[], on: string, top = on, base = 2000): Beat {
       for (const pin of st.pins) if (pin.line === id) pin.out = clamp((p - pin.u + 0.04) / 0.07)
       if (t < 1) {
         const q = at(pts, p)
-        st.tool = { on, kind: 'machine', x: q.x, y: q.y, ang: q.ang, z: z + 1, phase: (p * q.len) / (RULES.stitch / 10) }
+        st.tool = { on, kind: RULES.needle, x: q.x, y: q.y, ang: q.ang, z: z + 1, phase: (p * q.len) / (RULES.stitch / 10) }
       }
     },
   }
@@ -278,10 +290,11 @@ function press(pts: Pt[], on: string, during?: (st: SceneState, t: number) => vo
     },
   }
 }
-function trace(id: string, kind: 'cut' | 'chalk', pts: Pt[], on: string, base: number): Beat {
+function trace(id: string, kind: 'cut' | 'chalk', pts: Pt[], on: string): Beat {
   return {
-    base,
+    base: kind === 'cut' ? travel(pts, RULES.cutSpeed, 2400, 14000) : travel(pts, RULES.chalkSpeed, 1000, 5000),
     cam: 'tool',
+    zoom: kind === 'cut' ? RULES.cutZoom : undefined,
     pts,
     apply: (st, t) => {
       const p = inOut(t)
@@ -495,7 +508,7 @@ export function buildScene(step: Pick<SewingStep2D, 'action' | 'annotation' | 'f
       frame[3] = y0 + fh + 4
       if (half) seams.push({ id: 'fold', kind: 'fold', pts: [[x0 + 0.3, y0 + 0.6], [x0 + 0.3, y0 + fh - 0.6]], p: 1, z: 0, op: 1, on: '_fabric' })
       const edge = sampleCmds(outlineCommands(o, lx), piece.x, piece.y)
-      beats.push(approach('_paper', { dy: -0.6 }), trace('cut', 'cut', half ? edge.filter((q) => q[0] > x0 + 0.2) : edge, '_paper', 3200), {
+      beats.push(approach('_paper', { dy: -0.6 }), trace('cut', 'cut', half ? edge.filter((q) => q[0] > x0 + 0.2) : edge, '_paper'), {
         base: 1300,
         focus: [cutKey, '_open'],
         cam: 'wide',
@@ -528,12 +541,12 @@ export function buildScene(step: Pick<SewingStep2D, 'action' | 'annotation' | 'f
           }
         },
       })
-    } else if (action === 'cut') beats.push(trace('cut', 'cut', sampleCmds(outlineCommands(target.o, lineX(target)), target.x, target.y), target.id, 3200))
+    } else if (action === 'cut') beats.push(trace('cut', 'cut', sampleCmds(outlineCommands(target.o, lineX(target)), target.x, target.y), target.id))
     else if (action === 'mark') {
       const y = target.y + target.h * 0.55
       const hw = Math.min(9, target.w * 0.3)
       const cx = target.x + lineX(target) + (target.o.onFold ? hw * 1.2 : 0)
-      beats.push(trace('mark', 'chalk', [[cx - hw, y], [cx + hw, y]], target.id, 1500))
+      beats.push(trace('mark', 'chalk', [[cx - hw, y], [cx + hw, y]], target.id))
     } else if (action === 'fold' && (edge === 'top' || edge === 'bottom')) {
       const amount = clamp(step.annotation?.amount ?? 2.5, 0.5, target.h * 0.25)
       const hinge = edge === 'bottom' ? target.h - amount : amount
@@ -579,7 +592,7 @@ export function stateAt(scene: Scene, time: number): SceneState {
     const [w0, v0, w1, v1] = st.work
     const fit = Math.max(1, Math.min((x1 - x0) / (w1 - w0), (y1 - y0) / (v1 - v0)) * 0.92)
     const k = inOut(clamp(t / 0.3))
-    const zIn = fit * RULES.zoom
+    const zIn = fit * (b.zoom ?? RULES.zoom)
     if (b.cam === 'wide') st.cam = { fx: lerp(camStart.fx, (w0 + w1) / 2, k), fy: lerp(camStart.fy, (v0 + v1) / 2, k), z: lerp(camStart.z, fit, k) }
     else if (b.cam === 'pts' && b.pts) {
       const [cx, cy] = centreOf(b.pts)
