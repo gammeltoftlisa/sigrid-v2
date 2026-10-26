@@ -1182,3 +1182,5 @@ body { background: transparent !important; isolation: isolate; }
 .gs-face { position: absolute; left: 0; top: 0; overflow: visible; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .gs-back { transform: rotateY(180deg); }
 .gs-sh, .gs-tool, .gs-pin, .gs-ln { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; transform-origin: 0 0; }
+/* the drawings sit exactly on their point (an inline svg would sit on a text baseline, off the point it turns around) */
+.gs-sh > svg, .gs-tool > svg, .gs-pin > svg, .gs-face > svg, .gs-lns > svg { display: block; }
