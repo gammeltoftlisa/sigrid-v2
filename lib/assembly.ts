@@ -1,6 +1,6 @@
 import type { JoinKind, SewingStep2D } from './types'
 
-type StepPieces = Pick<SewingStep2D, 'pieceId' | 'pieceIds' | 'secondPieceId' | 'join'>
+type StepPieces = Pick<SewingStep2D, 'pieceId' | 'pieceIds' | 'secondPieceId' | 'join'> & { action?: SewingStep2D['action'] }
 
 /** The pieces a step is about: several when it joins them, else its one piece. "<id>#2" is a piece's second cut. */
 export const stepPieceIds = (s: StepPieces): string[] =>
@@ -28,6 +28,8 @@ export interface Assembly {
   base: AssemblyMember[]
   joining: AssemblyMember[][]
   join: JoinKind
+  /** The base was joined in the last step or two, and the steps since only pinned, sewed or pressed it (so this step is about that seam) */
+  recentJoin?: boolean
 }
 
 /**
@@ -64,7 +66,17 @@ export function assemblyAt(steps: StepPieces[], index: number): Assembly | null 
   // The first piece named (with everything already sewn to it) is the base
   const base = groups[0]
   const join = steps[index].join
-  return { base, joining: groups.filter((g) => g !== base).map((g) => attached(g, ids, join)), join: join ?? 'side' }
+  const inBase = (id: string) => base.some((m) => m.id === id)
+  let recentJoin = false
+  for (let k = index - 1; k >= Math.max(0, index - 3); k--) {
+    const before = stepPieceIds(steps[k])
+    if (before.length >= 2 && before.some(inBase)) {
+      recentJoin = true
+      break
+    }
+    if (!before.length || !before.every(inBase) || !['pin', 'sew', 'attach', 'press'].includes(steps[k].action ?? '')) break
+  }
+  return { base, joining: groups.filter((g) => g !== base).map((g) => attached(g, ids, join)), join: join ?? 'side', recentJoin }
 }
 
 /** A group as it's attached by a step: to the step's first piece, by the piece of it the step names */

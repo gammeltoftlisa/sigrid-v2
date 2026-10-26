@@ -1162,3 +1162,23 @@ body { background: transparent !important; isolation: isolate; }
 /* Side sheets: full width on phones, 448px from sm */
 :root .panel-sheet[data-side="right"] { width: 100%; }
 @media (min-width: 640px) { :root .panel-sheet[data-side="right"] { max-width: 28rem; } }
+
+/* Guide scenes: a step played out on a cutting mat in soft 3D (components/sewing/GuideScene).
+   One plain fabric for every guide: greige, the right side a shade darker than the wrong side. */
+.guide-scene {
+  --gs-mat: #CBD0C0; --gs-mat-line: rgba(255,255,255,.55); --gs-mat-line-2: rgba(255,255,255,.28);
+  --gs-right: #CBC3B6; --gs-wrong: #E8E3DA; --gs-edge: #8E8577; --gs-thread: #4E321C; --gs-interf: #FBF8F2; --gs-chalk: #fff;
+  background: var(--gs-mat);
+}
+:root[data-theme="dark"] .guide-scene { --gs-mat: #2C3028; --gs-mat-line: rgba(255,255,255,.09); --gs-mat-line-2: rgba(255,255,255,.045); }
+.gs-stage { perspective: 1700px; perspective-origin: 50% 20%; }
+.gs-cam, .gs-table { position: absolute; inset: 0; transform-style: preserve-3d; }
+.gs-table { transform-origin: 50% 50%; }
+.gs-mat {
+  position: absolute; left: -60%; top: -60%; width: 220%; height: 220%; transform: translateZ(0); background-color: var(--gs-mat);
+  background-image: linear-gradient(var(--gs-mat-line) 1px, transparent 1px), linear-gradient(90deg, var(--gs-mat-line) 1px, transparent 1px), linear-gradient(var(--gs-mat-line-2) 1px, transparent 1px), linear-gradient(90deg, var(--gs-mat-line-2) 1px, transparent 1px);
+}
+.gs-pc, .gs-strip, .gs-lns { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
+.gs-face { position: absolute; left: 0; top: 0; overflow: visible; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.gs-back { transform: rotateY(180deg); }
+.gs-sh, .gs-tool, .gs-pin, .gs-ln { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; transform-origin: 0 0; }
