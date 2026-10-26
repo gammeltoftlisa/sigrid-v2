@@ -36,7 +36,7 @@ export default function PaymentPage() {
           >
             <div className="flex flex-col gap-1 px-1 pb-2">
               <p className="flex items-baseline gap-1">
-                <span className="text-2xl font-semibold tracking-tight">{plan.price}</span>
+                <span className="font-heading text-3xl">{plan.price}</span>
                 {plan.period && <span className="text-sm text-muted-foreground">{plan.period}</span>}
               </p>
             </div>

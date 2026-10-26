@@ -21,6 +21,9 @@ export function GarmentCard({
   byline,
   progress,
   tag,
+  lead,
+  description,
+  photoSrc,
   className,
 }: {
   href: string
@@ -33,30 +36,40 @@ export function GarmentCard({
   progress?: number
   /** Small label over the image, e.g. "In progress" */
   tag?: string
+  /** The featured tile at the start of a grid: twice as wide and tall, with the description */
+  lead?: boolean
+  /** Shown on the lead tile only */
+  description?: string
+  /** The garment's own photo, instead of the stock one */
+  photoSrc?: string
   className?: string
 }) {
   const details = [difficulty, time].filter(Boolean).join(' · ')
   return (
     <Card
       data-variant="product"
-      className={cn('group/tile relative gap-3 pt-0', className)}
+      className={cn('group/tile relative gap-3 pt-0', lead && 'tile-lead', className)}
     >
       <GarmentImage
         name={name}
+        photoSrc={photoSrc}
+        sizes={lead ? '(min-width: 1280px) 40vw, (min-width: 768px) 60vw, 100vw' : undefined}
         className="product-image aspect-product p-6 sm:p-8"
-        artClassName="max-w-40 hover-zoom"
+        artClassName={cn('hover-zoom', lead ? 'max-w-72' : 'max-w-40')}
       >
         {tag && (
           <PhotoLabel className="absolute top-3 left-3">{tag}</PhotoLabel>
         )}
       </GarmentImage>
       <CardHeader className="gap-0.5">
+        {lead && <p className="kicker">Featured pattern</p>}
         <CardTitle>
           <Link href={href} className="outline-none after:absolute after:inset-0">
             {name}
           </Link>
         </CardTitle>
         {byline && <p className="truncate text-xs">{byline}</p>}
+        {lead && description && <p className="line-clamp-2 max-w-md text-sm text-muted-foreground">{description}</p>}
         <p className="line-clamp-1 text-xs text-muted-foreground">{details}</p>
         {progress !== undefined ? (
           <div className="mt-1 flex items-center gap-2">

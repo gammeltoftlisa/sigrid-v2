@@ -1,3 +1,4 @@
+import { findPublishedGarment, findPublishedGuide } from './published'
 import type {
   Garment,
   Creator,
@@ -352,6 +353,7 @@ export const tshirtFabrics: FabricOption[] = [
 ]
 
 export const standardSizes: Record<StandardSize, UserMeasurements> = {
+  XXS: { bust: 76,  waist: 58, hips: 83,  height: 162, inseam: 73 },
   XS:  { bust: 80,  waist: 62, hips: 87,  height: 164, inseam: 74 },
   S:   { bust: 84,  waist: 66, hips: 91,  height: 166, inseam: 76 },
   M:   { bust: 88,  waist: 70, hips: 95,  height: 168, inseam: 78 },
@@ -362,6 +364,8 @@ export const standardSizes: Record<StandardSize, UserMeasurements> = {
 
 /** A base garment, or a creator pattern shown as a garment of its own */
 export const getGarmentById = (id: string): Garment => {
+  const published = findPublishedGarment(id)
+  if (published) return published
   const garment = garments.find((g) => g.id === id)
   if (garment) return garment
   const pattern = creatorPatterns.find((p) => p.garmentId === id)
@@ -945,4 +949,4 @@ export const garmentGuides: GarmentGuide[] = [
 ]
 
 export const getGarmentGuide = (garmentId: string) =>
-  garmentGuides.find((g) => g.garmentId === garmentId) ?? null
+  findPublishedGuide(garmentId) ?? garmentGuides.find((g) => g.garmentId === garmentId) ?? null

@@ -29,7 +29,7 @@ export function SizePicker({
       spacing={2}
       value={value ? [value] : []}
       onValueChange={(next) => next[0] && onValueChange(next[0] as StandardSize)}
-      className="grid w-full grid-cols-3 @xl:grid-cols-6"
+      className="grid w-full grid-cols-4 @xl:grid-cols-7"
     >
       {sizes.map((s) => (
         <ToggleGroupItem

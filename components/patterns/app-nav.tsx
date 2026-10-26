@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { IconCompass, IconHome, IconNeedleThread, IconShoppingBag, IconUser, type Icon } from '@tabler/icons-react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { cn } from 'cn'
 
 import { Logomark } from '@/components/patterns/wordmark'
+import { UserAvatar } from '@/components/patterns/profile-photo'
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
@@ -54,7 +54,11 @@ export function AppTabBar() {
                     transition={{ type: 'spring', stiffness: 420, damping: 38 }}
                   />
                 )}
-                <ItemIcon className="relative size-5" stroke={active ? 1.75 : 1.4} aria-hidden />
+                {href === '/profile' ? (
+                  <UserAvatar className="relative size-5" />
+                ) : (
+                  <ItemIcon className="relative size-5" stroke={active ? 1.75 : 1.4} aria-hidden />
+                )}
                 <span className="relative">{short ?? label}</span>
               </Link>
             </li>
@@ -128,9 +132,7 @@ export function AppSidebar() {
             />
           }
         >
-          <Avatar className="size-9">
-            <AvatarFallback className="bg-foreground/7 text-foreground"><IconUser className="size-4" aria-hidden /></AvatarFallback>
-          </Avatar>
+          <UserAvatar className="size-9" />
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={10}>
           Profile

@@ -15,6 +15,8 @@ import { Panel } from '@/components/patterns/panel'
 import { PageSection } from '@/components/patterns/page-section'
 import { KeepHeight } from '@/components/patterns/keep-height'
 import { creatorPatterns, creators, getPatternsByCreator } from '@/lib/data'
+import { useMounted } from '@/hooks/use-mounted'
+import { listPublishedGarments } from '@/lib/published'
 import type { Difficulty, GarmentCategory } from '@/lib/types'
 
 const categories = ['All', 'Tops', 'Bottoms', 'Dresses', 'Outerwear'] as const satisfies readonly (GarmentCategory | 'All')[]
@@ -31,6 +33,11 @@ export default function ExplorePage() {
   const [difficulty, setDifficulty] = useState<Difficulty | 'All'>('All')
 
   const query = search.trim().toLowerCase()
+  // Patterns published from the studio on this device sit first, as "Your pattern"
+  const mounted = useMounted()
+  const yours = (mounted ? listPublishedGarments() : []).filter(
+    (g) => (category === 'All' || g.category === category) && (difficulty === 'All' || g.difficulty === difficulty) && (!query || g.name.toLowerCase().includes(query)),
+  )
   const filtered = creatorPatterns.filter((p) => {
     if (category !== 'All' && p.category !== category) return false
     if (difficulty !== 'All' && p.difficulty !== difficulty) return false
@@ -85,7 +92,7 @@ export default function ExplorePage() {
         </div>
 
         <KeepHeight>
-        {filtered.length === 0 ? (
+        {filtered.length === 0 && yours.length === 0 ? (
           <Empty className="border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -104,6 +111,17 @@ export default function ExplorePage() {
           </Empty>
         ) : (
           <div key={`${category}-${difficulty}`} className="tile-grid tiles">
+            {yours.map((g) => (
+              <GarmentCard
+                key={g.id}
+                href={`/garment/${g.id}`}
+                name={g.name}
+                difficulty={g.difficulty}
+                byline="Your pattern"
+                price={g.price}
+                photoSrc={g.photo}
+              />
+            ))}
             {filtered.map((p) => (
               <GarmentCard
                 key={p.id}

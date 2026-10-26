@@ -1,7 +1,9 @@
+import type { PieceOutline } from './piece-outline'
+
 export type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
 export type FitType = 'Oversized' | 'Relaxed' | 'Regular' | 'Fitted' | 'Tailored'
 export type GarmentCategory = 'Tops' | 'Bottoms' | 'Dresses' | 'Outerwear'
-export type StandardSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL'
+export type StandardSize = 'XXS' | 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL'
 
 export interface Garment {
   id: string
@@ -15,6 +17,10 @@ export interface Garment {
   fits?: FitType[]
   sizes: StandardSize[]
   description: string
+  /** A photo of this exact garment (a published studio pattern's own photo) */
+  photo?: string
+  /** Published from the pattern studio on this device */
+  published?: boolean
 }
 
 export interface Creator {
@@ -126,6 +132,10 @@ export interface GuidePiece {
   name?: string
   shape: 'rectangle' | 'trapezoid'
   dims: PieceDims | ((m: UserMeasurements) => PieceDims)
+  /** The real outline (curves, fold, neckline), when known; otherwise it's drawn from dims */
+  outline?: PieceOutline
+  /** Cut from interfacing instead of the main fabric */
+  material?: 'fabric' | 'interfacing'
   grainLine?: 'vertical' | 'horizontal'
   seamAllowance?: number
 }
@@ -144,6 +154,13 @@ export interface SewingStep2D {
   title: string
   instruction: string
   pieceId?: string
+  /**
+   * Every piece the step is about, when it joins several (the first is also `pieceId`).
+   * "<id>#2" is the second cut of a piece that's cut twice (drawn mirrored), e.g. two overlay halves.
+   */
+  pieceIds?: string[]
+  /** How the pieces of a joining step meet: edge to edge at the sides, onto the top edge (a collar), or laid on top */
+  join?: JoinKind
   secondPieceId?: string
   fabricSide?: FabricSide
   annotation?: StepAnnotation
@@ -152,8 +169,14 @@ export interface SewingStep2D {
   tip?: string
 }
 
+export type JoinKind = 'side' | 'top' | 'layer'
+
 export interface GarmentGuide {
   garmentId: string
   pieces: GuidePiece[]
   steps: SewingStep2D[]
+  /** Show the maker's sections exactly (patterns from the studio); built-in guides merge one-step sections */
+  keepSections?: boolean
+  /** The maker's icon per section title (keys of the studio's section icons) */
+  sectionIcons?: Record<string, string>
 }

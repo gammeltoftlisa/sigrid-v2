@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { IconCheck } from '@tabler/icons-react'
 
 /**
@@ -18,8 +18,8 @@ export const progressStateOf = (index: number, current: number): ProgressState =
   index < current ? 'done' : index === current ? 'active' : 'upcoming'
 
 const DOT_SIZES = {
-  sm: { box: 'w-4 h-4',  text: 'text-[9px]',  check: 10 },
-  md: { box: 'w-7 h-7',  text: 'text-[11px]', check: 14 },
+  sm: { box: 'size-4',  text: 'text-2xs',  check: 10 },
+  md: { box: 'size-7',  text: 'text-2xs', check: 14 },
   lg: { box: 'w-8 h-8',  text: 'text-xs',     check: 14 },
 } as const
 
@@ -36,10 +36,10 @@ export function StatusDot({
   const s = DOT_SIZES[size]
   return (
     <div
-      className={`${s.box} ${s.text} rounded-full shrink-0 flex items-center justify-center font-bold leading-none transition-colors duration-200 ${
-        state === 'done'   ? 'bg-glass text-foreground'
-        : state === 'active' ? 'bg-primary text-primary-foreground'
-        :                      'bg-glass text-muted-foreground'
+      className={`${s.box} ${s.text} rounded-full shrink-0 flex items-center justify-center font-medium leading-none tabular-nums transition-colors duration-200 ${
+        state === 'done'   ? 'bg-accent text-primary'
+        : state === 'active' ? 'step-dot-active bg-primary text-primary-foreground'
+        :                      'step-dot-upcoming text-muted-foreground'
       }`}
     >
       {state === 'done' ? (
@@ -53,7 +53,7 @@ export function StatusDot({
           <IconCheck size={s.check} stroke={3} />
         </motion.span>
       ) : state === 'active' && size === 'sm' ? (
-        <span className="w-1.5 h-1.5 rounded-full bg-surface" />
+        <span className="size-1.5 rounded-full bg-current" />
       ) : (
         children
       )}
@@ -67,14 +67,12 @@ export function StatusDot({
  * doesn't float loose in the list.
  */
 export const stepRowClass = (state: ProgressState, open = false) =>
-  `rounded-lg overflow-hidden transition-colors duration-150 ${
-    state === 'active' ? 'bg-glass'
-    : open             ? 'bg-(--background)'
-    :                    'hover:bg-(--background)'
-  }`
+  `step-row rounded-(--control-radius) overflow-hidden transition-colors duration-150 ${
+    state === 'active' ? 'step-row-active' : open ? '' : 'glass-inset-hover'
+  } ${open ? 'step-row-open' : ''}`
 
 /** Title text of a step row or journey. */
 export const stepTextClass = (state: ProgressState) =>
   state === 'active' ? 'text-foreground font-medium'
-  : state === 'done' ? 'text-ink-3'
-  :                    'text-ink-2'
+  : state === 'done' ? 'text-muted-foreground'
+  :                    'text-foreground'

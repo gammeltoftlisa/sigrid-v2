@@ -1,14 +1,14 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { use, useMemo, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { IconChevronLeft, IconPrinter } from '@tabler/icons-react'
 import { getGarmentById, getGarmentGuide, standardSizes } from '@/lib/data'
 import { loadProject } from '@/lib/projects'
 import { allSizes, sizeLabel } from '@/lib/sizes'
-import IconButton from '@/components/legacy/IconButton'
-import PrimaryButton from '@/components/legacy/PrimaryButton'
-import { textLink } from '@/components/legacy/interaction'
+import { Button } from '@/components/ui/button'
+import { Inset } from '@/components/patterns/inset'
+import { Panel } from '@/components/patterns/panel'
 import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
 import type { GuidePiece, PieceDims, StandardSize } from '@/lib/types'
 
@@ -110,7 +110,8 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
   const router = useRouter()
   const searchParams = useSearchParams()
   const garment = getGarmentById(id)
-  const guide = getGarmentGuide(id)
+  // Stable per id: a published pattern's guide is rebuilt from storage on every call
+  const guide = useMemo(() => getGarmentGuide(id), [id])
 
   // Size comes from the link (so the right size always prints), else the saved project
   const [size, setSize] = useState<StandardSize | null>(null)
@@ -135,10 +136,10 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
   }, [ready, size, searchParams])
 
   const header = (
-    <div className="shrink-0 bg-bg border-b border-rim px-5 py-4 flex items-center gap-3 print:hidden">
-      <IconButton label="Back" onClick={() => router.back()}>
-        <IconChevronLeft size={16} />
-      </IconButton>
+    <div className="top-bar flex h-14 shrink-0 items-center gap-1 px-4 md:px-8 print:hidden">
+      <Button variant="outline" size="icon-lg" aria-label="Back" onClick={() => router.back()}>
+        <IconChevronLeft />
+      </Button>
       <PageBreadcrumbs
         items={[
           { label: 'Home', href: '/home' },
@@ -149,15 +150,15 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
     </div>
   )
 
-  if (!ready) return <div className="min-h-screen bg-bg">{header}</div>
+  if (!ready) return <div className="min-h-screen">{header}</div>
 
   if (!guide || guide.pieces.length === 0) {
     return (
-      <div className="min-h-screen bg-bg">
+      <div className="min-h-screen">
         {header}
-        <div className="px-5 py-16 text-center">
-          <p className="text-heading font-bold text-ink mb-2">Pattern coming soon</p>
-          <p className="text-body text-ink-2">The printable pattern for {garment.name} isn&apos;t ready yet.</p>
+        <div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
+          <h1 className="text-4xl">Pattern <em className="display-italic">coming soon</em></h1>
+          <p className="text-base text-muted-foreground">The printable pattern for {garment.name} isn&apos;t ready yet.</p>
         </div>
       </div>
     )
@@ -165,50 +166,56 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
 
   if (!size) {
     return (
-      <div className="min-h-screen bg-bg">
+      <div className="min-h-screen">
         {header}
-        <div className="px-5 py-16 text-center max-w-sm mx-auto">
-          <p className="text-heading font-bold text-ink mb-2">Choose a size first</p>
-          <p className="text-body text-ink-2 mb-6">Your pattern is printed in the size you choose when you start the project.</p>
-          <a href={`/garment/${id}`} className={`text-label ${textLink}`}>Go to {garment.name}</a>
+        <div className="mx-auto flex max-w-sm flex-col items-center gap-3 px-5 py-16 text-center">
+          <h1 className="text-4xl">Choose a <em className="display-italic">size</em> first</h1>
+          <p className="text-base text-muted-foreground">Your pattern is printed in the size you choose when you start the project.</p>
+          <Button variant="outline" className="mt-3" nativeButton={false} render={<a href={`/garment/${id}`} />}>
+            Go to {garment.name}
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-bg print:bg-white print:min-h-0">
+    <div className="min-h-screen print:bg-white print:min-h-0">
       {/* A4 with 10 mm margins; each tile below fills exactly one printable page */}
       <style>{`@page { size: A4 portrait; margin: 10mm; }`}</style>
 
       {header}
 
       {/* ── Screen view ── */}
-      <div className="print:hidden px-5 md:px-12 pt-6 pb-10">
-        <h1 className="text-title font-bold text-ink mb-1">Your pattern, {sizeLabel(size)}</h1>
-        <p className="text-body text-ink-2 mb-6">
-          {layouts.length} pieces at full size, spread over {totalPages} A4 pages.
-        </p>
+      <div className="print:hidden flex flex-col gap-8 px-4 pt-4 pb-10 md:px-8">
+        <header className="flex flex-col gap-3">
+          <p className="kicker">{layouts.length} pieces · {totalPages} A4 pages</p>
+          <h1>Your pattern, <em className="display-italic">{sizeLabel(size)}</em></h1>
+          <p className="text-base text-muted-foreground">Every piece at full size, ready to print and tape together.</p>
+        </header>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 mb-6">
-          {layouts.map((l) => (
-            <div key={l.piece.id} className="bg-surface rounded-(--radius) p-4 border border-rim">
-              <div className="h-32 mb-3 rounded-2xl bg-surface-2/60 flex items-center justify-center p-3">
-                <svg viewBox={`0 0 ${l.w} ${l.h}`} className="h-full max-w-full">
-                  <PieceDrawing layout={l} preview />
-                </svg>
-              </div>
-              <p className="text-label font-semibold text-ink">{l.piece.label} · {pieceName(l.piece)}</p>
-              <p className="text-caption text-ink-3">
-                {Math.max(l.dims.topWidth, l.dims.bottomWidth)} × {l.dims.height} cm · {l.cols * l.rows} page{l.cols * l.rows > 1 ? 's' : ''}
-              </p>
-            </div>
-          ))}
-        </div>
+        <Panel label="Pieces" meta={layouts.length}>
+          <div className="tiles tiles-compact">
+            {layouts.map((l) => (
+              <Inset key={l.piece.id} className="flex flex-col gap-3 p-3">
+                <div className="flex h-32 items-center justify-center rounded-(--image-radius) bg-muted p-3">
+                  <svg viewBox={`0 0 ${l.w} ${l.h}`} className="h-full max-w-full">
+                    <PieceDrawing layout={l} preview />
+                  </svg>
+                </div>
+                <div className="flex flex-col gap-0.5 px-1">
+                  <p className="text-sm font-medium">{l.piece.label} · {pieceName(l.piece)}</p>
+                  <p className="text-xs text-muted-foreground tabular-nums">
+                    {Math.max(l.dims.topWidth, l.dims.bottomWidth)} × {l.dims.height} cm · {l.cols * l.rows} page{l.cols * l.rows > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </Inset>
+            ))}
+          </div>
+        </Panel>
 
-        <div className="bg-surface rounded-(--radius) p-5 border border-rim mb-6">
-          <h2 className="text-heading font-semibold text-ink mb-3">How to print</h2>
-          <ol className="space-y-2.5">
+        <Panel label="How to print">
+          <ol className="flex flex-col gap-2 px-1 pb-1">
             {[
               'Print at 100% / "Actual size" — turn off "Fit to page".',
               'Measure the 10 cm square on the first page. If it isn\'t 10 cm, check your print settings.',
@@ -216,19 +223,19 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
               'Cut along the solid line. The dashed line is where you stitch.',
             ].map((text, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="w-6 h-6 border border-rim text-ink text-[12px] font-medium flex items-center justify-center shrink-0 mt-0.5">
+                <span className="step-dot-upcoming mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-2xs font-medium tabular-nums">
                   {i + 1}
                 </span>
-                <p className="text-label text-ink-2">{text}</p>
+                <p className="text-sm text-muted-foreground">{text}</p>
               </li>
             ))}
           </ol>
-        </div>
+        </Panel>
 
-        <PrimaryButton onClick={() => window.print()}>
-          <IconPrinter size={18} />
-          Print / save as PDF
-        </PrimaryButton>
+        <Button size="lg" className="self-start" onClick={() => window.print()}>
+          <IconPrinter data-icon="inline-start" />
+          Print or save as PDF
+        </Button>
       </div>
 
       {/* ── Print view: cover page + true-scale tiles ── */}

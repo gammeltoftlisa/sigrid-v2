@@ -44,7 +44,8 @@ const nextConfig: NextConfig = {
   images: {
     // Product photos (lib/fabric/sources) and garment photography (lib/garment-photos.ts).
     // Listings with photos from any other host lose the photo (lib/fabric/safe-listing.ts).
-    remotePatterns: IMAGE_HOSTS.map((hostname) => ({ protocol: "https" as const, hostname })),
+    // plus Mood Fabrics' blog, for the photo of the example studio pattern (development)
+    remotePatterns: [...IMAGE_HOSTS, "blog.moodfabrics.com"].map((hostname) => ({ protocol: "https" as const, hostname })),
   },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];

@@ -17,7 +17,7 @@ export default function PrivacyPage() {
 
       <LegalSection title="What stays on your device">
         <p>
-          Your projects, chosen size, progress through each guide, the dates you mark steps done (for streaks), and your fabric bag
+          Your projects, chosen size, progress through each guide, the dates you mark steps done (for streaks), your fabric bag and your profile picture
           are saved in your browser’s local storage. They are not sent to us. Clearing your browser data removes them.
         </p>
       </LegalSection>

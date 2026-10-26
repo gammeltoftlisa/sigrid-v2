@@ -13,8 +13,8 @@ import { allSizes, saveSize } from '@/lib/sizes'
 import type { StandardSize } from '@/lib/types'
 
 // One welcome screen: what Sigrid is, in a sentence
-const intro: { icon: Icon; title: string; body: string }[] = [
-  { icon: IconNeedleThread, title: 'Sew your own clothes', body: 'Patterns in your size, one calm step at a time.' },
+const intro: { icon: Icon; title: React.ReactNode; body: string }[] = [
+  { icon: IconNeedleThread, title: <>Sew your <em className="display-italic">own clothes</em></>, body: 'Patterns in your size, one calm step at a time.' },
 ]
 const ACCOUNT = intro.length
 const SIZE = ACCOUNT + 1
@@ -26,7 +26,7 @@ function StepDots({ current }: { current: number }) {
       {Array.from({ length: TOTAL }, (_, i) => (
         <span
           key={i}
-          className={cn('h-0.5 transition-all duration-200', i === current ? 'w-8 bg-primary' : 'w-4 bg-indicator')}
+          className={cn('stitch-dot h-0.5 transition-all duration-200', i === current ? 'w-8 bg-foreground' : 'w-4 bg-indicator')}
         />
       ))}
     </div>
@@ -69,7 +69,7 @@ export default function OnboardingPage() {
             </div>
             <div className="flex flex-col gap-3">
               <h1>{intro[step].title}</h1>
-              <p className="max-w-xs text-base leading-relaxed text-muted-foreground">{intro[step].body}</p>
+              <p className="mx-auto max-w-xs text-base text-muted-foreground">{intro[step].body}</p>
             </div>
           </div>
         )}
@@ -78,8 +78,8 @@ export default function OnboardingPage() {
           // Beta: no account and no personal data. Only what's needed: agreeing to the terms.
           <div className="flex flex-1 flex-col gap-6 pt-6">
             <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">Before you start</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1>Before you <em className="display-italic">start</em></h1>
+              <p className="text-base text-muted-foreground">
                 During the beta there’s no account. Your projects and progress are saved on this device only, and we don’t collect your
                 name or email.
               </p>
@@ -104,9 +104,9 @@ export default function OnboardingPage() {
 
         {step === SIZE && (
           <div className="flex flex-1 flex-col gap-6 pt-6">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-semibold tracking-tight">What’s your size?</h1>
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col gap-2">
+              <h1>What’s your <em className="display-italic">size</em>?</h1>
+              <p className="text-base text-muted-foreground">
                 The size you usually buy. You can change it anytime.
               </p>
             </div>

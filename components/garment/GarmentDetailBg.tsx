@@ -16,6 +16,7 @@ export default function GarmentDetailBg({ garmentId }: { garmentId: string }) {
         </div>
         <GarmentImage
           name={garment.name}
+          photoSrc={garment.photo}
           className="mx-4 mt-4 aspect-product rounded-(--radius) sm:mx-6 md:m-0 md:mt-6 md:aspect-auto md:flex-1"
           artClassName="max-w-72 md:max-w-sm"
         />

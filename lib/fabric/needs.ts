@@ -1,3 +1,4 @@
+import { findPublishedNeed } from '@/lib/published'
 import type { StandardSize } from '@/lib/types'
 
 export interface FabricChoice {
@@ -84,7 +85,7 @@ const needs: FabricNeed[] = [
 ]
 
 export function getFabricNeed(garmentId: string): FabricNeed {
-  return needs.find((n) => n.garmentId === garmentId) ?? needs[0]
+  return findPublishedNeed(garmentId) ?? needs.find((n) => n.garmentId === garmentId) ?? needs[0]
 }
 
 /** Metres needed for a size, falling back to the nearest listed size */

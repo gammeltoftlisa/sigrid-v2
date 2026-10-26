@@ -1,11 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { IconX, IconCamera, IconShare, IconStar, IconStarFilled } from '@tabler/icons-react'
-import PrimaryButton from '@/components/legacy/PrimaryButton'
-import SecondaryButton from '@/components/legacy/SecondaryButton'
-import IconButton from '@/components/legacy/IconButton'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import { GarmentArt } from '@/components/garment/GarmentArt'
 import { TAP_ICON } from '@/components/legacy/interaction'
 import { cn } from '@/lib/utils'
@@ -61,7 +60,7 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
       {open && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
           <motion.div
-            className="absolute inset-0 bg-ink/40"
+            className="guide-overlay absolute inset-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -73,21 +72,21 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="done-title"
-            className="relative w-full md:max-w-md max-h-[92vh] flex flex-col bg-bg rounded-t-3xl md:rounded-3xl shadow-modal overflow-hidden"
+            className="done-dialog relative w-full md:max-w-md flex flex-col rounded-t-pane-lg md:rounded-pane-lg overflow-hidden"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
           >
             <div className="absolute top-4 right-4 z-10">
-              <IconButton label="Close" onClick={onClose}>
-                <IconX size={16} />
-              </IconButton>
+              <Button variant="outline" size="icon-lg" aria-label="Close" onClick={onClose}>
+                <IconX />
+              </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto">
               {/* Finished garment + confetti */}
-              <div className="relative h-56 flex items-center justify-center bg-surface-2/50 overflow-hidden">
+              <div className="done-hero relative h-56 flex items-center justify-center overflow-hidden">
                 <motion.div
                   initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -110,11 +109,12 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
               </div>
 
               <div className="px-6 pt-6 pb-4">
-                <h2 id="done-title" className="text-title font-bold text-ink mb-1">You made this.</h2>
-                <p className="text-body text-ink-2 mb-6">{garment.name} is finished, and you sewed every seam. Take a moment to enjoy it.</p>
+                <p className="kicker mb-3">Finished</p>
+                <h2 id="done-title" className="text-5xl mb-3">You <em className="display-italic">made</em> this.</h2>
+                <p className="text-base text-muted-foreground mb-6">{garment.name} is finished, and you sewed every seam. Take a moment to enjoy it.</p>
 
                 {/* Rating */}
-                <h3 className="text-label font-semibold text-ink mb-2">How did it go?</h3>
+                <h3 className="eyebrow text-muted-foreground mb-2">How did it go?</h3>
                 <div className="flex gap-2 justify-center" role="radiogroup" aria-label="Rate your make">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <motion.button
@@ -134,30 +134,32 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
                         className="block"
                       >
                         {star <= shown
-                          ? <IconStarFilled size={32} className="text-warn" />
-                          : <IconStar size={32} className="text-rim" stroke={1.5} />}
+                          ? <IconStarFilled size={32} className="text-primary" />
+                          : <IconStar size={32} className="text-muted-foreground" stroke={1.5} />}
                       </motion.span>
                     </motion.button>
                   ))}
                 </div>
-                <p className="text-center mt-1 h-5 text-caption text-ink-2">{RATING_COPY[rating]}</p>
+                <p className="text-center mt-1 h-5 text-xs text-muted-foreground">{RATING_COPY[rating]}</p>
 
                 {/* Photo */}
-                <h3 className="text-label font-semibold text-ink mt-5 mb-2">Keep a record</h3>
-                <button className="w-full border-2 border-dashed border-rim rounded-3xl h-32 flex flex-col items-center justify-center gap-2 bg-surface hover:bg-surface-2 hover:border-primary/40 press transition duration-150">
-                  <IconCamera size={28} className="text-ink-3" stroke={1.5} />
-                  <p className="text-label font-semibold text-ink">Add a photo</p>
-                  <p className="text-caption text-ink-3 -mt-1.5">Remember what you made, and how far you’ve come</p>
+                <h3 className="eyebrow text-muted-foreground mt-6 mb-2">Keep a record</h3>
+                <button data-slot="inset" className="glass-inset-hover press w-full rounded-(--radius) h-32 flex flex-col items-center justify-center gap-2 border border-dashed">
+                  <IconCamera size={28} className="text-muted-foreground" stroke={1.5} aria-hidden />
+                  <p className="text-sm font-medium">Add a photo</p>
+                  <p className="text-xs text-muted-foreground -mt-1.5">Remember what you made, and how far you’ve come</p>
                 </button>
               </div>
             </div>
 
-            <div className="shrink-0 px-6 pt-3 pb-6 md:pb-5 border-t border-rim flex flex-col gap-2">
-              <PrimaryButton href="/explore">Start your next project</PrimaryButton>
-              <SecondaryButton>
-                <IconShare size={18} />
+            <div className="shrink-0 px-6 pt-3 pb-6 md:pb-5 flex flex-col gap-2">
+              <Button size="lg" className="w-full" nativeButton={false} render={<Link href="/explore" />}>
+                Start your next project
+              </Button>
+              <Button size="lg" variant="outline" className="w-full">
+                <IconShare data-icon="inline-start" />
                 Share your creation
-              </SecondaryButton>
+              </Button>
             </div>
           </motion.div>
         </div>

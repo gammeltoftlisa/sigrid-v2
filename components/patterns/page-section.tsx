@@ -5,12 +5,15 @@ import { cn } from "cn"
  * then an optional action. Description and content below.
  */
 function PageSection({
+  id,
   title,
   description,
   action,
   children,
   className,
 }: {
+  /** Anchor to scroll to */
+  id?: string
   /** Leave out when the page has only one section, so the heading doesn't repeat the page title */
   title?: string
   description?: string
@@ -19,7 +22,7 @@ function PageSection({
   className?: string
 }) {
   return (
-    <section className={cn("flex flex-col gap-4", className)}>
+    <section id={id} className={cn("flex scroll-mt-6 flex-col gap-4", className)}>
       {title && <div className="flex flex-col gap-1">
         <div className="flex items-center gap-4">
           <h2 className="page-section-title text-xl font-semibold">{title}</h2>

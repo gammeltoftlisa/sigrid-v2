@@ -1,4 +1,5 @@
 import { garments, getGarmentGuide } from './data'
+import { listPublishedGarments } from './published'
 import { loadProject, type ProjectState } from './projects'
 import { sizeLabel } from './sizes'
 import type { Garment } from './types'
@@ -13,7 +14,7 @@ export interface ProjectSummary {
 
 /** Every project the user has started on this device, in-progress first. Browser only. */
 export function listProjects(): ProjectSummary[] {
-  return garments
+  return [...garments, ...listPublishedGarments()]
     .flatMap((garment) => {
       const project = loadProject(garment.id)
       if (!project) return []
