@@ -159,7 +159,8 @@ export class SceneView {
   }
 
   private faceOp(p: PieceState, st: SceneState) {
-    return p.op * (RULES.dimEarlier && st.focus && !st.focus.includes(p.key) ? 0.5 : 1)
+    // The fabric a piece is cut from never fades back: you'd see the mat through it
+    return p.op * (RULES.dimEarlier && st.focus && !st.focus.includes(p.key) && !p.key.startsWith('_') ? 0.5 : 1)
   }
 
   private drawPiece(p: PieceState, st: SceneState) {

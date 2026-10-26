@@ -34,14 +34,18 @@ export const RULES = {
   /** Sewing with the machine or by hand */
   needle: 'machine' as 'machine' | 'hand',
   /** How fast the tools travel, cm a second: steady and calm, whatever the length of the seam */
-  sewSpeed: 7,
-  cutSpeed: 14,
-  chalkSpeed: 9,
-  /** The tools move calmly: the needle goes up and down this many times a second, the scissors
-   * snip once every this many cm, the iron takes this long for one glide out and back (ms) */
-  needleRate: 2.2,
-  snipEvery: 6,
-  pressTime: 3600,
+  sewSpeed: 12,
+  cutSpeed: 30,
+  chalkSpeed: 12,
+  /** The tool's own motion is calm, however fast it travels: the needle goes up and down this
+   * many times a second, the scissors snip this many times a second, the iron takes this long
+   * for one glide out and back (ms), steam puffs this many times a second */
+  needleRate: 1.6,
+  snipRate: 0.8,
+  pressTime: 3200,
+  steamRate: 0.5,
+  /** Folding the fabric before cutting a piece on the fold, ms */
+  foldTime: 1600,
   /** Pins go in one at a time, this many ms apart */
   pinEvery: 480,
   /** Cutting follows the scissors less closely than sewing, so they don't race across the screen */
@@ -293,14 +297,14 @@ function press(pts: Pt[], on: string, during?: (st: SceneState, t: number) => vo
       const u = t < 0.5 ? inOut(t * 2) : inOut(2 - t * 2)
       const q = at(pts, u)
       const z = st.p[on].z + 2
-      if (t < 1) st.tool = { on, kind: 'iron', x: q.x, y: q.y, ang: at(pts, 0).ang, z: z + 2 * (1 - Math.sin(Math.PI * clamp(t * 1.2))), phase: ((t * RULES.pressTime) / 1000) * 0.7 }
+      if (t < 1) st.tool = { on, kind: 'iron', x: q.x, y: q.y, ang: at(pts, 0).ang, z: z + 2 * (1 - Math.sin(Math.PI * clamp(t * 1.2))), phase: ((t * RULES.pressTime) / 1000) * RULES.steamRate }
       during?.(st, t)
     },
   }
 }
 function trace(id: string, kind: 'cut' | 'chalk', pts: Pt[], on: string): Beat {
   return {
-    base: kind === 'cut' ? travel(pts, RULES.cutSpeed, 3000, 24000) : travel(pts, RULES.chalkSpeed, 1600, 8000),
+    base: kind === 'cut' ? travel(pts, RULES.cutSpeed, 3000, 24000) : travel(pts, RULES.chalkSpeed, 1400, 8000),
     cam: 'tool',
     zoom: kind === 'cut' ? RULES.cutZoom : undefined,
     pts,
@@ -310,7 +314,8 @@ function trace(id: string, kind: 'cut' | 'chalk', pts: Pt[], on: string): Beat {
       st.lines.push({ id, kind, pts, p, z, op: 1, on })
       if (t < 1) {
         const q = at(pts, p)
-        st.tool = { on, kind: kind === 'cut' ? 'scissors' : 'chalk', x: q.x, y: q.y, ang: q.ang, z: z + 1, phase: (p * q.len) / RULES.snipEvery }
+        const secs = (t * (kind === 'cut' ? travel(pts, RULES.cutSpeed, 3000, 24000) : 0)) / 1000
+        st.tool = { on, kind: kind === 'cut' ? 'scissors' : 'chalk', x: q.x, y: q.y, ang: q.ang, z: z + 1, phase: secs * RULES.snipRate }
       }
     },
   }
@@ -504,18 +509,35 @@ export function buildScene(step: Pick<SewingStep2D, 'action' | 'annotation' | 'f
       const cutKey = target.id
       const shape = outlineCommands(o, lx).map(([k, ...v]) => [k, ...v.map((n, i) => n + (i % 2 === 0 ? m : 2))] as OutlineCmd)
       const piece: ScenePiece = { key: cutKey, o, label: target.piece.label, x: x0 + m, y: y0 + 2, w, h: target.h, lineX: lx, layer: 1, side, style: 'fabric', enters: true, labelled: true }
+      const cloth = (key: string, x: number, layer: number, hole: OutlineCmd[]): ScenePiece => ({ key, o: { lines: [{ down: 0, width: fw }, { down: fh, width: fw }] }, label: '', x, y: y0, w: fw, h: fh, lineX: fw / 2, layer, side: 'right', style: 'fabric', hole, enters: false, labelled: false })
+      // The top layer of folded fabric: it starts opened out to the left and folds over along
+      // the fold; its hole is the cut seen from the other side
+      const mirrored = shape.map(([k, ...v]) => [k, ...v.map((n, i) => (i % 2 === 0 ? fw - n : n))] as OutlineCmd)
       scenePieces.splice(0, scenePieces.length,
-        { key: '_fabric', o: { lines: [{ down: 0, width: fw }, { down: fh, width: fw }] }, label: '', x: x0, y: y0, w: fw, h: fh, lineX: fw / 2, layer: 0, side: 'right', style: 'fabric', hole: shape, enters: false, labelled: false },
+        cloth('_fabric', x0, 0, shape),
         piece,
-        ...(half ? [{ ...piece, key: '_open', layer: 1.5 }] : []),
-        { ...piece, key: '_paper', layer: 2, style: 'paper', enters: true, labelled: false },
+        ...(half ? [cloth('_flap', x0 - fw, 1.8, mirrored), { ...piece, key: '_open', layer: 2.4 }] : []),
+        { ...piece, key: '_paper', layer: 3, style: 'paper', enters: true, labelled: false },
       )
-      frame[0] = x0 - (half ? w + 4 : 4)
+      frame[0] = x0 - (half ? fw + 4 : 4)
       frame[1] = y0 - 4
       frame[2] = x0 + fw + 4
       frame[3] = y0 + fh + 4
       if (half) seams.push({ id: 'fold', kind: 'fold', pts: [[x0 + 0.3, y0 + 0.6], [x0 + 0.3, y0 + fh - 0.6]], p: 1, z: 0, op: 1, on: '_fabric' })
       const edge = sampleCmds(outlineCommands(o, lx), piece.x, piece.y)
+      if (half) {
+        beats.push({
+          base: RULES.foldTime,
+          focus: ['_flap'],
+          cam: 'wide',
+          apply: (st, t) => {
+            const p = st.p._flap
+            p.rot = { axis: 'y', deg: 180 * inOut(t), o: [fw, fh / 2] }
+            p.lift = Math.sin(Math.PI * t) * RULES.lift * 0.2
+            p.moving = t < 1
+          },
+        })
+      }
       beats.push(approach('_paper', { dy: -0.6 }), trace('cut', 'cut', half ? edge.filter((q) => q[0] > x0 + 0.2) : edge, '_paper'), {
         base: 1300,
         focus: [cutKey, '_open'],
@@ -527,6 +549,7 @@ export function buildScene(step: Pick<SewingStep2D, 'action' | 'annotation' | 'f
           const l = st.lines.find((l) => l.id === 'cut')
           if (l) l.op = 1 - e
           st.p._fabric.holed = true
+          if (half) st.p._flap.holed = true
           for (const k of [cutKey, ...(half ? ['_open'] : [])]) {
             const p = st.p[k]
             p.op = 1
