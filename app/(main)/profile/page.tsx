@@ -145,7 +145,7 @@ export default function ProfilePage() {
                   <IconSparkles className="size-3.5" />
                 </StepDot>
               }
-              title="Plan"
+              title="Pricing"
               meta="Free in beta"
             />
             <PanelRow

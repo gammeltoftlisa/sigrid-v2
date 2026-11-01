@@ -58,6 +58,3 @@ export function missingFor(step: WizardStep, p: StudioPattern): string[] {
 
 export const isDone = (step: WizardStep, p: StudioPattern) =>
   step === 'publish' ? p.status === 'ready' : missingFor(step, p).length === 0
-
-/** Where to open a pattern: the first step that isn't done yet */
-export const firstOpenStep = (p: StudioPattern): WizardStep => WIZARD.find((s) => !isDone(s.id, p))?.id ?? 'publish'

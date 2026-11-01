@@ -41,9 +41,9 @@ export default function PatternCanvas({ piece, action, annotation, fabricSide, m
 
   if (!scene) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-surface-2 rounded-3xl">
-        {action === 'prepare' ? <IconYarn size={56} className="text-ink-3" stroke={1.5} /> : <IconScissors size={56} className="text-ink-3" stroke={1.5} />}
-        <p className="text-label text-ink-2 font-medium text-center px-6">{title ?? 'Get ready'}</p>
+      <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-muted rounded-3xl">
+        {action === 'prepare' ? <IconYarn size={56} className="text-muted-foreground" stroke={1.5} /> : <IconScissors size={56} className="text-muted-foreground" stroke={1.5} />}
+        <p className="text-[0.9375rem] text-muted-foreground font-medium text-center px-6">{title ?? 'Get ready'}</p>
       </div>
     )
   }

@@ -45,6 +45,10 @@ export interface SourceStatus {
   count: number
   /** Why a source was skipped or failed, in plain words */
   note?: string
+  /** It should have answered and didn't. A source without keys is skipped, not failed. */
+  failed?: boolean
+  /** It answered, but some of its products couldn't be read this time */
+  incomplete?: boolean
 }
 
 export interface FabricSearchResponse {

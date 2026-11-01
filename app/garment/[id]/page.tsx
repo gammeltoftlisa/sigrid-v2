@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect, useMemo, useState } from 'react'
+import { use, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { IconArrowRight, IconCheck, IconListCheck, IconPlus, IconPrinter, IconScissors, IconShirt } from '@tabler/icons-react'
@@ -17,7 +17,8 @@ import SizeSheet from '@/components/garment/SizeSheet'
 import { useMounted } from '@/hooks/use-mounted'
 import { usePurchases } from '@/hooks/use-purchases'
 import { TOOLS } from '@/components/sewing/tools'
-import { creators, getCatalogItem, getGarmentById, getGarmentGuide } from '@/lib/data'
+import { creators, getCatalogItem, getGarmentById, getGuideOutline } from '@/lib/data'
+import { BuyDialog } from '@/components/garment/BuyDialog'
 import { paymentsEnabled } from '@/lib/payments'
 import { getFabricNeed, metersFor } from '@/lib/fabric/needs'
 import { formatMeters } from '@/lib/fabric/pricing'
@@ -34,8 +35,8 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const fabricNeed = getFabricNeed(id)
   const creator = garment.isCreator && garment.creatorId ? creators.find((c) => c.id === garment.creatorId) : null
   const [following, setFollowing] = useState(false)
-  // Stable per id: a published pattern's guide is rebuilt from storage on every call
-  const guide = useMemo(() => getGarmentGuide(id), [id])
+  // Stable per id: a published pattern's outline is rebuilt from storage on every call
+  const guide = useMemo(() => getGuideOutline(id), [id])
   const tools = useMemo(() => (guide ? [...new Set(guide.steps.flatMap((s) => (s.tool ? [s.tool] : [])))] : []), [guide])
   const totalSteps = guide?.steps.length ?? 0
 
@@ -57,6 +58,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   }
 
   const startProject = (size: StandardSize) => {
+    if (needsPaying) return
     const next = { size, completedUntil: 0 }
     saveProject(id, next)
     setStarted(next)
@@ -70,19 +72,29 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   // Every fabric the pattern recommends: "Cotton jersey · Organic cotton jersey · Viscose jersey"
   const fabricNames = fabricNeed.choices.map((c) => c.name).join(' · ')
 
-  // Starting a project is what needs paying for. Projects already started on this device carry on.
+  // Starting a project is what needs paying for, and the server checks it again before sending the guide
   const purchases = usePurchases()
   const [paying, setPaying] = useState(false)
-  const needsPaying = paymentsEnabled && !project && !!getCatalogItem(id) && !purchases.garmentIds.includes(id)
+  const [buyOpen, setBuyOpen] = useState(false)
+  const needsPaying = paymentsEnabled && !!getCatalogItem(id) && !purchases.garmentIds.includes(id)
 
-  const buy = async () => {
-    if (!purchases.isSignedIn) {
-      router.push(`/sign-in?redirect_url=${encodeURIComponent(`/garment/${id}`)}`)
-      return
-    }
+  const buy = () => {
+    if (purchases.isSignedIn) setBuyOpen(true)
+    else router.push(`/sign-in?redirect_url=${encodeURIComponent(`/garment/${id}`)}`)
+  }
+
+  const goToPayment = async () => {
     setPaying(true)
     try {
-      const res = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ garmentId: id }) })
+      const res = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ garmentId: id, acceptWithdrawalWaiver: true }) })
+      if (res.status === 409) {
+        // Bought in another tab or on another device
+        await purchases.refresh()
+        setPaying(false)
+        setBuyOpen(false)
+        setSizeSheetOpen(true)
+        return
+      }
       const { url } = (await res.json()) as { url?: string }
       if (!res.ok || !url) throw new Error('No checkout')
       window.location.assign(url)
@@ -92,17 +104,33 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
     }
   }
 
-  // Back from a finished payment: the purchase is read from Stripe, then choose a size
+  // Back from Stripe: the server asks Stripe whether this payment is real and this person's.
+  // Nothing here is believed from the link alone, and thanks are only said once the money is confirmed.
   const { refresh: refreshPurchases, loading: purchasesLoading } = purchases
+  const confirming = useRef(false)
   useEffect(() => {
-    if (purchasesLoading || new URLSearchParams(window.location.search).get('checkout') !== 'done') return
-    router.replace(`/garment/${id}`)
-    refreshPurchases()
-      .then(() => {
-        toast.success('Thank you. The pattern is yours.')
-        setSizeSheetOpen(true)
+    const sessionId = new URLSearchParams(window.location.search).get('checkout_session')
+    if (purchasesLoading || !sessionId || confirming.current) return
+    confirming.current = true
+    fetch(`/api/checkout/confirm?session_id=${encodeURIComponent(sessionId)}`, { cache: 'no-store', signal: AbortSignal.timeout(20_000) })
+      .then((res) => (res.ok ? (res.json() as Promise<{ status: string }>) : Promise.reject(new Error(String(res.status)))))
+      .then(async ({ status }) => {
+        if (status === 'active') await refreshPurchases()
+        router.replace(`/garment/${id}`)
+        if (status === 'active') {
+          toast.success('Thank you. The pattern is yours.')
+          setSizeSheetOpen(true)
+        } else if (status === 'processing') {
+          toast.info('Your payment is still being processed. The pattern opens here as soon as it clears.', { duration: 10_000 })
+        } else {
+          toast.error('This payment didn’t go through, so the pattern isn’t unlocked.', { duration: 10_000 })
+        }
       })
-      .catch(() => {})
+      .catch(() => {
+        // The link stays, so reloading tries again
+        confirming.current = false
+        toast.error('We couldn’t confirm your payment just now. If you paid, it’s safe. Reload this page in a moment; you won’t be charged again.', { duration: 15_000 })
+      })
   }, [purchasesLoading, refreshPurchases, router, id])
 
   const onCta = () => (needsPaying ? buy() : inProgress ? enterGuide() : setSizeSheetOpen(true))
@@ -220,10 +248,10 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
                   detail={tools.map((t) => TOOLS[t].label.toLowerCase()).join(', ').replace(/^./, (c) => c.toUpperCase())}
                 />
               )}
-              {guide && guide.pieces.length > 0 && (
+              {guide && guide.pieces > 0 && (
                 <PanelRow
                   leading={<StepDot state="upcoming"><IconPrinter className="size-3.5" /></StepDot>}
-                  title={`Pattern · ${guide.pieces.length} pieces`}
+                  title={`Pattern · ${guide.pieces} pieces`}
                   detail={project ? `Ready to print in ${sizeLabel(project.size)}` : 'Ready once you choose a size'}
                   trailing={
                     project && (
@@ -255,6 +283,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         initialSize={project?.size ?? profileSize}
         onConfirm={startProject}
       />
+      <BuyDialog open={buyOpen} name={garment.name} price={garment.price} busy={paying} onOpenChange={setBuyOpen} onConfirm={goToPayment} />
     </main>
   )
 }

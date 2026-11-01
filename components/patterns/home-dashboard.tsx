@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress'
 import { GarmentImage } from '@/components/garment/GarmentImage'
 import { ProductGrid } from '@/components/patterns/product-grid'
 import { TOOLS } from '@/components/sewing/tools'
-import { getGarmentGuide } from '@/lib/data'
+import { getGuideOutline } from '@/lib/data'
 import { getFabricNeed, metersFor } from '@/lib/fabric/needs'
 import { minutesPerStep, type ProjectSummary } from '@/lib/project-summary'
 import { sizeLabel } from '@/lib/sizes'
@@ -21,7 +21,7 @@ function timeLeft(minutes: number) {
 function ProjectRow({ project, primary }: { project: ProjectSummary; primary: boolean }) {
   const { garment, totalSteps } = project
   const done = Math.min(project.project.completedUntil, totalSteps)
-  const next = getGarmentGuide(garment.id)?.steps[done]
+  const next = getGuideOutline(garment.id)?.steps[done]
   const tool = next?.tool ? TOOLS[next.tool] : null
   const need = getFabricNeed(garment.id)
   const size = project.project.size
@@ -55,7 +55,6 @@ function ProjectRow({ project, primary }: { project: ProjectSummary; primary: bo
         <div className="flex flex-col gap-1">
           <p className="eyebrow text-muted-foreground">Next step</p>
           <p className="font-heading text-xl">{next?.title ?? 'Ready to start'}</p>
-          {next && <p className="line-clamp-2 text-sm text-muted-foreground">{next.instruction}</p>}
         </div>
 
         <ul className="flex flex-col gap-1.5 text-sm">

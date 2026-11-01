@@ -26,7 +26,6 @@ This is Sigrid's killer feature. Instead of a flat PDF with confusing diagrams, 
 
 ## Business Model (Placeholder)
 - Pay per project: €7–15 per garment pattern
-- Monthly subscription: unlimited patterns
 - Creator marketplace: creators sell their patterns on Sigrid; Sigrid takes a commission
 - Currently in beta – payment not yet active
 

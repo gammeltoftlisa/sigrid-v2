@@ -1,3 +1,4 @@
+import { writeRaw } from './local-store'
 import { sewingSaved } from './sewing-store'
 import type { StandardSize } from './types'
 
@@ -28,9 +29,7 @@ export function loadSavedSize(): StandardSize | null {
 }
 
 export function saveSize(size: StandardSize) {
-  try {
-    localStorage.setItem(STORAGE_KEY, size)
-    localStorage.setItem(`${STORAGE_KEY}_at`, new Date().toISOString())
-    sewingSaved()
-  } catch {}
+  if (!writeRaw(STORAGE_KEY, size).ok) return
+  writeRaw(`${STORAGE_KEY}_at`, new Date().toISOString())
+  sewingSaved()
 }

@@ -13,11 +13,14 @@ function parse(raw: string | undefined): URL | null {
 }
 
 /**
- * Listings come from other companies' APIs, so check them before they reach a link or an image:
+ * Listings come from other companies' APIs, so check them before they reach a price, a link or an image:
  * the shop link must be https (never `javascript:` or `data:`), and a photo is kept only when it
  * is https on a known host. Anything else would be unsafe, or crash next/image.
  */
 export function safeListing(listing: FabricListing): FabricListing | null {
+  // A price that isn't a number would show as "NaN" and break sorting and totals
+  if (!listing.title.trim() || !Number.isFinite(listing.unitPrice) || listing.unitPrice <= 0) return null
+  if (!/^[A-Z]{3}$/.test(listing.currency)) return null
   const url = parse(listing.url)
   if (url?.protocol !== 'https:') return null
   const image = parse(listing.image)

@@ -1,13 +1,15 @@
 'use client'
 
-import { useState, use, useEffect, useMemo } from 'react'
+import { useState, use, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import { IconPrinter, IconChevronDown, IconNeedleThread } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { getGarmentById, getGarmentGuide, standardSizes } from '@/lib/data'
+import { getGarmentById, standardSizes } from '@/lib/data'
+import { useGarmentGuide } from '@/hooks/use-garment-guide'
+import { Spinner } from '@/components/ui/spinner'
 import type { Garment, StandardSize, UserMeasurements } from '@/lib/types'
 import { loadProject, saveProject } from '@/lib/projects'
 import { useSewingVersion } from '@/hooks/use-mounted'
@@ -39,8 +41,7 @@ const slideVariants = {
 export default function GuidePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const garment = getGarmentById(id)
-  // Stable per id: a published pattern's guide is rebuilt from storage on every call
-  const guide = useMemo(() => getGarmentGuide(id), [id])
+  const { guide, state: guideState, retry: retryGuide } = useGarmentGuide(id)
   const router = useRouter()
   const journeys = useMemo(() => (guide ? groupIntoJourneys(guide.steps, { keepSections: guide.keepSections }) : []), [guide])
 
@@ -64,6 +65,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   useEffect(() => {
     const project = loadProject(id)
     if (!project) { router.replace(`/garment/${id}`); return }
+    // Wait for the guide: resuming against an empty one would reset the saved progress to 0
+    if (guideState !== 'ready') return
     const total = guide?.steps.length ?? 0
     const last = Math.max(0, total - 1)
     // completedUntil === total means every step is done
@@ -74,14 +77,24 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     setMeasurements(standardSizes[project.size])
     setCompletedUntil(resumeAt)
     setViewStep(Math.min(resumeAt, last))
-  }, [id, guide, router, sewingVersion])
+  }, [id, guide, guideState, router, sewingVersion])
 
   // Remember progress so leaving and coming back resumes where you were
   useEffect(() => {
     if (size) saveProject(id, { size, completedUntil })
   }, [id, size, completedUntil])
 
+  // The short pause while a step is being marked done
+  const doneTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => {
+    if (doneTimer.current) clearTimeout(doneTimer.current)
+  }, [])
+
   const changeSize = (next: StandardSize) => {
+    // A step finishing now belongs to the old size; it mustn't land on the new start
+    if (doneTimer.current) clearTimeout(doneTimer.current)
+    doneTimer.current = null
+    setDoneAnim(false)
     saveProject(id, { size: next, completedUntil: 0 })
     setSize(next)
     setMeasurements(standardSizes[next])
@@ -107,6 +120,34 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   }, [guide, sizeSheetOpen, doneOpen])
 
   const printPattern = () => window.open(`/garment/${id}/pattern?print=true${size ? `&size=${size}` : ''}`, '_blank')
+
+  // Not bought: the garment page offers it
+  if (guideState === 'locked') {
+    router.replace(`/garment/${id}`)
+    return null
+  }
+
+  if (guideState === 'loading' || guideState === 'error') {
+    return (
+      <main className="guide-page">
+        <GuideTopBar garment={garment} />
+        <div className="px-4 pb-6 md:pr-8 md:pl-4">
+          <Empty className="border">
+            <EmptyHeader>
+              {guideState === 'loading' ? <Spinner /> : <EmptyMedia variant="icon"><IconNeedleThread /></EmptyMedia>}
+              <EmptyTitle>{guideState === 'loading' ? 'Opening your guide' : 'The guide didn’t open'}</EmptyTitle>
+              {guideState === 'error' && <EmptyDescription>This is usually a connection problem. Your progress is safe.</EmptyDescription>}
+            </EmptyHeader>
+            {guideState === 'error' && (
+              <EmptyContent>
+                <Button onClick={retryGuide}>Try again</Button>
+              </EmptyContent>
+            )}
+          </Empty>
+        </div>
+      </main>
+    )
+  }
 
   if (!guide || guide.steps.length === 0) {
     return (
@@ -135,10 +176,13 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   // Mark current step done and advance
   const advance = () => {
     if (allDone) { setDoneOpen(true); return }
+    // A second press during the pause would be the same step again
+    if (doneTimer.current) return
     setDoneAnim(true)
     // Remember when each step was done, for streaks and the Projects dashboard
     logStepDone({ garmentId: id, step: completedUntil, action: steps[completedUntil].action })
-    setTimeout(() => {
+    doneTimer.current = setTimeout(() => {
+      doneTimer.current = null
       setDoneAnim(false)
       if (isLast) {
         // Last step: everything is done — celebrate over the guide

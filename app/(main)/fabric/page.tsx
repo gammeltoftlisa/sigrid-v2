@@ -107,9 +107,13 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
 
   useEffect(() => {
     const ctrl = new AbortController()
-    fetch(`/api/fabrics?${apiQuery}`, { signal: ctrl.signal })
+    // The server gives up on slow shops well before this; the limit is for a stalled connection
+    fetch(`/api/fabrics?${apiQuery}`, { signal: AbortSignal.any([ctrl.signal, AbortSignal.timeout(30_000)]) })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((data: FabricSearchResponse) => setResult({ key: requestKey, state: 'done', data }))
+      .then((data: FabricSearchResponse) => {
+        if (!Array.isArray(data?.listings) || !Array.isArray(data?.sources)) throw new Error('Unexpected answer')
+        setResult({ key: requestKey, state: 'done', data })
+      })
       .catch((e) => {
         if (!ctrl.signal.aborted) {
           console.warn(e)
@@ -160,7 +164,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
           const short = meters ? Number(coversLength(a, meters) === false) - Number(coversLength(b, meters) === false) : 0
           return short || priceOf(a) - priceOf(b)
         })
-  const silent = load.state === 'done' ? load.data.sources.filter((s) => !s.ok && s.note === 'Didn’t answer in time') : []
+  const silent = load.state === 'done' ? load.data.sources.filter((s) => s.failed) : []
   const inBag = new Set(bag.map((i) => i.listing.id))
   const priceSortLabel = meters ? 'Lowest price for your size' : isNotions ? 'Lowest price' : 'Lowest price per metre'
 
