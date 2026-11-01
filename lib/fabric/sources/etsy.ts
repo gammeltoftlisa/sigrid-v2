@@ -1,6 +1,10 @@
+import { failureOf, fetchJson } from '@/lib/server/fetch-with-retry'
+import { logEvent } from '@/lib/server/log'
+
 import type { FabricListing, FabricQuery } from '../types'
 import { withReferral } from './referral'
 import { parsePieceMeters } from './piece-length'
+import { etsyListing, etsyResponse, parseEach } from './schemas'
 
 /**
  * Vintage fabric on Etsy, through the Open API v3.
@@ -13,41 +17,34 @@ export const etsySource = {
   configured: () => !!process.env.ETSY_API_KEY,
 }
 
-interface EtsyListing {
-  listing_id: number
-  title: string
-  url: string
-  when_made?: string
-  price: { amount: number; divisor: number; currency_code: string }
-  images?: { url_570xN: string }[]
-  shipping_profile?: { origin_country_iso?: string }
-}
-
 const VINTAGE = /^(before_|19\d0s|19\d\d_|200\d|2000_)/
 
-export async function searchEtsy(query: FabricQuery): Promise<FabricListing[]> {
+export async function searchEtsy(query: FabricQuery, deadlineAt: number): Promise<FabricListing[]> {
   const headers = { 'x-api-key': process.env.ETSY_API_KEY! }
   const params = new URLSearchParams({ keywords: `vintage ${query.q} fabric`, limit: '40', sort_on: 'score' })
-  const res = await fetch(`https://openapi.etsy.com/v3/application/listings/active?${params}`, {
-    headers,
-    next: { revalidate: 60 * 30 },
-    signal: AbortSignal.timeout(8000),
+  const data = await fetchJson(`https://openapi.etsy.com/v3/application/listings/active?${params}`, { headers, next: { revalidate: 60 * 30 } }, etsyResponse, {
+    op: 'fabric.etsy.search',
+    source: 'etsy',
+    deadlineAt,
   })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const data = (await res.json()) as { results: EtsyListing[] }
   const terms = query.match.map((t) => t.toLowerCase())
-  const picked = data.results
+  const picked = parseEach(data.results, etsyListing, 'fabric.etsy.listings', 'etsy')
     .filter((l) => l.when_made && VINTAGE.test(l.when_made))
     .filter((l) => terms.some((t) => l.title.toLowerCase().includes(t)))
     .slice(0, query.limit)
   if (picked.length === 0) return []
 
-  // The search response has no images; fetch them in one batch call
-  const batch = await fetch(
+  // The search response has no images; fetch them in one batch call. Without them the listings still work.
+  const batch = await fetchJson(
     `https://openapi.etsy.com/v3/application/listings/batch?listing_ids=${picked.map((l) => l.listing_id).join(',')}&includes=Images,Shipping`,
-    { headers, next: { revalidate: 60 * 30 }, signal: AbortSignal.timeout(8000) },
-  )
-  const detailed = batch.ok ? ((await batch.json()) as { results: EtsyListing[] }).results : picked
+    { headers, next: { revalidate: 60 * 30 } },
+    etsyResponse,
+    { op: 'fabric.etsy.batch', source: 'etsy', deadlineAt },
+  ).catch((e) => {
+    logEvent('warn', 'fabric.etsy.batch', { source: 'etsy', ...failureOf(e) })
+    return null
+  })
+  const detailed = batch ? parseEach(batch.results, etsyListing, 'fabric.etsy.batch', 'etsy') : picked
   const byId = new Map(detailed.map((l) => [l.listing_id, l]))
 
   return picked.map((l) => {

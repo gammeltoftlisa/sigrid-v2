@@ -1,3 +1,6 @@
+import { z } from 'zod'
+
+import { readJson, validEntries, writeRaw } from './local-store'
 import type { StepAction } from './types'
 
 /**
@@ -15,22 +18,22 @@ export interface StepDone {
 
 const KEY = 'sigrid_activity'
 
+const stepDoneSchema = z.object({
+  garmentId: z.string(),
+  step: z.number(),
+  action: z.custom<StepAction>((a) => typeof a === 'string'),
+  at: z.string().refine((s) => !Number.isNaN(Date.parse(s))),
+})
+
 export function loadActivity(): StepDone[] {
-  try {
-    const raw = localStorage.getItem(KEY)
-    const list = raw ? (JSON.parse(raw) as StepDone[]) : []
-    return Array.isArray(list) ? list.filter((e) => e && typeof e.at === 'string') : []
-  } catch {
-    return []
-  }
+  const result = readJson(KEY, z.array(z.unknown()))
+  return result.status === 'ok' ? validEntries(result.value, stepDoneSchema) : []
 }
 
 export function logStepDone(entry: Omit<StepDone, 'at'>) {
-  try {
-    const list = loadActivity().filter((e) => !(e.garmentId === entry.garmentId && e.step === entry.step))
-    list.push({ ...entry, at: new Date().toISOString() })
-    localStorage.setItem(KEY, JSON.stringify(list.slice(-2000)))
-  } catch {}
+  const list = loadActivity().filter((e) => !(e.garmentId === entry.garmentId && e.step === entry.step))
+  list.push({ ...entry, at: new Date().toISOString() })
+  writeRaw(KEY, JSON.stringify(list.slice(-2000)))
 }
 
 /** Local calendar day, e.g. "2026-10-11" */
