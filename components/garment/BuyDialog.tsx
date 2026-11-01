@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 import {
   AlertDialog,
@@ -26,7 +27,7 @@ export function BuyDialog({ open, name, price, busy, onOpenChange, onConfirm }: 
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Buy {name} for €{price}</AlertDialogTitle>
-          <AlertDialogDescription>You pay on Stripe’s page. If you haven’t opened the pattern or the guide, you can cancel within 14 days.</AlertDialogDescription>
+          <AlertDialogDescription>You pay on Stripe’s page. If you haven’t opened the pattern or the guide, you can cancel within 14 days. Read the <Link href="/legal/terms" target="_blank" rel="noopener" className="underline underline-offset-4">terms</Link> and <Link href="/legal/refunds" target="_blank" rel="noopener" className="underline underline-offset-4">refund policy</Link>.</AlertDialogDescription>
         </AlertDialogHeader>
         <label className="flex items-start gap-3 text-sm">
           <Checkbox checked={agreed} onCheckedChange={setAgreed} className="mt-0.5" />

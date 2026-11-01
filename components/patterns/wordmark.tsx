@@ -1,27 +1,28 @@
+import Image from 'next/image'
 import { cn } from 'cn'
 
-/** "sigrid" wordmark: lowercase brand sans, with the i's dot as a pin head. Sized by the parent font size. */
+import needleSmall from '@/public/brand/needle-small.png'
+import needle from '@/public/brand/needle.png'
+
+/**
+ * The needle bent into an S: the polished metal photo, with a see-through eye so it sits on any background.
+ * `small` is a sturdier cut of it for text sizes, where the real needle's thin line would nearly vanish.
+ */
+export function NeedleMark({ small, className }: { small?: boolean; className?: string }) {
+  return <Image src={small ? needleSmall : needle} alt="" sizes="96px" className={cn('w-auto', className)} />
+}
+
+/** "Sigrid" with the needle as its S. Sized by the parent font size. */
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span role="img" aria-label="Sigrid" className={cn('wordmark', className)}>
-      <span aria-hidden>
-        s
-        <span className="relative">
-          ı
-          <span className="wordmark-dot" />
-        </span>
-        grid
-      </span>
+      <NeedleMark small className="wordmark-needle" />
+      <span aria-hidden>igrid</span>
     </span>
   )
 }
 
-/** The rail's mark: a single "s" with the pin-head dot. */
+/** The rail's mark: the needle on its own. */
 export function Logomark({ className }: { className?: string }) {
-  return (
-    <span aria-hidden className={cn('wordmark text-base', className)}>
-      s
-      <span className="logomark-dot" />
-    </span>
-  )
+  return <NeedleMark small className={cn('h-8', className)} />
 }

@@ -3,8 +3,9 @@ import { createLimiter } from '@/lib/server/limit'
 import { logEvent } from '@/lib/server/log'
 
 import type { FabricCondition, FabricListing, FabricQuery } from '../types'
+import { parseComposition, parseWidth, stripHtml } from './parse'
 import { withReferral } from './referral'
-import { catalogProduct, catalogResponse, parseEach, productResponse, suggestProduct, suggestResponse } from './schemas'
+import { parseEach, productResponse, suggestProduct, suggestResponse } from './schemas'
 
 /**
  * Independent fabric shops that run on Shopify. Every Shopify store exposes a public,
@@ -74,38 +75,8 @@ const NOT_YARDAGE = /\b(remnants?|coupons?|bundles?|scraps?|samples?|swatch(es)?
 const NOT_APPAREL = /\b(curtain(ing)?|upholstery|furnishing|outdoor|canvas tote)\b/i
 const NOT_CUT_VARIANT = /sample|swatch|thread|pattern|kit/i
 
-const stripHtml = (html: string) =>
-  html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;| /g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ')
-
-const QUALIFIERS = '(?:(?:soft|pure|fine|combed|brushed|organic|gots|certified|mercerised|mercerized|recycled|european|egyptian|pima|merino|mulberry)\\s+)*'
-const FIBRES = 'cotton|linen|flax|hemp|ramie|viscose|rayon|modal|lyocell|tencel|cupro|ecovero|bamboo|polyester|polyamide|nylon|elastane|elasthane|spandex|lycra|polyurethane|acrylic|acetate|wool|cashmere|alpaca|mohair|silk|metallic|lurex'
-const FIBRE = new RegExp(`(\\d{1,3}(?:[.,]\\d)?)\\s?%\\s?(${QUALIFIERS}(?:${FIBRES})\\w*)`, 'gi')
-const title = (s: string) => s.replace(/\b\p{L}/gu, (c) => c.toUpperCase())
-
-/** "Composition: 55% cotton - 40% Modal - 5% Elasthane" → "55% Cotton, 40% Modal, 5% Elasthane" */
-function parseComposition(text: string): string | undefined {
-  const label = text.search(/composition|fibre content|fiber content|content\s*:/i)
-  const scope = label >= 0 ? text.slice(label, label + 140) : text
-  const fibres = [...scope.matchAll(FIBRE)]
-  if (fibres.length > 0) {
-    // Keep only the first run of percentages; descriptions often repeat the composition
-    const first = fibres[0].index ?? 0
-    const run = fibres.filter((m) => (m.index ?? 0) - first < 90).map((m) => `${m[1]}% ${title(m[2].toLowerCase())}`)
-    return [...new Set(run)].join(', ')
-  }
-  if (label < 0) return undefined
-  const words = scope.match(/:\s*([A-Za-zé&,\s]{3,40}?)(?=\s+(?:width|weight|gsm|colour|color|care|wash|stretch)\b|[.:]|$)/i)
-  return words?.[1].trim() || undefined
-}
-
-function parseWidth(text: string): number | undefined {
-  const m = text.match(/width\s*:?\s*(\d{2,3})\s*cm/i) ?? text.match(/(\d{2,3})\s*cm\s*(?:wide|width)/i)
-  const w = m ? Number(m[1]) : NaN
-  return w >= 80 && w <= 330 ? w : undefined
-}
-
 /** Atelier Brunette titles look like `Tissu "Jersey Modal Off-White"`: keep the name */
-const cleanTitle = (t: string) => t.replace(/^tissu\s+/i, '').replace(/["“”]/g, '').trim()
+export const cleanTitle = (t: string) => t.replace(/^tissu\s+/i, '').replace(/["“”]/g, '').trim()
 
 interface ProductBasics {
   id: number | string
@@ -165,11 +136,15 @@ export async function searchShopify(shop: ShopifyShop, query: FabricQuery, deadl
   const products = parseEach(data.resources?.results?.products ?? [], suggestProduct, 'fabric.shopify.search', shop.id)
 
   const terms = query.match.map((t) => t.toLowerCase())
+  // Supplies match whole words: otherwise "needle" finds needlecord and "cord" finds corduroy
+  const wholeWord = (hay: string, term: string) => new RegExp(`(^|[^a-z])${term.replace(/[^a-z0-9 -]/g, '')}s?($|[^a-z])`).test(hay)
+  const excluded = (query.exclude ?? []).map((t) => t.toLowerCase())
   const matching = products
     .filter((p) => p.available)
     .filter((p) => (query.kind === 'notion' ? !NOT_APPAREL.test(p.title) : !NOT_YARDAGE.test(p.title) && !NOT_APPAREL.test(p.title)))
     .filter((p) => {
       const hay = `${p.title} ${p.type ?? ''} ${(p.tags ?? []).join(' ')}`.toLowerCase()
+      if (query.kind === 'notion') return !excluded.some((t) => p.title.toLowerCase().includes(t)) && terms.some((t) => wholeWord(hay, t))
       return terms.some((t) => hay.includes(t))
     })
     .slice(0, query.limit)
@@ -201,35 +176,4 @@ export async function searchShopify(shop: ShopifyShop, query: FabricQuery, deadl
     return variant ? toListing(shop, { ...p, body: p.body ?? '', tags: p.tags ?? [] }, variant, query.kind) : null
   })
   return { listings: found.filter((l): l is FabricListing => l !== null), incomplete: failed.length > 0 }
-}
-
-/**
- * The shop's latest products, kept to dress fabric only: for browsing the whole store
- * when no garment is chosen. One request per shop, since the feed already has variants.
- */
-export async function browseShopify(shop: ShopifyShop, count: number, deadlineAt: number): Promise<FabricListing[]> {
-  const data = await limit(() =>
-    fetchJson(`${shop.origin}/products.json?limit=60`, { headers: headersFor(shop), next: { revalidate: REVALIDATE } }, catalogResponse, {
-      op: 'fabric.shopify.browse',
-      source: shop.id,
-      deadlineAt,
-    }),
-  )
-  const products = parseEach(data.products, catalogProduct, 'fabric.shopify.browse', shop.id)
-
-  const out: FabricListing[] = []
-  for (const p of products) {
-    if (out.length >= count) break
-    if (NOT_YARDAGE.test(p.title) || NOT_APPAREL.test(p.title)) continue
-    const tags = Array.isArray(p.tags) ? p.tags : (p.tags ?? '').split(',').map((t) => t.trim())
-    const body = p.body_html ?? ''
-    // A dress fabric says it is one, or states its fibres
-    const isFabric = /fabric|jersey|knit|woven|tissu/i.test(p.product_type ?? '') || !!parseComposition(stripHtml(body))
-    if (!isFabric) continue
-    const variant = pickVariant(p.variants)
-    if (!variant) continue
-    const listing = toListing(shop, { id: p.id, title: p.title, handle: p.handle, body, tags, image: p.images?.[0]?.src }, variant, 'fabric')
-    if (listing) out.push(listing)
-  }
-  return out
 }

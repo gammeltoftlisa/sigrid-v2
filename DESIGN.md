@@ -1,14 +1,16 @@
 # DESIGN.md: UI rules for Sigrid
 
 These rules are **mandatory** for anyone building UI in this repo, people and AI agents alike.
-The visual reference is the Storybook in the `sewing-app` repo (`npm run storybook`, http://localhost:6006), which documents the components in this repo.
+The visual reference is the Storybook in the `sewing-app` repo (`npm run storybook`, http://localhost:6006), which documents the components in this repo. Its Screens are this app's real pages, copied by the sync script.
 
 Where things live here: tokens and the brand layer in `app/globals.css`, shadcn components in `components/ui/`, patterns in `components/patterns/`, imagery in `components/garment/`.
 The sewing guide (`components/sewing/`, `components/legacy/`) is older code; don't use `components/legacy` in new code.
 
+> **Logo: a polished metal needle bent into an S.** It's a photo with a transparent background and a see-through eye (`public/brand/needle.png`), so it never takes the text colour. `NeedleMark` on its own in the rail, `Wordmark` (the needle as the S of Sigrid) elsewhere. At text size and in the browser icon it uses `needle-small.png`, a sturdier cut, because the real needle's line nearly vanishes when small.
+>
 > **Brand: liquid glass, warm editorial atelier.** Built on the `liquid-glass-frontend` skill (`.claude/skills/liquid-glass-frontend`, read its `references/` before UI work).
 > Real Apple-style frosted glass over a calm page: a cutting mat as the floor, seen from low down looking towards the top right, on a stipple of tiny dots (`Atmosphere`), in black, white and beige. A characterful serif (Fraunces) does the talking, with italic accents and small mono kickers.
-> **Signature moment:** page titles wipe up from behind a mask. Calm copy, confident type.
+> **Signature moment:** the big Fraunces page title with its italic ink line. Calm copy, confident type. Nothing animates on arrival.
 
 ## 0. Workflow
 
@@ -47,7 +49,7 @@ Themes: `next-themes` sets `<html data-theme="light|dark">` (system by default, 
 | `--app-elev` | `#FFFFFF` / `#2B2B2B` | Solid fills, such as a focused field |
 | `card` → `--glass-inset` | see above | Insets: what sits on glass |
 | `--app-text` → `foreground` | `#211C16` / `#F0ECE1` | Text |
-| `--app-text-soft` → `muted-foreground` | `#625746` / `#A79C8C` | Secondary text (AA on every surface) |
+| `--app-text-soft` → `muted-foreground` | `#6B6052` / `#A79C8C` | Secondary text (AA on every surface) |
 | `--app-border` / `-strong` | ink or bone at 10% / 20% | Hairlines on glass, field and button edges |
 | `primary`, `brand`, `ring` | ink (bone or beige on dark) | Progress, chosen states, focus on fields |
 | `--accent-ink` | ink / beige | Italic headline accents, kickers |
@@ -64,7 +66,7 @@ Themes: `next-themes` sets `<html data-theme="light|dark">` (system by default, 
 
 **Products and reading have their own container.** A product (photo plus text) always sits in `ProductGrid`: a solid fill a little lighter than the page (`--product-fill`) with the page's dots. A page shares one container for all its products, with a stroke between them instead of a box around each. The same goes for products in a labelled section (`ProductGrid label="…"`). Never put products directly on the background or in a glass `Panel`. A single large photo uses `ProductFrame`.
 
-**Glass is only for things you act on:** buttons, button groups, fields, the rail and tab bar, menus, dialogs, and panels of controls (`<Panel glass>`, such as Browse in Find fabric, the guide's step list and Profile's settings). Products and anything you only read use the solid container: `ProductGrid`, or `Panel` without `glass`, such as dashboard stats and step instructions.
+**Glass is only for things you act on:** buttons, button groups, fields, the rail and tab bar, menus, dialogs, and panels of controls (`<Panel glass>`, such as Browse in Find fabric, the guide's step list and Profile's `SettingsList`). Products and anything you only read use the solid container: `ProductGrid`, or `Panel` without `glass`, such as dashboard stats and step instructions.
 
 Glass is **one material, whatever its size**: white and see-through, a white tint (`--glass-fill`) + `--glass-blur` + a 1px top edge. `--glass-blur` drains the colour, maps the page to near white and raises the difference between the page and the mat's lines, so they show softly blurred through it. Tune brightness and contrast together: if the page lands below near white, glass turns gray. A panel, a secondary button and a button group look the same. Whatever sits inside glass adds no fill of its own (`--glass-inset`), so it looks the same there as on the page. Only the page is warm: no cream tints on glass and no `saturate()`, which turns the warm page yellow. Only surfaces that text scrolls under are thicker: fixed bars, sheets and dialogs, menus. `Atmosphere` (in the root layout) draws the mat and a stipple of tiny dots behind every screen. No drifting blobs, no moving fades.
 
@@ -76,7 +78,7 @@ Glass is **one material, whatever its size**: white and see-through, a white tin
 | Inset (no blur) | everything **inside** glass: rows, fields, chips, buttons, tiles | `PanelRow`, `Inset`, `DetailList`; fields and buttons turn inset automatically |
 | Glass pill | primary and outline buttons on the page | automatic on `Button` |
 
-- **Never animate `opacity`, `filter` or `mask` on glass or on anything that contains it, even with a fill-forwards animation that has ended.** The browser then cuts the glass off from the page: its computed styles look right, but there is nothing behind it to blur. Entrance animations move only (`sg-rise`).
+- **Never animate `opacity`, `filter` or `mask` on glass or on anything that contains it, even with a fill-forwards animation that has ended.** The browser then cuts the glass off from the page: its computed styles look right, but there is nothing behind it to blur.
 - **Never nest `backdrop-filter`.** Inside glass, use the inset (tint + sheen). The global CSS does this for shadcn parts.
 - **No `mix-blend-mode` anywhere, including on `::before`/`::after` and in shadcn parts.** One blended element on screen stops every glass surface from blurring, even a tiny avatar border, so glass changes as you scroll. Texture goes inside `Atmosphere`, behind the content.
 - Light and dark use the same glass recipe; only the tokens differ.
@@ -89,7 +91,8 @@ Glass is **one material, whatever its size**: white and see-through, a white tin
 | Token | Value | Use |
 | --- | --- | --- |
 | `rounded-(--radius)` | 22px | Panels, cards, sheets |
-| `rounded-(--control-radius)` | 14px | Fields, white rows, `Inset`, size tiles |
+| `rounded-(--field-radius)` | 22px | Fields and dropdowns: a full pill when one line tall, the same curve when taller |
+| `rounded-(--control-radius)` | 14px | White rows, `Inset`, size tiles |
 | `rounded-full` | | Every button (pills), badges, avatars, chips on photos |
 | `rounded-(--image-radius)` | 16px | Photos |
 | `rounded-pane` / `rounded-pane-lg` / `rounded-pane-inner` | 22 / 28 / 24px | The floating rail, tab bar, action bar and their inner pills |
@@ -126,7 +129,7 @@ Put the line that carries the feeling in `<em className="display-italic">` (ital
 | 8px (`gap-2`) | Related items: rows in a panel, chips, tiles in a stat grid |
 | 12px (`gap-3`) | Image → text, label → control |
 | 16px (`p-4`, `gap-4`) | Inside a component: panel padding, section title → content |
-| 24px (`gap-6`) | Between panels in a column |
+| 12px (`gap-3`, `--grid-gutter`) | Between containers on the background, in every direction |
 | 32px | Page title → content (built into `PageHeader`) |
 | 40 / 48px | Between page sections, phones / from `md` (built into `PageContainer`) |
 
@@ -136,26 +139,28 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 
 | Control | Height | Notes |
 | --- | --- | --- |
-| Fields and dropdowns | 36px (44px on touch) | 15px text, 12px side padding, 14px corners, 16px muted icons |
+| Fields and dropdowns | 36px (44px on touch), 32px small (40px on touch) | 15px text, 14px side padding, fully rounded, 16px muted icons |
 | Button | 40px | `size="lg"` (44px) for the one main action |
 | Small button and chips | 32px (40px on touch) | `size="sm"`; filter chips, removable filters, the bag |
 | Icon button | 36–44px | `size="icon-lg"` in bars, always with `aria-label` |
 
 - Chips and size tiles are frosted, ink when chosen.
 - Labels: 13px medium, 8px above the field. Every field has a visible label; placeholders are examples.
-- While you type, a field turns solid with a ink edge and a soft ink ring.
+- Fields have three looks: frosted at rest, whiter with a darker stitch on hover, solid white with a crisp 1px ink edge while typing or open. **Never a ring around a field.** A problem is a 1px solid red edge plus text under the field.
+- A dropdown is full width unless a row of controls needs a set size (`w-40`), and its open list is always exactly as wide as the field, including popover dropdowns (`w-(--anchor-width)`). Long options wrap and are never cut off. Lists scroll after about 8 rows, stopping mid-row so you can see there is more.
+- Inside a list: 4px padding, 32px rows, and the row you're on is a fully rounded pill in the page's beige (`--menu-row-hover`), by mouse or keyboard. The chosen row has a check and medium text. The list's text lines up with the field's. Hand-built choices in a popover use `.menu-option` for the same pill.
 - The slider is a 2px ink track with small glass handles; it can always be typed into as well.
 - Touch targets are at least 44×44px on phones.
 
 ## 7. Layout
 
-- **Mobile first** (375px). Screens use `PageContainer` and `PageHeader` inside `AppShell`. Tab screens that need a big moment use `HeroBand`: a stacked headline on one side, copy and actions anchored to the *bottom* of the other.
-- **Vary the treatment.** Siblings don't all share one shape: a product grid leads with a `GarmentCard lead` (twice as wide and tall, with its description), and adjacent sections use different patterns (hero band → glass panel → bento grid).
+- **Mobile first** (375px). Screens use `PageContainer` and `PageHeader` inside `AppShell`.
+- **Vary the treatment.** Siblings don't all share one shape: a product grid leads with a `GarmentCard lead` (twice as wide and tall, with its description), and adjacent sections use different patterns.
 - **Navigation**: from `md`, a floating glass icon rail (`AppSidebar`); on phones, a floating glass tab bar (`AppTabBar`). Pages leave room with `pb-tabbar`. The phone's main action goes in an `ActionBar` above the tab bar.
 - **12-column grid**: one grid, one gutter (16px on phones, 24px from `md`). Never one-off `grid-cols-[…]`.
   - `grid-12` is the page grid. `col-side` (4 columns on `lg`, 3 from `xl`, sticky 8px from the top like the rail) and `col-main` (the rest) make the two-column workspace.
-  - `tiles` is the product grid: 2 per row on phones, 3 on tablets, 4 on laptops; 5 when full width from `xl`, 4 beside a side panel. Add `tile-grid` to stagger them in; `tiles-compact` for tighter rows (project cards).
-  - `tiles-wide` is for bigger cards: 1, then 2, then 3 per row.
+  - `tiles` is every grid of cards with images, and there is one rule for how many fit a row. The count follows the width of the container, never the screen or the page: **under 720px 2, 720–959px 3, 960–1199px 4, 1200px and up 5.** Pages never set their own count. Cards that don't fit go to the next row, every row is the same height, and a short last row leaves its spots empty.
+  - `tiles-wide` is for bigger cards without images, such as plans: 1, then 2, then 3 per row.
 - **Top line**: `PageHeader` (or `TopBar`) shows back, breadcrumbs and quick actions as plain text on the page, no container.
 - **Side sheets**: `PanelSheet` (full width on phones, 448px from `sm`).
 - **Show only what's needed.** Fewer panels, fewer words, one main action.
@@ -164,7 +169,7 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 
 | Need | Use |
 | --- | --- |
-| A page title | `PageHeader` (optional `kicker`); it wipes in by itself |
+| A page title | `PageHeader` (optional `kicker`) |
 | Main / secondary / quiet action | `Button` (black, stitched) / `variant="outline"` (frosted pill) / `variant="ghost"` |
 | Delete or reset | `Button variant="destructive"` (outlined text) + `AlertDialog` that says what will be lost |
 | Icon-only action | `Button size="icon-lg"` + `aria-label` |
@@ -172,22 +177,31 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 | Choose one of 6+ | `Select` |
 | A setting / an agreement | `Switch` / `Checkbox` |
 | Filter by category | `CategoryTabs` |
-| Filter the fabric store | `FabricFilterGroups` + `ActiveFilters` |
-| Buying fabric for a garment | `GarmentThumb` before the garment field, metres in the panel meta, `FabricChoices` chips (its recommended fabrics, all or one) |
+| The way into the store | `ShopHome`: **never filters on the way in.** Under the bar and the category bubbles, each category is its own row: its name, a "Show all" button with the count, and up to 12 products in a `ProductGrid` that scrolls sideways (`.tiles-row`, the same cards per row as `tiles`), ending in another "Show all". You reach the filter panel by going into a category or searching. |
+| Chosen filters | `FilterTags`, above the products on the right: a removable tag per chosen filter (colours with their dot), plus "Clear all" when there are two or more. Colour dots have no stroke; white and cream get a soft shadow so they still show on white. |
+| The store, inside a category or a search | `ShopBrowse` in a `ShopLayout`: the page fits the screen and the products scroll inside their container, never the page. No "Shop" title. A bar at the top holds search and the bag, and is the only thing that always stays, with the filter panel staying in view beside the products. Under the bar, category bubbles with icons (`category-icons.ts`) that drill down (the one you're in softly tinted, never a black fill), with breadcrumbs above them as the way back up, and scroll away with the products. They stay on one line in `CategoryRow`, fading out softly at an edge where there's more: swipe, or use the arrows floating over the ends. The bar is fully rounded and floats over the products with nothing filled behind it (`lib/shop/taxonomy.ts`), and a side panel on the page grid (`col-side`: 4 of 12 columns, 3 from `xl`) where every filter is a dropdown (`FilterDropdown`, `PriceDropdown`), which come from the head category. Categories are never in a dropdown. |
+| What a pattern needs | A row in the garment page's Overview opens `WhatYouNeedDialog`: every thing with its picture from `supplyIcon()` |
+| What the store carries | `curate()` in `lib/shop/curate.ts`: a quota per subcategory, one of each kind of thing, about 150 in all |
+| Buying for a garment | `PatternFabric` in a `ShopLayout`: `GarmentThumb` and the garment's name, then dropdowns for what you need, size, recommended fabric and filters |
 | Group things | `Panel` (solid; `glass` when it holds controls), rows in `PanelRow`, plain white blocks in `Inset` |
 | Label–value details | `DetailList` |
 | Any products, on a page or in a section | One `ProductGrid` around a `tiles` grid, with a stroke between products |
 | One large product photo | `ProductFrame` around `GarmentImage` |
 | A garment in a grid | `GarmentCard` in a `ProductGrid` |
-| A fabric in a grid | `FabricCard` in a `ProductGrid` |
+| A product in the store | `ShopCard` (`FabricCard` plus its choice of size or colour) in a `ProductGrid` |
+| A fabric for a pattern | `FabricCard` in a `ProductGrid` |
 | Featured product at the start of a grid | `GarmentCard lead description={…}` |
 | Light / dark / system | `useTheme()` from `next-themes`; the switch lives in Profile |
-| Started projects | `ProjectGrid` (cards: `ProjectCard`, data: `projectCardData()`) |
+| What's in progress on Home | `HomeDashboard`: one project fills the container, several become equal `ProjectCard`s |
+| The user's picture and setting it | `UserAvatar`, `ProfilePhoto` (drop, paste or choose, then frame) |
+| Started projects | `ProjectGrid` (cards: `ProjectCard`, data: `projectCardData()`): `tiles` decides how many fit a row. Only the photo, name, next step, progress and one button |
 | A pattern maker | `MakerCard`; their page starts with `ProfileHeader` |
 | A label on a photo | `PhotoLabel` |
 | A small white label | `Pill` |
 | Pick a size | `SizePicker`, or `SizeSheet` for a project |
-| Streaks and stats | `SewingDashboard` |
+| This week and totals on Home | `SewingDashboard`: kept plain. The day's letter is ringed when you sewed that day, and each total sits in its own small container, one under the other |
+| A settings page | One `SettingsList` per kind of thing (`solid` when it only reads or links onward) > `SettingsGroup` > `SettingsRow`. Profile: About you, Selling (makers only), Settings and Your data, About Sigrid. Containers rather than tabs while a page fits in a short scroll |
+| What kind of user someone is | `useAccountType()`: sewer or pattern maker, on the Clerk account. Decides what shows, never what someone may do or pay for |
 | Side panel | `PanelSheet` |
 | The fabric bag | `FabricBagButton` + `FabricBagSheet` |
 | State (saved, failed, needs a look, info) | `StatusMessage`; `StatusBadge` for short labels |
@@ -195,7 +209,9 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 | Nothing here yet | `Empty` with one next action |
 | Loading | `Skeleton`, or `Spinner` in the button |
 | A table | `Table` inside an `Inset` |
-| A legal page | `LegalPage` + `LegalSection`; `LegalFooter` on every screen |
+| Login and sign-up | `AuthShell` around Clerk's form; its styling is in the global CSS |
+| A legal page | `LegalPage` + `LegalSection`, with `LegalFooter` under it. Always a page, never a modal: long reading that has to be linkable, printable and open to anyone |
+| Reaching the legal pages | `SettingsLinks` in Profile, plus a link where it matters: sign-up, the welcome's agreement, before paying. Those open in a new tab so nothing being filled in is lost. Not in a footer on every screen |
 | Keep the page from jumping when a list shrinks | `KeepHeight` |
 
 ## 9. Product rules (sewing)
@@ -214,15 +230,16 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 
 ## 11. Motion
 
-One easing everywhere: `[0.22, 1, 0.36, 1]` (`ease` in `reveal.tsx`, `--ease-out-soft` in CSS).
+One easing everywhere: `[0.22, 1, 0.36, 1]` (`ease` in `patterns/reveal.tsx`, `--ease-out-soft` in CSS).
 
 | What | How |
 | --- | --- |
-| Atmosphere | `Atmosphere`: one soft, still light in the top corner. Nothing drifts |
+| Atmosphere | `Atmosphere`: a cutting mat and tiny dots behind every screen. Nothing moves |
+| Guide steps | See "Guide animations" |
 | Sliding marker (tabs, navigation) | Built into `CategoryTabs`, `AppSidebar`, `AppTabBar` |
 | Hover | Buttons lift 1px; glass tiles frost in (`glass-inset-hover`), never swap colour; `hover-zoom` on photos |
 
-No bounce. Animate after hydration (`useRevealReady`). Reduced motion is respected everywhere (`MotionConfig reducedMotion="user"` plus the global CSS rule).
+No bounce. Reduced motion is respected everywhere (`MotionConfig reducedMotion="user"` plus the global CSS rule).
 
 ## 12. Imagery
 
@@ -259,8 +276,50 @@ Sigrid sounds like a calm, experienced friend at the sewing table. Every sentenc
 - [ ] Copy is calm, specific and plain
 - [ ] The honesty check: does it have a signature moment and varied composition, or does it look like a template?
 
+## Guide animations
+
+Every guide step plays as a short film: **what you do, the whole way along, then the result.** Nobody chooses an animation. `lib/guide-animation/rules.ts` reads it from the step, so this works for every guide and for patterns from the studio. Change a rule there and in this table together.
+
+| The step says | It plays |
+| --- | --- |
+| `prepare`, "wash" | The cloth lifts and settles |
+| `prepare`, "fold" or "lay out" | The cloth folds in half |
+| `prepare`, "hang", or with a piece | The work settles flat |
+| `cut`, the piece on the fold, or "on the fold" | **Half pattern.** Fold, pattern against the fold, draw round it, cut everywhere except the fold, opens into one joined piece |
+| `cut`, "(cut 2)", "both layers", "a left and a right", more than one of a piece | **Two loose pieces.** Fold, pattern in the corner away from the fold, cut right round, A1 and A2 lie apart |
+| `cut`, anything else | **Full pattern.** One layer, pattern in a corner, one piece |
+| `mark` right before a `cut` of the same piece | The first half of the cut: the chalk line. The `cut` step then cuts it |
+| `mark`, anything else | Chalk marks along the edge, as many as it says ("4 loops") |
+| `fold`, "0.5 + 1 cm", "6 mm double fold" | **Fold twice**, each the whole length |
+| `fold`, "2.5 cm fold" or `annotation.amount` | **Fold once**, the whole length |
+| `fold`, "in half" | Fold once, half the piece |
+| `press`, "fold" or "hem" in the title | The same as `fold`, then ironed |
+| `press`, anything else | The iron, once, along the whole seam or edge |
+| `pin` | Pins evenly along the whole line, one after another |
+| `sew` or `attach` | The machine along the whole line. If the edge is folded it sews the fold's inner edge |
+| `sew`, "by hand", "slip stitch" | The hand needle instead of the machine |
+| `sew`, "buttons" | Each button, by hand, as many as it says |
+| `sew`, "dart" | A short dart in from the edge |
+| A piece in `pieceIds` not yet on the table | It comes in first, then the step's own action |
+| Any step after it | Whatever was folded and sewn stays on the cloth |
+
+**Stitches:** straight by default. "baste", "longest stitch", "gather": basting. "topstitch", "close to the fold", "understitch": topstitch. "zigzag", "overlock", "blind hem", "buttonhole" (satin): those stitches.
+
+**Which edge:** `annotation.edge`; "hem" means the bottom; "front edges" or "placket" means both sides.
+
+**Rules for every animation**
+
+- One fabric colour on both sides and for every piece. No textures.
+- A tool is always the same size on screen, whatever the camera does. Stitches are thin and small.
+- The camera follows the work from start to end and pulls back for the result. Never a partial close-up that suggests working only there.
+- Pieces are always named the same way: A, or A1 and A2.
+- Cut pieces come from a corner, to save fabric. The pattern sits exactly in the corner: a side on the fabric's own edge is never drawn or cut.
+- Folds are one even movement. Check landings by measuring frame-to-frame change: a jump is a bug.
+
+**To make a guide look right:** write the step in plain words, set `action`, and give an edge with `annotation` when it matters. Set `pieceIds` and `join` when a step joins pieces: `layer` lays one on another (a shoulder, a side seam on a flat garment), `side` puts it beside (a sleeve), `top` on its top edge (a collar, a band).
+
 ## Site structure
 
-Each main page answers one question. **Home:** what am I sewing and how is it going (no browsing). **Explore:** what could I sew next (every pattern and maker). **Find fabric:** what do I sew it with. **Profile:** my account and settings. A *pattern* is what you find and buy, a *project* is what you're sewing. Main pages have no breadcrumbs, because the menu shows where you are; deeper pages do.
+Each main page answers one question. **Home:** what am I sewing and how is it going (no browsing). **My patterns:** every pattern I've bought, kept for good, whether I've started it or finished it. **Explore:** what could I sew next (every pattern and maker). **Shop:** what do I sew it with: fabric and every other supply. Each pattern page has a "What you'll need" list (`lib/fabric/supplies.ts`, only what its guide or description says), and each row opens that supply in the shop for that pattern. **Profile:** my account and settings. **Everything needs an account:** `proxy.ts` sends anyone logged out to the login screen, and only login and the legal pages are open. A *pattern* is what you find and buy, a *project* is what you're sewing. Main pages have no breadcrumbs, because the menu shows where you are; deeper pages do.
 
 **No entrance animations.** Pages and their content are simply there when you arrive: no rising, fading, wiping or staggering. Motion only answers something you do, like a hover, a press or opening a panel.

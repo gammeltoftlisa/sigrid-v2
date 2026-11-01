@@ -45,3 +45,12 @@ CREATE TABLE IF NOT EXISTS sewing_profiles (
   size_updated_at timestamptz,
   erased_at timestamptz
 );
+
+-- A daily copy of what the shops sell, so the store can filter all of it (lib/shop/store.ts). Public shop data, no people.
+-- Safe to empty at any time: the next refresh fills it again.
+CREATE TABLE IF NOT EXISTS shop_products (
+  id text PRIMARY KEY,
+  source text NOT NULL,
+  data jsonb NOT NULL,
+  refreshed_at timestamptz NOT NULL
+);

@@ -65,4 +65,6 @@ export interface FabricQuery {
   match: string[]
   limit: number
   kind: 'fabric' | 'notion'
+  /** Titles containing these are left out */
+  exclude?: string[]
 }

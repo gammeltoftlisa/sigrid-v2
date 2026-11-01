@@ -11,7 +11,7 @@ export const business = {
   address: '[Street, postcode, city, Sweden]',
   email: '[contact email]',
   /** Last time the legal texts were reviewed */
-  updated: '12 October 2026',
+  updated: '1 November 2026',
 }
 
 export const isPlaceholder = (v: string) => v.startsWith('[')

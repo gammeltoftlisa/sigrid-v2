@@ -98,5 +98,5 @@ export function BackButton({ to, className }: { to?: string; className?: string 
 
 /** Page padding for screens inside the app shell. Fills the width beside the sidebar; pass a max-w class for reading pages. */
 export function PageContainer({ className, ...props }: React.ComponentProps<'div'>) {
-  return <div className={cn('page mx-auto flex w-full flex-col gap-8 px-4 pb-10 sm:px-6', className)} {...props} />
+  return <div className={cn('page mx-auto flex w-full flex-col px-4 sm:px-6', className)} {...props} />
 }

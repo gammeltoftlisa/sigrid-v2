@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { GarmentImage } from '@/components/garment/GarmentImage'
 import { useRouter } from 'next/navigation'
 import { IconPlus, IconRuler2, IconTrash } from '@tabler/icons-react'
@@ -22,6 +23,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
 import { Panel, PanelRow } from '@/components/patterns/panel'
 import { StatusBadge } from '@/components/patterns/status-badge'
+import { useAccountType } from '@/hooks/use-account-type'
 import { useMounted } from '@/hooks/use-mounted'
 import { createPattern, deletePattern, loadPatterns, plural, type StudioPattern } from '@/lib/studio/patterns'
 import { WIZARD, isDone } from '@/lib/studio/wizard'
@@ -56,6 +58,7 @@ function DeleteButton({ pattern, onDelete }: { pattern: StudioPattern; onDelete:
 export default function StudioPage() {
   const router = useRouter()
   const mounted = useMounted()
+  const account = useAccountType()
   const [version, setVersion] = useState(0)
   // Re-read after a delete; `version` is what changes
   const patterns = mounted ? loadPatterns() : []
@@ -69,6 +72,26 @@ export default function StudioPage() {
       New pattern
     </Button>
   )
+
+  if (account.ready && account.type !== 'maker') {
+    return (
+      <PageContainer>
+        <PageHeader title="Pattern studio" breadcrumbs={[{ label: 'Profile', href: '/profile' }, { label: 'Pattern studio' }]} />
+        <Empty className="bg-card rounded-(--radius)">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <IconRuler2 />
+            </EmptyMedia>
+            <EmptyTitle>The studio is for pattern makers</EmptyTitle>
+            <EmptyDescription>To sell your own patterns, change your account type to Pattern maker on your profile.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button size="lg" nativeButton={false} render={<Link href="/profile" />}>Go to Profile</Button>
+          </EmptyContent>
+        </Empty>
+      </PageContainer>
+    )
+  }
 
   return (
     <PageContainer>

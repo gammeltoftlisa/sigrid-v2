@@ -27,8 +27,8 @@ export function usePurchases() {
 
   const current = result?.userId === userId ? result : null
   return {
-    isSignedIn: !!isSignedIn,
     garmentIds: current?.garmentIds ?? [],
+    failed,
     // Not knowing mustn't leave the page waiting forever. Buying is still safe: the server checks.
     loading: paymentsEnabled && (!isLoaded || (!!isSignedIn && !current && !failed)),
     refresh,

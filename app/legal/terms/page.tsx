@@ -36,9 +36,9 @@ export default function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="Buying fabric">
+      <LegalSection title="Buying fabric and supplies">
         <p>
-          Fabric in Find fabric is sold by independent shops and secondhand sellers, not by us. When you check out, your purchase is an
+          Fabric and supplies in Shop are sold by independent shops and secondhand sellers, not by us. When you check out, your purchase is an
           agreement between you and the shop, and the shop’s terms, delivery and return rules apply. Prices are shown as the shop lists
           them and may change. Some shops may pay us a commission when you buy through Sigrid; it never changes your price.
         </p>

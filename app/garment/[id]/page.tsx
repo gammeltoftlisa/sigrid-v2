@@ -3,7 +3,7 @@
 import { use, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { IconArrowRight, IconListCheck, IconPrinter, IconScissors, IconShirt } from '@tabler/icons-react'
+import { IconChecklist, IconArrowRight, IconListCheck, IconPrinter, IconShirt } from '@tabler/icons-react'
 
 import { ActionBar } from '@/components/patterns/action-bar'
 import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
@@ -17,7 +17,9 @@ import { garmentPhoto } from '@/lib/garment-photos'
 import SizeSheet from '@/components/garment/SizeSheet'
 import { useMounted } from '@/hooks/use-mounted'
 import { usePurchases } from '@/hooks/use-purchases'
-import { TOOLS } from '@/components/sewing/tools'
+import { supplyIcon } from '@/components/patterns/supply-icon'
+import { WhatYouNeedDialog } from '@/components/patterns/what-you-need'
+import { suppliesFor } from '@/lib/fabric/supplies'
 import { catalogGarments, creators, getCatalogItem, getGarmentById, getGuideOutline } from '@/lib/data'
 import { BuyDialog } from '@/components/garment/BuyDialog'
 import { paymentsEnabled } from '@/lib/payments'
@@ -37,8 +39,8 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const creator = garment.isCreator && garment.creatorId ? creators.find((c) => c.id === garment.creatorId) : null
   // Stable per id: a published pattern's outline is rebuilt from storage on every call
   const guide = useMemo(() => getGuideOutline(id), [id])
-  const tools = useMemo(() => (guide ? [...new Set(guide.steps.flatMap((s) => (s.tool ? [s.tool] : [])))] : []), [guide])
   const totalSteps = guide?.steps.length ?? 0
+  const supplies = suppliesFor(id)
 
   // Project state lives in the browser, so read it after mount
   const mounted = useMounted()
@@ -46,6 +48,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const [started, setStarted] = useState<ProjectState | undefined>(undefined)
   const project = started ?? (mounted ? loadProject(id) : null)
   const profileSize = mounted ? loadSavedSize() : null
+  const [needsOpen, setNeedsOpen] = useState(false)
   const [sizeSheetOpen, setSizeSheetOpen] = useState(false)
 
   const done = project ? Math.min(project.completedUntil, totalSteps) : 0
@@ -77,10 +80,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const [buyOpen, setBuyOpen] = useState(false)
   const needsPaying = paymentsEnabled && !!getCatalogItem(id) && !purchases.garmentIds.includes(id)
 
-  const buy = () => {
-    if (purchases.isSignedIn) setBuyOpen(true)
-    else router.push(`/sign-in?redirect_url=${encodeURIComponent(`/garment/${id}`)}`)
-  }
+  const buy = () => setBuyOpen(true)
 
   const goToPayment = async () => {
     setPaying(true)
@@ -170,7 +170,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   return (
     <main className="min-h-svh">
       
-      <div className="shrink-0 px-4 md:pr-8 md:pl-4">
+      <div className="shrink-0 px-4 md:px-3">
       <div className="top-bar flex h-14 items-center gap-2">
         <PageBreadcrumbs
           items={[
@@ -181,10 +181,10 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
       </div>
       </div>
 
-      <div className="md:grid md:grid-cols-12 md:gap-x-(--grid-gutter) md:pr-8 md:pl-4">
+      <div className="md:grid md:grid-cols-12 md:gap-x-(--grid-gutter) md:px-3">
         {/* Garment image: a rounded card like the listing tiles. Top of the page on phones; from md it fills the left half top to bottom */}
-        <div className="md:sticky md:top-4 md:col-span-6 md:h-[calc(100svh-5rem)] md:self-start">
-          <ProductFrame className="mx-4 mt-4 sm:mx-6 md:m-0 md:h-full">
+        <div className="md:sticky md:top-4 md:col-span-6 garment-photo-pane md:self-start">
+          <ProductFrame className="mx-4 mt-1 sm:mx-6 md:m-0 md:h-full">
           <GarmentImage
             name={garment.name}
             className="aspect-product rounded-(--image-radius) md:aspect-auto md:h-full"
@@ -198,7 +198,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="flex flex-col md:col-span-6">
-          <div className="flex w-full flex-1 flex-col gap-6 px-4 pt-6 pb-6 sm:px-6 md:px-0 md:pt-2">
+          <div className="flex w-full flex-1 flex-col gap-3 px-4 pt-3 pb-3 sm:px-6 md:px-0 md:pt-0">
             <header className="flex flex-col gap-2">
               <div className="flex items-baseline justify-between gap-4">
                 {/* Smaller than a page hero: it shares the screen with the photo */}
@@ -221,7 +221,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             <Panel
               glass
               footer={<div className="hidden md:block">{cta}</div>}
-              label={finished ? 'Finished' : project ? 'Your project' : 'What you need'}
+              label={finished ? 'Finished' : project ? 'Your project' : 'Overview'}
               meta={project ? `${done} / ${totalSteps}` : undefined}
               progress={project && totalSteps ? (done / totalSteps) * 100 : undefined}
             >
@@ -232,13 +232,6 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
                 title={fabricNames}
                 detail={`${formatMeters(fabricMeters)}${fabricSize ? ` for ${sizeLabel(fabricSize)}` : ''} · Find fabric`}
               />
-              {tools.length > 0 && (
-                <PanelRow
-                  leading={<StepDot state="upcoming"><IconScissors className="size-3.5" /></StepDot>}
-                  title="Tools"
-                  detail={tools.map((t) => TOOLS[t].label.toLowerCase()).join(', ').replace(/^./, (c) => c.toUpperCase())}
-                />
-              )}
               {guide && guide.pieces > 0 && (
                 <PanelRow
                   leading={<StepDot state="upcoming"><IconPrinter className="size-3.5" /></StepDot>}
@@ -259,6 +252,20 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
                 />
               )}
               {!project && stepsRow}
+              {/* Everything to have ready, as pictures in a modal */}
+              <PanelRow
+                onClick={() => setNeedsOpen(true)}
+                leading={<StepDot state="upcoming"><IconChecklist className="size-3.5" /></StepDot>}
+                title="What you’ll need"
+                detail={`${supplies.special.length + supplies.basics.length + 1} things`}
+                trailing={
+                  <span aria-hidden className="hidden items-center gap-1.5 text-muted-foreground sm:flex">
+                    {[...new Set([...supplies.special, ...supplies.basics].map(supplyIcon))].slice(0, 5).map((Icon, i) => (
+                      <Icon key={i} className="size-4" />
+                    ))}
+                  </span>
+                }
+              />
             </Panel>
 
           </div>
@@ -269,7 +276,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {more.length > 0 && (
-        <div className="px-4 pt-2 pb-44 sm:px-6 md:pt-6 md:pr-8 md:pb-8 md:pl-4">
+        <div className="px-4 pt-0 pb-44 sm:px-6 md:px-3 md:pb-3 md:pt-3">
           <ProductGrid label={fromMaker.length > 0 ? `More from ${creator!.handle}` : 'You might also like'}>
             <div className="tiles">
               {more.map((g) => (
@@ -280,6 +287,13 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
+      <WhatYouNeedDialog
+        open={needsOpen}
+        onOpenChange={setNeedsOpen}
+        garmentId={id}
+        fabric={{ name: 'Fabric', detail: `${formatMeters(fabricMeters)}${fabricSize ? ` for ${sizeLabel(fabricSize)}` : ''}: ${fabricNames}` }}
+        supplies={supplies}
+      />
       <SizeSheet
         garment={garment}
         open={sizeSheetOpen}

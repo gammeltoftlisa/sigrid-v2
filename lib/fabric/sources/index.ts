@@ -5,7 +5,7 @@ import { safeListing } from '../safe-listing'
 import type { FabricListing, FabricQuery, FabricSearchResponse, SourceKind, SourceStatus } from '../types'
 import { ebaySource, searchEbay } from './ebay'
 import { etsySource, searchEtsy } from './etsy'
-import { browseShopify, searchShopify, shopifyShops, type ShopAnswer } from './shopify'
+import { searchShopify, shopifyShops, type ShopAnswer } from './shopify'
 
 /**
  * Every place Sigrid can buy fabric from. To add a shop or marketplace, write an
@@ -18,8 +18,6 @@ interface Source {
   /** Null when the source can be searched; otherwise why it is skipped */
   unavailable: () => string | null
   search: (q: FabricQuery, deadlineAt: number) => Promise<ShopAnswer>
-  /** Whole-store browsing without a search; sources without it sit out */
-  browse?: (limit: number, deadlineAt: number) => Promise<FabricListing[]>
   /** Secondhand sources only carry fabric, not notions */
   fabricOnly?: boolean
 }
@@ -31,7 +29,6 @@ const sources: Source[] = [
     kind: shop.condition === 'deadstock' ? 'deadstock' : 'shop',
     unavailable: () => null,
     search: (q, deadlineAt) => searchShopify(shop, q, deadlineAt),
-    browse: (count, deadlineAt) => browseShopify(shop, count, deadlineAt),
   })),
   {
     ...ebaySource,
@@ -68,19 +65,18 @@ export function cacheControlFor(sources: SourceStatus[]): string {
   return answered ? 'public, s-maxage=60' : 'no-store'
 }
 
-/** Search every source for one query, or browse every store when `query` is null */
-export async function searchAllSources(query: FabricQuery | null, browseLimit = 8): Promise<FabricSearchResponse> {
+/** Search every source for one query */
+export async function searchAllSources(query: FabricQuery): Promise<FabricSearchResponse> {
   const settled = await Promise.all(
     sources.map(async (s): Promise<{ status: SourceStatus; listings: FabricListing[] } | null> => {
-      if (query?.kind === 'notion' && s.fabricOnly) return null
-      if (!query && !s.browse) return null
+      if (query.kind === 'notion' && s.fabricOnly) return null
       const base = { id: s.id, name: s.name, kind: s.kind }
       const skip = s.unavailable()
       if (skip) return { status: { ...base, ok: false, count: 0, note: skip }, listings: [] }
       const started = Date.now()
       const deadlineAt = started + SOURCE_DEADLINE_MS
       try {
-        const { listings: raw, incomplete } = query ? await s.search(query, deadlineAt) : { listings: await s.browse!(browseLimit, deadlineAt), incomplete: false }
+        const { listings: raw, incomplete } = await s.search(query, deadlineAt)
         const listings = raw.map(safeListing).filter((l): l is FabricListing => l !== null)
         if (listings.length < raw.length) logEvent('warn', 'fabric.source.unsafe', { source: s.id, dropped: raw.length - listings.length, total: raw.length })
         return { status: { ...base, ok: true, count: listings.length, ...(incomplete ? { incomplete } : {}) }, listings }

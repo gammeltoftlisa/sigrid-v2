@@ -2,44 +2,90 @@
 
 import Link from 'next/link'
 import { useClerk, useUser } from '@clerk/nextjs'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Panel, PanelRow } from '@/components/patterns/panel'
+import { CategoryTabs } from '@/components/patterns/category-tabs'
+import { Pill } from '@/components/patterns/profile-header'
+import { SettingsRow } from '@/components/patterns/settings'
+import { accountTypes, useAccountType, type AccountType } from '@/hooks/use-account-type'
 import { usePurchases } from '@/hooks/use-purchases'
-import { getCatalogItem } from '@/lib/data'
 import { paymentsEnabled } from '@/lib/payments'
 import { flushSewing } from '@/lib/sewing-sync'
 
-/** Log in, or manage the account. The account screens themselves are Clerk's. */
-export function AccountPanel() {
+/** Who this is, for the top of Profile: the name, email and kind of user. */
+export function AccountIdentity() {
   const { isLoaded, isSignedIn, user } = useUser()
-  const { openUserProfile, signOut } = useClerk()
-  const purchases = usePurchases()
-
-  if (!isLoaded) return <Panel glass label="Account"><p className="px-1 text-sm text-muted-foreground">Checking…</p></Panel>
-
-  if (!isSignedIn) {
-    return (
-      <Panel glass label="Account">
-        <p className="px-1 pb-2 text-sm text-muted-foreground">Log in to keep your projects and progress on all your devices. Browsing needs no account.</p>
-        <div className="flex flex-wrap gap-2">
-          <Button nativeButton={false} render={<Link href="/sign-in?redirect_url=/profile" />}>Log in</Button>
-          <Button variant="outline" nativeButton={false} render={<Link href="/sign-up?redirect_url=/profile" />}>Create account</Button>
-        </div>
-      </Panel>
-    )
-  }
-
+  const { type, ready } = useAccountType()
+  // The proxy only lets logged-in people here, so this is just the moment before Clerk has loaded
+  if (!isLoaded || !isSignedIn) return <p className="text-sm text-muted-foreground">Checking…</p>
+  const email = user.primaryEmailAddress?.emailAddress
   return (
-    <Panel glass label="Account">
-      <p className="truncate px-1 pb-2 text-sm">{user.primaryEmailAddress?.emailAddress}</p>
-      {paymentsEnabled && purchases.garmentIds.map((id) => (
-        <PanelRow key={id} href={`/garment/${id}`} title={getCatalogItem(id)?.name ?? id} detail="Your pattern" />
-      ))}
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => openUserProfile()}>Manage account</Button>
-        <Button variant="ghost" onClick={async () => { await flushSewing(); await signOut({ redirectUrl: '/profile' }) }}>Log out</Button>
-      </div>
-    </Panel>
+    <div className="flex w-full min-w-0 flex-col gap-1">
+      <p className="title-md truncate">{user.fullName || 'Logged in'}</p>
+      <p className="truncate text-sm text-muted-foreground" title={email}>{email}</p>
+      {ready && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Pill>{accountTypes[type].label}</Pill>
+          <span className="text-xs text-muted-foreground">{accountTypes[type].detail}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const typeByLabel = Object.fromEntries(
+  (Object.keys(accountTypes) as AccountType[]).map((t) => [accountTypes[t].label, t]),
+) as Record<string, AccountType>
+const typeLabels = Object.keys(typeByLabel)
+
+/** Choose between buying and selling patterns. */
+export function AccountTypeRow() {
+  const { type, setType, ready } = useAccountType()
+  const choose = async (label: string) => {
+    try {
+      await setType(typeByLabel[label])
+    } catch {
+      toast.error('Couldn’t change your account type. Please try again.')
+    }
+  }
+  return (
+    <SettingsRow
+      title="Account type"
+      description={type === 'maker' ? 'You sell your own patterns, and can still buy other makers’.' : 'You buy patterns and sew them. Choose Pattern maker to sell your own.'}
+    >
+      {ready && <CategoryTabs label="Account type" options={typeLabels} value={accountTypes[type].label} onValueChange={choose} />}
+    </SettingsRow>
+  )
+}
+
+/** The patterns this account has bought, when there are any. */
+export function BoughtPatternsRow() {
+  const purchases = usePurchases()
+  const count = purchases.garmentIds.length
+  if (!paymentsEnabled || count === 0) return null
+  return (
+    <SettingsRow title="Patterns you’ve bought" description={count === 1 ? '1 pattern, yours for good.' : `${count} patterns, yours for good.`}>
+      <Button variant="outline" nativeButton={false} render={<Link href="/patterns" />}>My patterns</Button>
+    </SettingsRow>
+  )
+}
+
+/** Manage the login. The account screens themselves are Clerk's (see lib/clerk-appearance). */
+export function LoginRow() {
+  const { openUserProfile } = useClerk()
+  return (
+    <SettingsRow title="Login and security" description="Your email, password and devices.">
+      <Button variant="outline" onClick={() => openUserProfile()}>Manage account</Button>
+    </SettingsRow>
+  )
+}
+
+export function LogOutRow() {
+  const { signOut } = useClerk()
+  return (
+    <SettingsRow title="Log out" description="Your sewing stays on your account.">
+      <Button variant="outline" onClick={async () => { await flushSewing(); await signOut({ redirectUrl: '/sign-in' }) }}>Log out</Button>
+    </SettingsRow>
   )
 }

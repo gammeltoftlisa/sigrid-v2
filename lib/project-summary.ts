@@ -1,7 +1,6 @@
 import { catalogGarments, getGuideOutline } from './data'
 import { listPublishedGarments } from './published'
 import { loadProject, type ProjectState } from './projects'
-import { sizeLabel } from './sizes'
 import type { Garment } from './types'
 
 export interface ProjectSummary {
@@ -41,7 +40,6 @@ export function projectCardData({ garment, project, totalSteps }: ProjectSummary
     photoSrc: garment.photo,
     href: `/garment/${garment.id}`,
     continueHref: `/garment/${garment.id}/guide`,
-    sizeLabel: sizeLabel(project.size),
     nextStep: steps[project.completedUntil]?.title,
     done: Math.min(project.completedUntil, totalSteps),
     total: totalSteps,

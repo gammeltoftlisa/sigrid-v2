@@ -12,9 +12,9 @@ import { formatMeters, formatMoney, unitLabel } from '@/lib/fabric/pricing'
 /** Top-bar button that opens the bag; shows how many fabrics are in it. */
 export function FabricBagButton({ count, onClick }: { count: number; onClick: () => void }) {
   return (
-    <Button variant="outline" size="sm" onClick={onClick} aria-label={`Fabric bag, ${count} ${count === 1 ? 'fabric' : 'fabrics'}`}>
+    <Button variant="outline" size="lg" onClick={onClick} aria-label={`Fabric bag, ${count} ${count === 1 ? 'fabric' : 'fabrics'}`}>
       <IconShoppingBag data-icon="inline-start" />
-      Bag
+      <span className="max-sm:sr-only">Bag</span>
       <span className="tabular-nums">{count}</span>
     </Button>
   )

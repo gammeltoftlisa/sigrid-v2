@@ -13,7 +13,7 @@ export const legalPages = [
 export function LegalPage({ title, intro, children }: { title: string; intro: string; children: React.ReactNode }) {
   return (
     <PageContainer>
-      <PageHeader breadcrumbs={[{ label: 'Home', href: '/home' }, { label: title }]} title={title} description={intro} />
+      <PageHeader breadcrumbs={[{ label: 'Sigrid', href: '/' }, { label: title }]} title={title} description={intro} />
       <article className="legal-prose flex max-w-prose flex-col gap-8">
         {children}
         <p className="text-xs text-muted-foreground">Last updated {business.updated}.</p>

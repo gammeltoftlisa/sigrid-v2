@@ -93,6 +93,7 @@ export function PanelRow({
   trailing,
   href,
   external,
+  onClick,
   className,
 }: {
   leading?: React.ReactNode
@@ -105,17 +106,20 @@ export function PanelRow({
   href?: string
   /** The link leaves Sigrid: opens in a new tab, with an outward arrow instead of the chevron */
   external?: boolean
+  /** Makes the whole row a button, with a chevron at the end */
+  onClick?: () => void
   className?: string
 }) {
-  const Row = href ? (external ? 'a' : Link) : 'div'
+  const Row = onClick ? 'button' : href ? (external ? 'a' : Link) : 'div'
   return (
     <Row
       href={href as string}
+      {...(onClick && { type: 'button' as const, onClick })}
       {...(external && { target: '_blank', rel: 'noopener' })}
       data-state={state}
       className={cn(
         'flex items-center gap-3 rounded-(--control-radius) border px-2.5 py-2.5 transition-colors',
-        href && 'group/row outline-none hover:bg-background',
+        (href || onClick) && 'group/row w-full text-left outline-none hover:bg-background',
         state === 'active' ? 'border-foreground/35 bg-background' : 'bg-card',
         state === 'done' && 'border-transparent',
         className,
@@ -139,7 +143,7 @@ export function PanelRow({
       )}
       {trailing}
       {href && external && <IconExternalLink className="size-4 shrink-0 text-muted-foreground" aria-hidden />}
-      {href && !external && (
+      {(onClick || (href && !external)) && (
         <IconChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover/row:translate-x-0.5" aria-hidden />
       )}
     </Row>

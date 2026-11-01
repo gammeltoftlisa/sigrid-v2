@@ -4,12 +4,12 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { IconPlayerPauseFilled, IconPlayerPlayFilled } from '@tabler/icons-react'
 import { RULES, type Scene } from '@/lib/guide-scene'
-import { SceneView } from '@/lib/guide-scene-view'
+import { FlatSceneView } from '@/lib/guide-animation/flat-view'
 
 /**
- * A step played out like an instruction video: the pieces on a tilted cutting mat, in one plain
- * fabric, with the tools doing the step. Loops on its own; reduced motion shows the finished
- * frame. Drawn straight into the DOM each frame (3D transforms), outside React.
+ * A step played out like an instruction video: the pieces flat on the net, in one plain fabric, with
+ * the tools doing the step. Loops on its own; reduced motion shows the finished frame. Drawn straight
+ * into the DOM each frame, outside React.
  */
 export default function GuideScene({ scene, label }: { scene: Scene; label: string }) {
   const stageRef = useRef<HTMLDivElement>(null)
@@ -24,7 +24,7 @@ export default function GuideScene({ scene, label }: { scene: Scene; label: stri
   useEffect(() => {
     const el = stageRef.current
     if (!el) return
-    const view = new SceneView(el, scene, `gs${uid}`)
+    const view = new FlatSceneView(el, scene, `gs${uid}`)
     let time = reduce ? scene.total : 0
     let last = performance.now()
     let raf = 0
@@ -49,8 +49,8 @@ export default function GuideScene({ scene, label }: { scene: Scene; label: stri
   }, [scene, reduce, uid])
 
   return (
-    <div className="guide-scene relative h-full w-full overflow-hidden" role="img" aria-label={label}>
-      <div ref={stageRef} className="gs-stage absolute inset-0" />
+    <div className="guide-scene relative h-full w-full overflow-hidden">
+      <div ref={stageRef} className="gs-stage absolute inset-0" role="img" aria-label={label} />
       {!reduce && (
         <button
           type="button"

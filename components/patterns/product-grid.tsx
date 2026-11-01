@@ -12,7 +12,7 @@ export function Stipple() {
 /**
  * The one container for products: a solid fill a little lighter than the page, with the page's dots and a
  * stroke between products instead of a box around each. A page shares one of these for all its
- * products. Put a `tiles` grid of GarmentCard, FabricCard, ProjectCard or MakerCard inside.
+ * products. Put a `tiles` grid of GarmentCard, FabricCard or MakerCard inside, or use ProjectGrid for projects.
  * Products never sit directly on the background, and never go in a glass Panel.
  */
 export function ProductGrid({

@@ -29,7 +29,13 @@ export const suggestProduct = z.object({
   image: z.string().nullish(),
 })
 
-const variant = z.object({ id: z.number(), title: z.string(), price: money, available: z.boolean().optional() })
+const variant = z.object({
+  id: z.number(),
+  title: z.string(),
+  price: money,
+  available: z.boolean().optional(),
+  featured_image: z.object({ src: z.string() }).nullish(),
+})
 
 export const productResponse = z.object({ product: z.object({ variants: z.array(variant) }) })
 
@@ -44,6 +50,9 @@ export const catalogProduct = z.object({
   tags: z.union([z.array(z.string()), z.string()]).nullish(),
   variants: z.array(variant),
   images: z.array(z.object({ src: z.string() })).nullish(),
+  vendor: z.string().nullish(),
+  created_at: z.string().nullish(),
+  options: z.array(z.object({ name: z.string(), values: z.array(z.string()).optional() })).nullish(),
 })
 
 // ── eBay ─────────────────────────────────────────────────────────────────────

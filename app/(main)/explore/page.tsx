@@ -75,7 +75,7 @@ export default function ExplorePage({ searchParams }: { searchParams: Promise<{ 
 
   return (
     <PageContainer>
-      <PageHeader title="Explore" description="Example patterns and maker profiles while Sigrid is in beta." className="pt-8 md:pt-12" />
+      <PageHeader title="Explore" description="Example patterns and maker profiles while Sigrid is in beta." className="pt-3" />
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -96,7 +96,7 @@ export default function ExplorePage({ searchParams }: { searchParams: Promise<{ 
             {view === 'Patterns' && (
               <>
                 <Select items={typeOptions} value={category} onValueChange={(v) => setCategory(v as GarmentCategory | 'All')}>
-                  <SelectTrigger aria-label="Type" className="flex-1 sm:w-32 sm:flex-none">
+                  <SelectTrigger aria-label="Type" className="flex-1 sm:w-40 sm:flex-none">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -106,7 +106,7 @@ export default function ExplorePage({ searchParams }: { searchParams: Promise<{ 
                   </SelectContent>
                 </Select>
                 <Select items={levels} value={level} onValueChange={(v) => setLevel(v as Difficulty | 'All')}>
-                  <SelectTrigger aria-label="Level" className="flex-1 sm:w-36 sm:flex-none">
+                  <SelectTrigger aria-label="Level" className="flex-1 sm:w-40 sm:flex-none">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

@@ -55,7 +55,7 @@ import {
 } from '@/lib/studio/patterns'
 import type { StandardSize } from '@/lib/types'
 import { PieceEditor } from './PieceEditor'
-import { assemblyAt, isSecondCut, pieceOf, stepPieceIds } from '@/lib/assembly'
+import { isSecondCut, pieceOf, stepPieceIds } from '@/lib/assembly'
 import type { JoinKind } from '@/lib/types'
 import { PieceShape } from './PieceShape'
 import { InlinePick, InlineText, InlineTextarea, TodoMark } from './Inline'
@@ -138,7 +138,6 @@ export function StudioGuide({
   const piece = step?.pieceId ? pieces.find((p) => p.id === step.pieceId && isDrawable(p)) : undefined
   // The pieces this step is about; joined ones are drawn together, as the sewer will see them
   const stepIds = step ? stepPieceIds(step) : []
-  const assembly = step ? assemblyAt(steps, current) : null
   const drawablePieces = pieces.filter(isDrawable)
   const labelOf = (pid: string) => {
     const p = pieces.find((x) => x.id === pieceOf(pid))
@@ -559,7 +558,7 @@ export function StudioGuide({
       ) : step ? (
         <div className="contents md:flex md:min-h-0 md:flex-1 md:flex-col">
           <div className="relative order-1 h-56 shrink-0 overflow-hidden guide-canvas rounded-(--radius) md:order-none md:h-auto md:min-h-0 md:flex-1">
-            <PatternCanvas key={`${step.id}-${stepIds.join('+')}-${step.action}`} piece={piece ?? null} assembly={assembly} pieces={drawablePieces} action={step.action} measurements={standardSizes.M} title={step.title} />
+            <PatternCanvas key={`${step.id}-${stepIds.join('+')}-${step.action}`} steps={steps} index={current} pieces={drawablePieces} measurements={standardSizes.M} />
             <div className="glass absolute top-3 left-3 flex items-center gap-1 rounded-full py-1 pr-2 pl-3 text-xs">
               Drawing
               <InlinePick className="mx-0 font-medium" label="Drawing" text={stepIds.length === 1 && piece ? `${piece.label} · ${piece.name}` : drawingText} placeholder="none">
