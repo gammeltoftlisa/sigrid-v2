@@ -1,8 +1,11 @@
+import { failureOf, UpstreamError } from '@/lib/server/fetch-with-retry'
+import { logEvent } from '@/lib/server/log'
+
 import { safeListing } from '../safe-listing'
 import type { FabricListing, FabricQuery, FabricSearchResponse, SourceKind, SourceStatus } from '../types'
 import { ebaySource, searchEbay } from './ebay'
 import { etsySource, searchEtsy } from './etsy'
-import { browseShopify, searchShopify, shopifyShops } from './shopify'
+import { browseShopify, searchShopify, shopifyShops, type ShopAnswer } from './shopify'
 
 /**
  * Every place Sigrid can buy fabric from. To add a shop or marketplace, write an
@@ -14,9 +17,9 @@ interface Source {
   kind: SourceKind
   /** Null when the source can be searched; otherwise why it is skipped */
   unavailable: () => string | null
-  search: (q: FabricQuery) => Promise<FabricListing[]>
+  search: (q: FabricQuery, deadlineAt: number) => Promise<ShopAnswer>
   /** Whole-store browsing without a search; sources without it sit out */
-  browse?: (limit: number) => Promise<FabricListing[]>
+  browse?: (limit: number, deadlineAt: number) => Promise<FabricListing[]>
   /** Secondhand sources only carry fabric, not notions */
   fabricOnly?: boolean
 }
@@ -27,24 +30,43 @@ const sources: Source[] = [
     name: shop.name,
     kind: shop.condition === 'deadstock' ? 'deadstock' : 'shop',
     unavailable: () => null,
-    search: (q) => searchShopify(shop, q),
-    browse: (limit) => browseShopify(shop, limit),
+    search: (q, deadlineAt) => searchShopify(shop, q, deadlineAt),
+    browse: (count, deadlineAt) => browseShopify(shop, count, deadlineAt),
   })),
   {
     ...ebaySource,
     kind: 'secondhand',
     unavailable: () => (ebaySource.configured() ? null : 'Needs eBay API keys'),
-    search: searchEbay,
+    search: async (q, deadlineAt) => ({ listings: await searchEbay(q, deadlineAt) }),
     fabricOnly: true,
   },
   {
     ...etsySource,
     kind: 'secondhand',
     unavailable: () => (etsySource.configured() ? null : 'Needs an Etsy API key'),
-    search: searchEtsy,
+    search: async (q, deadlineAt) => ({ listings: await searchEtsy(q, deadlineAt) }),
     fabricOnly: true,
   },
 ]
+
+/** How long one source gets, retries included. The search answers with whoever made it in time. */
+const SOURCE_DEADLINE_MS = 10_000
+
+/** What the visitor is told when a source fails: only say it was slow if it really was */
+function noteFor(error: unknown): string {
+  const slow = error instanceof UpstreamError && (error.reason === 'timeout' || error.reason === 'deadline')
+  return slow ? 'Didn’t answer in time' : 'Couldn’t be reached'
+}
+
+/**
+ * How long the CDN may keep a search. A full answer keeps for half an hour. A partial one keeps only
+ * briefly, and when nobody answered it isn't kept at all, so one bad moment doesn't stay for everyone.
+ */
+export function cacheControlFor(sources: SourceStatus[]): string {
+  if (!sources.some((s) => s.failed || s.incomplete)) return 'public, s-maxage=1800, stale-while-revalidate=3600'
+  const answered = sources.some((s) => s.ok)
+  return answered ? 'public, s-maxage=60' : 'no-store'
+}
 
 /** Search every source for one query, or browse every store when `query` is null */
 export async function searchAllSources(query: FabricQuery | null, browseLimit = 8): Promise<FabricSearchResponse> {
@@ -55,13 +77,16 @@ export async function searchAllSources(query: FabricQuery | null, browseLimit = 
       const base = { id: s.id, name: s.name, kind: s.kind }
       const skip = s.unavailable()
       if (skip) return { status: { ...base, ok: false, count: 0, note: skip }, listings: [] }
+      const started = Date.now()
+      const deadlineAt = started + SOURCE_DEADLINE_MS
       try {
-        const raw = query ? await s.search(query) : await s.browse!(browseLimit)
+        const { listings: raw, incomplete } = query ? await s.search(query, deadlineAt) : { listings: await s.browse!(browseLimit, deadlineAt), incomplete: false }
         const listings = raw.map(safeListing).filter((l): l is FabricListing => l !== null)
-        return { status: { ...base, ok: true, count: listings.length }, listings }
+        if (listings.length < raw.length) logEvent('warn', 'fabric.source.unsafe', { source: s.id, dropped: raw.length - listings.length, total: raw.length })
+        return { status: { ...base, ok: true, count: listings.length, ...(incomplete ? { incomplete } : {}) }, listings }
       } catch (e) {
-        console.warn(`[fabric] ${s.id} failed:`, e instanceof Error ? e.message : e)
-        return { status: { ...base, ok: false, count: 0, note: 'Didn’t answer in time' }, listings: [] }
+        logEvent('warn', 'fabric.source.failed', { source: s.id, durationMs: Date.now() - started, ...failureOf(e) })
+        return { status: { ...base, ok: false, failed: true, count: 0, note: noteFor(e) }, listings: [] }
       }
     }),
   )

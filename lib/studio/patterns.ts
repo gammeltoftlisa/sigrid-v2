@@ -3,7 +3,19 @@ import type { Tool } from '@/components/sewing/tools'
 import type { PieceOutline } from '@/lib/piece-outline'
 import { standardSizes } from '@/lib/data'
 import { allSizes } from '@/lib/sizes'
+import {
+  announceStorageProblem,
+  keepCorruptCopy,
+  readJson,
+  readRaw,
+  removeRaw,
+  storedKeys,
+  tryWriteRaw,
+  writeRaw,
+  type WriteResult,
+} from '@/lib/local-store'
 import type { DeepPartial } from 'ai'
+import { z } from 'zod'
 import type { DraftPiece, DraftStep, GuideDraft, WriteRequest } from './schema'
 
 /**
@@ -127,7 +139,7 @@ export interface StudioPattern {
   updatedAt: number
 }
 
-const KEY = 'sigrid_studio_patterns'
+const LEGACY_KEY = 'sigrid_studio_patterns'
 
 /** "1 step", "3 steps" */
 export const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`
@@ -177,35 +189,160 @@ const normalize = (saved: Saved): StudioPattern => {
   return withDerived(p)
 }
 
-export function loadPatterns(): StudioPattern[] {
+// ── Saving ───────────────────────────────────────────────────────────────────
+//
+// Each pattern has its own key, and its photo another, so one unreadable pattern can't cost the
+// others and typing doesn't rewrite a photo on every keystroke. Patterns that were saved together
+// under LEGACY_KEY are moved over the first time they're read.
+
+const patternKeyPrefix = 'sigrid_studio_pattern_'
+const photoKeyPrefix = 'sigrid_studio_photo_'
+export const patternKey = (id: string) => patternKeyPrefix + id
+export const photoKey = (id: string) => photoKeyPrefix + id
+
+/**
+ * Deleted ids, so a second tab still showing a deleted pattern can't bring it back by saving.
+ * A deletion only needs remembering while such a tab might be open, so the list stays short.
+ */
+const DELETED_KEY = 'sigrid_studio_deleted'
+const MAX_DELETED = 200
+
+/** Checks only what the code below relies on. normalize() fills in what older saves don't have. */
+const savedPatternSchema = z.looseObject({
+  id: z.string().min(1),
+  updatedAt: z.number().optional(),
+  sizes: z.array(z.string()).optional(),
+  pieces: z.array(z.looseObject({})).optional(),
+  steps: z.array(z.looseObject({})).optional(),
+  fabric: z.looseObject({}).optional(),
+  photo: z.string().optional(),
+})
+
+/** Null when this saved value can't become a pattern. Its key is left alone, so it isn't lost. */
+function readSaved(value: unknown, photo: string | null): StudioPattern | null {
+  const parsed = savedPatternSchema.safeParse(value)
+  if (!parsed.success) return null
   try {
-    const raw = localStorage.getItem(KEY)
-    return raw ? (JSON.parse(raw) as StudioPattern[]).map(normalize) : []
+    const saved = parsed.data as unknown as Saved
+    return normalize(photo ? { ...saved, photo } : saved)
   } catch {
-    return []
+    return null
   }
 }
 
-function writeAll(patterns: StudioPattern[]) {
+const parseJson = (raw: string): unknown => {
   try {
-    localStorage.setItem(KEY, JSON.stringify(patterns))
-  } catch {}
+    return JSON.parse(raw)
+  } catch {
+    return undefined
+  }
+}
+
+const deletedIds = (): string[] => {
+  const result = readJson(DELETED_KEY, z.array(z.string()))
+  return result.status === 'ok' ? result.value : []
+}
+
+/** Writes the two keys of one pattern. Keeps the photo out of the text, and skips what hasn't changed. */
+function writeOne(pattern: StudioPattern, write: typeof writeRaw): WriteResult {
+  const { photo, ...rest } = pattern
+  const text = JSON.stringify(rest)
+  const key = patternKey(pattern.id)
+  if (readRaw(key) !== text) {
+    const result = write(key, text)
+    if (!result.ok) return result
+  }
+  const pk = photoKey(pattern.id)
+  if (!photo) removeRaw(pk)
+  else if (readRaw(pk) !== photo) return write(pk, photo)
+  return { ok: true }
+}
+
+/**
+ * Moves the old all-in-one list to separate keys. The old list is removed first, because storage
+ * may not have room for both; localStorage is synchronous, so if a write fails the list goes
+ * straight back and nothing is lost. It's then still read by legacyPatterns().
+ */
+function migrateLegacy() {
+  const raw = readRaw(LEGACY_KEY)
+  if (raw === null) return
+  const items = parseJson(raw)
+  if (!Array.isArray(items)) {
+    if (keepCorruptCopy(LEGACY_KEY, raw)) removeRaw(LEGACY_KEY)
+    announceStorageProblem('unreadable')
+    return
+  }
+  const patterns = items.map((item) => readSaved(item, null))
+  const unreadable = items.filter((_, i) => !patterns[i])
+
+  removeRaw(LEGACY_KEY)
+  const written: string[] = []
+  for (const p of patterns) {
+    // Already moved, and maybe edited since: the separate key is the newer one
+    if (!p || readRaw(patternKey(p.id)) !== null) continue
+    written.push(p.id)
+    if (!writeOne(p, tryWriteRaw).ok) {
+      for (const id of written) {
+        removeRaw(patternKey(id))
+        removeRaw(photoKey(id))
+      }
+      tryWriteRaw(LEGACY_KEY, raw)
+      return
+    }
+  }
+  if (unreadable.length > 0) {
+    keepCorruptCopy(LEGACY_KEY, JSON.stringify(unreadable))
+    announceStorageProblem('unreadable')
+  }
+}
+
+/** What's still in the old list because moving it failed; normally nothing */
+function legacyPatterns(): StudioPattern[] {
+  const raw = readRaw(LEGACY_KEY)
+  const items = raw === null ? null : parseJson(raw)
+  if (!Array.isArray(items)) return []
+  return items.map((item) => readSaved(item, null)).filter((p): p is StudioPattern => !!p)
+}
+
+export function loadPatterns(): StudioPattern[] {
+  migrateLegacy()
+  const byId = new Map<string, StudioPattern>()
+  for (const p of legacyPatterns()) byId.set(p.id, p)
+  let unreadable = false
+  for (const key of storedKeys(patternKeyPrefix)) {
+    const id = key.slice(patternKeyPrefix.length)
+    const p = readSaved(parseJson(readRaw(key) ?? ''), readRaw(photoKey(id)))
+    if (p) byId.set(p.id, p)
+    else unreadable = true
+  }
+  if (unreadable) announceStorageProblem('unreadable')
+  for (const id of deletedIds()) byId.delete(id)
+  // Ids start with the time they were made, so this is newest first, and editing doesn't reorder
+  return [...byId.values()].sort((a, b) => (a.id < b.id ? 1 : a.id > b.id ? -1 : 0))
 }
 
 export function loadPattern(id: string): StudioPattern | null {
   return loadPatterns().find((p) => p.id === id) ?? null
 }
 
-export function savePattern(pattern: StudioPattern) {
-  const all = loadPatterns()
-  const i = all.findIndex((p) => p.id === pattern.id)
-  if (i === -1) all.unshift(pattern)
-  else all[i] = pattern
-  writeAll(all)
+/**
+ * Saves one pattern, unless it has been deleted or another tab has saved something newer. Those
+ * aren't failures: that tab's work is the one to keep, and this tab catches up from it.
+ */
+export function savePattern(pattern: StudioPattern): WriteResult {
+  migrateLegacy()
+  if (deletedIds().includes(pattern.id)) return { ok: true }
+  const stored = readRaw(patternKey(pattern.id))
+  const saved = stored === null ? null : savedPatternSchema.safeParse(parseJson(stored))
+  if (saved?.success && (saved.data.updatedAt ?? 0) > pattern.updatedAt) return { ok: true }
+  return writeOne(pattern, writeRaw)
 }
 
 export function deletePattern(id: string) {
-  writeAll(loadPatterns().filter((p) => p.id !== id))
+  migrateLegacy()
+  removeRaw(patternKey(id))
+  removeRaw(photoKey(id))
+  writeRaw(DELETED_KEY, JSON.stringify([...deletedIds().filter((d) => d !== id), id].slice(-MAX_DELETED)))
 }
 
 export function createPattern(): StudioPattern {

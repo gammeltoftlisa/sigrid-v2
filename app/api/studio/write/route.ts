@@ -1,6 +1,7 @@
 import { createTextStreamResponse, Output, streamText, toTextStream } from 'ai'
 
 import { clientIp, rateLimit } from '@/lib/rate-limit'
+import { errorMessage, logEvent } from '@/lib/server/log'
 import { STUDIO_AI_ENABLED } from '@/lib/studio/flags'
 import { guideDraftSchema, writeRequestSchema } from '@/lib/studio/schema'
 
@@ -12,6 +13,8 @@ const LIMIT = 10
 const WINDOW_MS = 60_000
 
 const MODEL = 'anthropic/claude-sonnet-5'
+// Room for the longest guide the request schema allows, and a cap on what one request can cost
+const MAX_OUTPUT_TOKENS = 32_000
 
 const SYSTEM = `You write step-by-step sewing guides for Sigrid, an app where pattern makers sell patterns and first-time sewers follow them.
 
@@ -74,8 +77,11 @@ export async function POST(request: Request) {
     system: SYSTEM,
     prompt,
     output: Output.object({ schema: guideDraftSchema }),
+    maxOutputTokens: MAX_OUTPUT_TOKENS,
+    // When the maker leaves, stop writing and stop paying for it
+    abortSignal: request.signal,
     onError({ error }) {
-      console.error('[studio/write]', error)
+      logEvent('error', 'studio.write', { error: errorMessage(error) })
     },
   })
 

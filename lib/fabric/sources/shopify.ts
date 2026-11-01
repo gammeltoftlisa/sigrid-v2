@@ -1,5 +1,10 @@
+import { failureOf, fetchJson } from '@/lib/server/fetch-with-retry'
+import { createLimiter } from '@/lib/server/limit'
+import { logEvent } from '@/lib/server/log'
+
 import type { FabricCondition, FabricListing, FabricQuery } from '../types'
 import { withReferral } from './referral'
+import { catalogProduct, catalogResponse, parseEach, productResponse, suggestProduct, suggestResponse } from './schemas'
 
 /**
  * Independent fabric shops that run on Shopify. Every Shopify store exposes a public,
@@ -31,19 +36,11 @@ export const shopifyShops: ShopifyShop[] = [
   { id: 'fabworks', name: 'Fabworks', origin: 'https://www.fabworks.co.uk', currency: 'GBP', unitMeters: 0.5, shipsFrom: 'GB', condition: 'deadstock' },
 ]
 
-interface SuggestProduct {
+interface Variant {
   id: number
   title: string
-  handle: string
-  available: boolean
-  body?: string
-  type?: string
-  tags?: string[]
-  image?: string | null
-}
-
-interface ProductJson {
-  product: { variants: { id: number; title: string; price: string; available?: boolean }[] }
+  price: string
+  available?: boolean
 }
 
 /**
@@ -56,6 +53,20 @@ const headersFor = (shop: ShopifyShop) => ({
   Cookie: `localization=${shop.shipsFrom}; cart_currency=${shop.currency}`,
 })
 const REVALIDATE = 60 * 60
+
+/**
+ * Every shop here runs on Shopify, which limits requests per visitor across all its shops: asking
+ * six shops at once brings 429s with a Retry-After of a minute, even though one shop alone is fine.
+ * So they share one line. Two at a time comes to about 15 requests a second, which it accepts, and
+ * answers already cached for the hour come back at once. A search is only slow the first time.
+ */
+const limit = createLimiter(2)
+
+/** What one shop answered. `incomplete` means some of its products couldn't be read this time. */
+export interface ShopAnswer {
+  listings: FabricListing[]
+  incomplete?: boolean
+}
 
 /** Products that are not yardage sold by length: fixed remnants, samples, notions, patterns */
 const NOT_YARDAGE = /\b(remnants?|coupons?|bundles?|scraps?|samples?|swatch(es)?|patterns?|kits?|books?|gift ?cards?|threads?|zips?|buttons?|needles?|interfacing|bias binding|tape)\b/i
@@ -97,7 +108,7 @@ function parseWidth(text: string): number | undefined {
 const cleanTitle = (t: string) => t.replace(/^tissu\s+/i, '').replace(/["“”]/g, '').trim()
 
 interface ProductBasics {
-  id: number
+  id: number | string
   title: string
   handle: string
   body: string
@@ -137,21 +148,21 @@ function toListing(
   }
 }
 
-const pickVariant = (variants: ProductJson['product']['variants']) =>
+const pickVariant = (variants: Variant[]) =>
   variants.find((v) => v.available !== false && !NOT_CUT_VARIANT.test(v.title)) ?? null
 
 /** Search one shop for a fabric (or notion) by keyword */
-export async function searchShopify(shop: ShopifyShop, query: FabricQuery): Promise<FabricListing[]> {
+export async function searchShopify(shop: ShopifyShop, query: FabricQuery, deadlineAt: number): Promise<ShopAnswer> {
   const base = `${shop.origin}${shop.localePath ?? ''}`
   const params = new URLSearchParams({ q: query.q, 'resources[type]': 'product', 'resources[limit]': '10' })
-  const res = await fetch(`${base}/search/suggest.json?${params}`, {
-    headers: headersFor(shop),
-    next: { revalidate: REVALIDATE },
-    signal: AbortSignal.timeout(8000),
-  })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const data = (await res.json()) as { resources?: { results?: { products?: SuggestProduct[] } } }
-  const products = data.resources?.results?.products ?? []
+  const data = await limit(() =>
+    fetchJson(`${base}/search/suggest.json?${params}`, { headers: headersFor(shop), next: { revalidate: REVALIDATE } }, suggestResponse, {
+      op: 'fabric.shopify.search',
+      source: shop.id,
+      deadlineAt,
+    }),
+  )
+  const products = parseEach(data.resources?.results?.products ?? [], suggestProduct, 'fabric.shopify.search', shop.id)
 
   const terms = query.match.map((t) => t.toLowerCase())
   const matching = products
@@ -163,59 +174,61 @@ export async function searchShopify(shop: ShopifyShop, query: FabricQuery): Prom
     })
     .slice(0, query.limit)
 
-  const listings = await Promise.all(
-    matching.map(async (p): Promise<FabricListing | null> => {
-      // Suggest results carry no variant ids, and their price can be a sample's; read the product itself
-      const pr = await fetch(`${shop.origin}/products/${encodeURIComponent(p.handle)}.json`, {
-        headers: headersFor(shop),
-        next: { revalidate: REVALIDATE },
-        signal: AbortSignal.timeout(8000),
-      })
-      if (!pr.ok) return null
-      const variant = pickVariant(((await pr.json()) as ProductJson).product.variants)
-      if (!variant) return null
-      return toListing(shop, { ...p, body: p.body ?? '', tags: p.tags ?? [] }, variant, query.kind)
-    }),
+  // Suggest results carry no variant ids, and their price can be a sample's; read the product itself.
+  // Each product stands alone: one that's slow or odd shouldn't cost the rest of the shop.
+  const settled = await Promise.allSettled(
+    matching.map((p) =>
+      limit(() =>
+        fetchJson(`${shop.origin}/products/${encodeURIComponent(p.handle)}.json`, { headers: headersFor(shop), next: { revalidate: REVALIDATE } }, productResponse, {
+          op: 'fabric.shopify.product',
+          source: shop.id,
+          deadlineAt,
+        }),
+      ),
+    ),
   )
-  return listings.filter((l): l is FabricListing => l !== null)
-}
+  const failed = settled.filter((r) => r.status === 'rejected')
+  if (failed.length > 0) {
+    logEvent('warn', 'fabric.shopify.products', { source: shop.id, failed: failed.length, total: matching.length, ...failureOf(failed[0].reason) })
+    // Nothing came back at all: the shop is down, which isn't the same as having no such fabric
+    if (failed.length === matching.length) throw failed[0].reason
+  }
 
-interface CatalogProduct {
-  id: number
-  title: string
-  handle: string
-  body_html: string | null
-  product_type: string
-  tags: string[] | string
-  variants: { id: number; title: string; price: string; available?: boolean }[]
-  images: { src: string }[]
+  const found = settled.map((r, i): FabricListing | null => {
+    if (r.status === 'rejected') return null
+    const p = matching[i]
+    const variant = pickVariant(r.value.product.variants)
+    return variant ? toListing(shop, { ...p, body: p.body ?? '', tags: p.tags ?? [] }, variant, query.kind) : null
+  })
+  return { listings: found.filter((l): l is FabricListing => l !== null), incomplete: failed.length > 0 }
 }
 
 /**
  * The shop's latest products, kept to dress fabric only: for browsing the whole store
  * when no garment is chosen. One request per shop, since the feed already has variants.
  */
-export async function browseShopify(shop: ShopifyShop, limit: number): Promise<FabricListing[]> {
-  const res = await fetch(`${shop.origin}/products.json?limit=60`, {
-    headers: headersFor(shop),
-    next: { revalidate: REVALIDATE },
-    signal: AbortSignal.timeout(8000),
-  })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const { products } = (await res.json()) as { products: CatalogProduct[] }
+export async function browseShopify(shop: ShopifyShop, count: number, deadlineAt: number): Promise<FabricListing[]> {
+  const data = await limit(() =>
+    fetchJson(`${shop.origin}/products.json?limit=60`, { headers: headersFor(shop), next: { revalidate: REVALIDATE } }, catalogResponse, {
+      op: 'fabric.shopify.browse',
+      source: shop.id,
+      deadlineAt,
+    }),
+  )
+  const products = parseEach(data.products, catalogProduct, 'fabric.shopify.browse', shop.id)
 
   const out: FabricListing[] = []
   for (const p of products) {
-    if (out.length >= limit) break
+    if (out.length >= count) break
     if (NOT_YARDAGE.test(p.title) || NOT_APPAREL.test(p.title)) continue
-    const tags = Array.isArray(p.tags) ? p.tags : p.tags.split(',').map((t) => t.trim())
+    const tags = Array.isArray(p.tags) ? p.tags : (p.tags ?? '').split(',').map((t) => t.trim())
     const body = p.body_html ?? ''
     // A dress fabric says it is one, or states its fibres
-    const isFabric = /fabric|jersey|knit|woven|tissu/i.test(p.product_type) || !!parseComposition(stripHtml(body))
+    const isFabric = /fabric|jersey|knit|woven|tissu/i.test(p.product_type ?? '') || !!parseComposition(stripHtml(body))
     if (!isFabric) continue
     const variant = pickVariant(p.variants)
     if (!variant) continue
-    const listing = toListing(shop, { id: p.id, title: p.title, handle: p.handle, body, tags, image: p.images[0]?.src }, variant, 'fabric')
+    const listing = toListing(shop, { id: p.id, title: p.title, handle: p.handle, body, tags, image: p.images?.[0]?.src }, variant, 'fabric')
     if (listing) out.push(listing)
   }
   return out

@@ -1,3 +1,7 @@
+import { z } from 'zod'
+
+import { readJson, writeRaw } from './local-store'
+import { allSizes } from './sizes'
 import type { StandardSize } from './types'
 
 /** A started project: the size is chosen once up front, then progress builds on it. */
@@ -9,19 +13,17 @@ export interface ProjectState {
 
 const key = (garmentId: string) => `sigrid_project_${garmentId}`
 
+const projectSchema = z.object({
+  // The guide looks the size up in a table, so one it doesn't know would crash it
+  size: z.custom<StandardSize>((s) => allSizes.includes(s as StandardSize)),
+  completedUntil: z.number().int().min(0),
+})
+
 export function loadProject(garmentId: string): ProjectState | null {
-  try {
-    const raw = localStorage.getItem(key(garmentId))
-    if (!raw) return null
-    const p = JSON.parse(raw) as ProjectState
-    return p && typeof p.size === 'string' && typeof p.completedUntil === 'number' ? p : null
-  } catch {
-    return null
-  }
+  const result = readJson(key(garmentId), projectSchema)
+  return result.status === 'ok' ? result.value : null
 }
 
 export function saveProject(garmentId: string, project: ProjectState) {
-  try {
-    localStorage.setItem(key(garmentId), JSON.stringify(project))
-  } catch {}
+  writeRaw(key(garmentId), JSON.stringify(project))
 }

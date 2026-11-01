@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react'
+import { z } from 'zod'
 
+import { parseStored, readRaw, validEntries, writeRaw } from '../local-store'
 import { withReferral } from './sources/referral'
 import type { FabricListing } from './types'
 
@@ -15,29 +17,41 @@ const KEY = 'sigrid_fabric_bag'
 const EVENT = 'sigrid-bag-change'
 const EMPTY: BagItem[] = []
 
+const httpsUrl = z.string().refine((u) => u.startsWith('https://'))
+
+/** What the bag and its checkout links rely on. A bag saved by an older version may not have all of it. */
+const bagItemSchema = z.looseObject({
+  units: z.number().int().positive(),
+  garmentId: z.string(),
+  listing: z.looseObject({
+    id: z.string().min(1),
+    sourceId: z.string(),
+    sourceName: z.string(),
+    title: z.string(),
+    url: httpsUrl,
+    currency: z.string(),
+    unitPrice: z.number().positive(),
+    checkout: z.discriminatedUnion('kind', [
+      z.looseObject({ kind: z.literal('shopify-cart'), origin: httpsUrl, variantId: z.number() }),
+      z.looseObject({ kind: z.literal('link') }),
+    ]),
+  }),
+})
+
 let cachedRaw: string | null = null
 let cached: BagItem[] = EMPTY
 
 function read(): BagItem[] {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem(KEY)
-  } catch {}
+  const raw = readRaw(KEY)
   if (raw === cachedRaw) return cached
   cachedRaw = raw
-  try {
-    const parsed = raw ? (JSON.parse(raw) as BagItem[]) : EMPTY
-    cached = Array.isArray(parsed) ? parsed.filter((i) => i?.listing?.id && i.units > 0) : EMPTY
-  } catch {
-    cached = EMPTY
-  }
+  const result = parseStored(KEY, raw, z.array(z.unknown()))
+  cached = result.status === 'ok' ? (validEntries(result.value, bagItemSchema) as unknown as BagItem[]) : EMPTY
   return cached
 }
 
 function write(items: BagItem[]) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(items))
-  } catch {}
+  writeRaw(KEY, JSON.stringify(items))
   window.dispatchEvent(new Event(EVENT))
 }
 
@@ -67,6 +81,8 @@ export function removeFromBag(listingId: string) {
 }
 
 export interface BagGroup {
+  /** Unique per group: one marketplace can have sellers in different currencies */
+  key: string
   sourceId: string
   sourceName: string
   currency: string
@@ -76,12 +92,14 @@ export interface BagGroup {
   cartUrl: string | null
 }
 
-/** One group per shop, since every shop has its own checkout */
+/** One group per shop, since every shop has its own checkout, and per currency, since a total can't mix them */
 export function groupBag(items: BagItem[]): BagGroup[] {
   const groups = new Map<string, BagGroup>()
   for (const item of items) {
     const { listing } = item
-    const g = groups.get(listing.sourceId) ?? {
+    const key = `${listing.sourceId}:${listing.currency}`
+    const g = groups.get(key) ?? {
+      key,
       sourceId: listing.sourceId,
       sourceName: listing.sourceName,
       currency: listing.currency,
@@ -91,7 +109,7 @@ export function groupBag(items: BagItem[]): BagGroup[] {
     }
     g.items.push(item)
     g.total += listing.unitPrice * item.units
-    groups.set(listing.sourceId, g)
+    groups.set(key, g)
   }
   for (const g of groups.values()) {
     const carts = g.items.map((i) => i.listing.checkout)
