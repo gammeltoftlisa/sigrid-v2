@@ -91,7 +91,7 @@ export default function StudioPage() {
           <EmptyContent>{newButton}</EmptyContent>
         </Empty>
       ) : (
-        <Panel label="Your patterns" meta={patterns.length || undefined}>
+        <Panel glass label="Your patterns" meta={patterns.length || undefined}>
           {patterns.map((p) => {
             const toFill = WIZARD.filter((w) => w.id !== 'publish')
             const done = toFill.filter((w) => isDone(w.id, p)).length

@@ -43,7 +43,7 @@ Themes: `next-themes` sets `<html data-theme="light|dark">` (system by default, 
 | --- | --- | --- |
 | `--app-bg` → `background` | `#EFEADE` / `#15110D` | The page, under the atmosphere |
 | `--app-panel` | `#FFFFFF` / `#1C1C1C` | Solid surfaces; neutral, only the page is warm |
-| `--glass-fill` / `-inset` / `-solid` / `-bar` / `-menu` | `--glass-fill` white at 45% (7% on dark), `-inset` transparent, `-solid` / `-bar` / `-menu` white at 80 / 78 / 90% (near-black on dark) | Every glass surface |
+| `--glass-fill` / `-inset` / `-solid` / `-bar` / `-menu` | `--glass-fill` white at 20% (5% on dark), `-inset` transparent, `-solid` / `-bar` / `-menu` white at 80 / 78 / 90% (near-black on dark) | Every glass surface |
 | `--app-elev` | `#FFFFFF` / `#2B2B2B` | Solid fills, such as a focused field |
 | `card` → `--glass-inset` | see above | Insets: what sits on glass |
 | `--app-text` → `foreground` | `#211C16` / `#F0ECE1` | Text |
@@ -62,9 +62,11 @@ Themes: `next-themes` sets `<html data-theme="light|dark">` (system by default, 
 
 **Everything sits in a container, never on the background.** Only titles, body text, buttons and button groups may sit directly on the page.
 
-**Products have their own container.** A product (photo plus text) always sits in `ProductGrid`: a solid fill a little lighter than the page (`--product-fill`) with the page's dots. A page shares one container for all its products, with a stroke between them instead of a box around each. The same goes for products in a labelled section (`ProductGrid label="…"`). Never put products directly on the background or in a glass `Panel`. A single large photo uses `ProductFrame`.
+**Products and reading have their own container.** A product (photo plus text) always sits in `ProductGrid`: a solid fill a little lighter than the page (`--product-fill`) with the page's dots. A page shares one container for all its products, with a stroke between them instead of a box around each. The same goes for products in a labelled section (`ProductGrid label="…"`). Never put products directly on the background or in a glass `Panel`. A single large photo uses `ProductFrame`.
 
-Glass is **one material, whatever its size**: white: a white tint (`--glass-fill`) + `--glass-blur` + a 1px top edge. `--glass-blur` drains the colour, lifts it towards white and blurs. Never darken it or raise its contrast: that turns small differences in the page into gray. A panel, a secondary button and a button group look the same. Whatever sits inside glass adds no fill of its own (`--glass-inset`), so it looks the same there as on the page. Only the page is warm: no cream tints on glass and no `saturate()`, which turns the warm page yellow. Only surfaces that text scrolls under are thicker: fixed bars, sheets and dialogs, menus. `Atmosphere` (in the root layout) draws the mat and a stipple of tiny dots behind every screen. No drifting blobs, no moving fades.
+**Glass is only for things you act on:** buttons, button groups, fields, the rail and tab bar, menus, dialogs, and panels of controls (`<Panel glass>`, such as Browse in Find fabric, the guide's step list and Profile's settings). Products and anything you only read use the solid container: `ProductGrid`, or `Panel` without `glass`, such as dashboard stats and step instructions.
+
+Glass is **one material, whatever its size**: white and see-through, a white tint (`--glass-fill`) + `--glass-blur` + a 1px top edge. `--glass-blur` drains the colour, maps the page to near white and raises the difference between the page and the mat's lines, so they show softly blurred through it. Tune brightness and contrast together: if the page lands below near white, glass turns gray. A panel, a secondary button and a button group look the same. Whatever sits inside glass adds no fill of its own (`--glass-inset`), so it looks the same there as on the page. Only the page is warm: no cream tints on glass and no `saturate()`, which turns the warm page yellow. Only surfaces that text scrolls under are thicker: fixed bars, sheets and dialogs, menus. `Atmosphere` (in the root layout) draws the mat and a stipple of tiny dots behind every screen. No drifting blobs, no moving fades.
 
 | Material | What | How |
 | --- | --- | --- |
@@ -167,7 +169,7 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 | Filter by category | `CategoryTabs` |
 | Filter the fabric store | `FabricFilterGroups` + `ActiveFilters` |
 | Buying fabric for a garment | `GarmentThumb` before the garment field, metres in the panel meta, `FabricChoices` chips (its recommended fabrics, all or one) |
-| Group things | `Panel` (glass), rows in `PanelRow`, plain white blocks in `Inset` |
+| Group things | `Panel` (solid; `glass` when it holds controls), rows in `PanelRow`, plain white blocks in `Inset` |
 | Label–value details | `DetailList` |
 | Any products, on a page or in a section | One `ProductGrid` around a `tiles` grid, with a stroke between products |
 | One large product photo | `ProductFrame` around `GarmentImage` |

@@ -16,11 +16,11 @@ export function AccountPanel() {
   const { openUserProfile, signOut } = useClerk()
   const purchases = usePurchases()
 
-  if (!isLoaded) return <Panel label="Account"><p className="px-1 text-sm text-muted-foreground">Checking…</p></Panel>
+  if (!isLoaded) return <Panel glass label="Account"><p className="px-1 text-sm text-muted-foreground">Checking…</p></Panel>
 
   if (!isSignedIn) {
     return (
-      <Panel label="Account">
+      <Panel glass label="Account">
         <p className="px-1 pb-2 text-sm text-muted-foreground">Log in to keep your projects and progress on all your devices. Browsing needs no account.</p>
         <div className="flex flex-wrap gap-2">
           <Button nativeButton={false} render={<Link href="/sign-in?redirect_url=/profile" />}>Log in</Button>
@@ -31,7 +31,7 @@ export function AccountPanel() {
   }
 
   return (
-    <Panel label="Account">
+    <Panel glass label="Account">
       <p className="truncate px-1 pb-2 text-sm">{user.primaryEmailAddress?.emailAddress}</p>
       {paymentsEnabled && purchases.garmentIds.map((id) => (
         <PanelRow key={id} href={`/garment/${id}`} title={getCatalogItem(id)?.name ?? id} detail="Your pattern" />

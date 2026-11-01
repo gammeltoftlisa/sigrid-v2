@@ -214,17 +214,19 @@
   /* One glass everywhere, whatever its size. What sits inside glass adds no fill of its own
      (--glass-inset), so a button in a panel looks the same as a button on the page. Only things that
      text scrolls under are thicker.
-     Glass is white: a white tint over a real blur. --glass-blur drains the warm page and lifts it
-     towards white. Never darken it or raise its contrast: that turns small differences in the page
-     into gray, which was the bug. It only suits the quiet page: over photos use --glass-blur-solid. */
-  --glass-fill: rgb(255 255 255 / 0.45);
+     Glass is white and see-through, and only on things you act on: buttons, fields, the rail, panels of
+     controls. --glass-blur drains the warm page, maps it to near white and doubles the difference between
+     the page and the mat's lines, so they show softly blurred through it. The net is too faint to survive
+     otherwise. Tune brightness and contrast together: the page must land near white. If it lands lower,
+     glass turns gray, which was a bug. It only suits the quiet page: over photos use --glass-blur-solid. */
+  --glass-fill: rgb(255 255 255 / 0.2);
   --glass-inset: transparent;
   --glass-hover: rgb(255 255 255 / 0.72);
   --glass-fill-solid: rgb(255 255 255 / 0.8);
   --glass-fill-bar: rgb(255 255 255 / 0.78);
   --glass-fill-menu: rgb(255 255 255 / 0.9);
   --glass-edge: inset 0 1px 0 var(--sheen), 0 10px 30px -24px rgb(0 0 0 / 0.2);
-  --glass-blur: saturate(0) brightness(1.08) blur(8px);
+  --glass-blur: saturate(0) brightness(0.74) contrast(2.6) blur(3px);
   --glass-blur-solid: blur(24px);
   --glass: var(--glass-tint);
   --glass-strong: color-mix(in srgb, var(--app-panel) 94%, transparent);
@@ -243,8 +245,8 @@
   --app-bg: var(--bg-dark);
   --app-panel: #1C1C1C;
   --app-elev: #2B2B2B;
-  --glass-fill: rgb(255 255 255 / 0.07);
-  --glass-blur: saturate(0) blur(8px);
+  --glass-fill: rgb(255 255 255 / 0.05);
+  --glass-blur: saturate(0) brightness(1.8) blur(3px);
   --glass-hover: rgb(255 255 255 / 0.1);
   --glass-fill-solid: rgb(32 32 32 / 0.66);
   --glass-fill-bar: rgb(32 32 32 / 0.62);
@@ -618,7 +620,7 @@ body { background: transparent !important; isolation: isolate; }
 :root *, :root *::before, :root *::after { border-color: var(--app-border); }
 
 .glass-surface, .glass-panel, .glass-control,
-:root :is([data-slot="card"]:not([data-variant="product"]), [data-slot="alert"], [data-slot="empty"].border),
+:root [data-slot="card"]:not([data-variant="product"]),
 .glass, .glass-bar, .glass-surface-soft,
 :root [data-slot="sheet-content"], :root [data-slot="dialog-content"], :root [data-slot="alert-dialog-content"], :root [data-slot="drawer-content"] {
   background-color: var(--glass-fill) !important;
@@ -714,7 +716,7 @@ body { background: transparent !important; isolation: isolate; }
 /* A row being dragged floats over other rows: it has to be solid */
 :root .bg-card.z-20 { background-color: var(--app-elev) !important; }
 /* Cards and rows sitting directly on the page (bg-card) are the same glass; inside glass they stay insets */
-:root .bg-card:not([data-variant="product"]):not(:is(.glass, .glass-bar, .glass-surface, .glass-surface-soft, .glass-panel, .glass-control, .guide-sheet, .done-dialog, .bg-card, [data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="drawer-content"], [data-slot="card"]:not([data-variant="product"])) *) {
+:root .bg-card:not([data-variant="product"]):not(:is(.product-grid, .glass, .glass-bar, .glass-surface, .glass-surface-soft, .glass-panel, .glass-control, .guide-sheet, .done-dialog, .bg-card, [data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="drawer-content"], [data-slot="card"]:not([data-variant="product"])) *) {
   background-color: var(--glass-fill);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
@@ -877,6 +879,14 @@ body { background: transparent !important; isolation: isolate; }
 }
 /* An avatar overlapping a photo needs its own solid fill */
 :root .product-grid [data-slot="avatar-fallback"] { background-color: var(--product-fill) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* Things you read rather than act on share the product container: a Panel without `glass`, notices, empty states */
+:root :is([data-slot="alert"], [data-slot="empty"].border) {
+  background-color: var(--product-fill);
+  border: 1px dashed var(--app-border-strong) !important;
+}
+.solid-panel { border-color: var(--app-border-strong); }
+.solid-panel .bg-card:not(.border) { box-shadow: inset 0 0 0 1px var(--app-border); }
 
 /* ─── Login: Clerk's screens in the same glass (app/(main)/sign-in, sign-up) ─── */
 .auth-page { display: flex; justify-content: center; padding: 3rem 1rem; }

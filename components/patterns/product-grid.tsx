@@ -1,7 +1,7 @@
 import { cn } from 'cn'
 
 /** The page's tiny dots, drawn from the pattern that Atmosphere defines for the whole document */
-function Stipple() {
+export function Stipple() {
   return (
     <svg aria-hidden className="stipple">
       <rect width="100%" height="100%" fill="url(#stipple-dots)" />

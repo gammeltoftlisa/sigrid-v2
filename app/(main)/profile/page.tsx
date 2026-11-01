@@ -98,25 +98,25 @@ export default function ProfilePage() {
 
       <div className="grid-12">
         <div className="col-side flex flex-col gap-6">
-        <Panel label="Profile picture">
+        <Panel glass label="Profile picture">
           <ProfilePhoto />
         </Panel>
         <AccountPanel />
-        <Panel label="Your data" footer={deleteButton}>
+        <Panel glass label="Your data" footer={deleteButton}>
           <p className="px-1 text-sm text-muted-foreground">
-            Your projects, progress, size and photo are saved on this device only, even when you’re logged in. To delete your account, use Manage account.{' '}
+            Logged in, your projects, progress and size are saved on your account. Logged out, they stay on this device. Your photo and fabric bag always stay on this device. To delete your account, use Manage account.{' '}
             <Link href="/legal/privacy" className="text-foreground underline underline-offset-4">Privacy policy</Link>
           </p>
         </Panel>
         </div>
 
         <div className="col-main flex flex-col gap-6">
-          <Panel label="My size" meta={size ? sizeLabel(size) : 'Not set'}>
+          <Panel glass label="My size" meta={size ? sizeLabel(size) : 'Not set'}>
             <p className="px-1 pb-2 text-sm text-muted-foreground">New patterns start in this size.</p>
             <SizePicker sizes={allSizes} value={size} onValueChange={selectSize} label="My usual size" />
           </Panel>
 
-          <Panel label="Appearance">
+          <Panel glass label="Appearance">
             <p className="px-1 pb-2 text-sm text-muted-foreground">Light, dark, or the same as your device.</p>
             {mounted && (
               <CategoryTabs
@@ -128,7 +128,7 @@ export default function ProfilePage() {
             )}
           </Panel>
 
-          <Panel label="Settings">
+          <Panel glass label="Settings">
             <PanelRow
               leading={
                 <StepDot state="upcoming">

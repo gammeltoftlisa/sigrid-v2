@@ -223,6 +223,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
         <div className="col-side flex flex-col gap-6">
           {garment && need && size && meters ? (
             <Panel
+              glass
               label="What you’re making"
               meta={<span aria-label={`You need ${formatMeters(meters)}`}>Need {formatMeters(meters)}</span>}
               action={clearAction}
@@ -453,7 +454,7 @@ function StorePanel({
   const categoryItems = [{ value: 'all', label: 'All fabric' }, ...departments.map((d) => ({ value: d.id, label: d.name }))]
 
   return (
-    <Panel label="Browse" action={action}>
+    <Panel glass label="Browse" action={action}>
         <form
           role="search"
           onSubmit={(e) => {

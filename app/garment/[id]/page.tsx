@@ -175,6 +175,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
 
             {/* One container: the rows scroll inside it if needed, the main button is always visible at its bottom */}
             <Panel
+              glass
               className="md:min-h-0"
               bodyClassName="md:overflow-y-auto"
               footer={<div className="hidden md:block">{cta}</div>}
