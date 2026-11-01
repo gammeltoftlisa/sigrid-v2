@@ -182,3 +182,9 @@ export interface GarmentGuide {
   /** The maker's icon per section title (keys of the studio's section icons) */
   sectionIcons?: Record<string, string>
 }
+
+/** A guide's outline: see getGuideOutline in lib/data.ts */
+export interface GuideOutline {
+  steps: { title: string; tool?: SewingStep2D['tool'] }[]
+  pieces: number
+}

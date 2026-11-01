@@ -1,9 +1,10 @@
 'use client'
 
-import { use, useMemo, useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { IconChevronLeft, IconPrinter } from '@tabler/icons-react'
-import { getGarmentById, getGarmentGuide, standardSizes } from '@/lib/data'
+import { getGarmentById, standardSizes } from '@/lib/data'
+import { useGarmentGuide } from '@/hooks/use-garment-guide'
 import { loadProject } from '@/lib/projects'
 import { allSizes, sizeLabel } from '@/lib/sizes'
 import { Button } from '@/components/ui/button'
@@ -110,8 +111,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
   const router = useRouter()
   const searchParams = useSearchParams()
   const garment = getGarmentById(id)
-  // Stable per id: a published pattern's guide is rebuilt from storage on every call
-  const guide = useMemo(() => getGarmentGuide(id), [id])
+  const { guide, state: guideState, retry: retryGuide } = useGarmentGuide(id)
 
   // Size comes from the link (so the right size always prints), else the saved project
   const [size, setSize] = useState<StandardSize | null>(null)
@@ -130,10 +130,10 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
 
   // Open the print dialog once the pieces are drawn, when asked to
   useEffect(() => {
-    if (!ready || !size || searchParams.get('print') !== 'true') return
+    if (!ready || !size || guideState !== 'ready' || searchParams.get('print') !== 'true') return
     const t = setTimeout(() => window.print(), 300)
     return () => clearTimeout(t)
-  }, [ready, size, searchParams])
+  }, [ready, size, guideState, searchParams])
 
   const header = (
     <div className="top-bar flex h-14 shrink-0 items-center gap-1 px-4 md:px-8 print:hidden">
@@ -150,7 +150,26 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
     </div>
   )
 
-  if (!ready) return <div className="min-h-screen">{header}</div>
+  if (!ready || guideState === 'loading') return <div className="min-h-screen">{header}</div>
+
+  // Not bought: the garment page offers it
+  if (guideState === 'locked') {
+    router.replace(`/garment/${id}`)
+    return null
+  }
+
+  if (guideState === 'error') {
+    return (
+      <div className="min-h-screen">
+        {header}
+        <div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
+          <h1 className="text-4xl">The pattern didn’t open</h1>
+          <p className="text-base text-muted-foreground">This is usually a connection problem.</p>
+          <Button className="mt-3" onClick={retryGuide}>Try again</Button>
+        </div>
+      </div>
+    )
+  }
 
   if (!guide || guide.pieces.length === 0) {
     return (

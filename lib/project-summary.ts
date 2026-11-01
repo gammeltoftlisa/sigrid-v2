@@ -1,4 +1,4 @@
-import { garments, getGarmentGuide } from './data'
+import { garments, getGuideOutline } from './data'
 import { listPublishedGarments } from './published'
 import { loadProject, type ProjectState } from './projects'
 import { sizeLabel } from './sizes'
@@ -25,7 +25,7 @@ export function listProjects(): ProjectSummary[] {
     .flatMap((garment) => {
       const project = loadProject(garment.id)
       if (!project) return []
-      const totalSteps = getGarmentGuide(garment.id)?.steps.length ?? 0
+      const totalSteps = getGuideOutline(garment.id)?.steps.length ?? 0
       const done = Math.min(project.completedUntil, totalSteps)
       const finished = totalSteps > 0 && done >= totalSteps
       return [{ garment, project, totalSteps, finished, percent: totalSteps ? Math.round((done / totalSteps) * 100) : 0 }]
@@ -35,7 +35,7 @@ export function listProjects(): ProjectSummary[] {
 
 /** What a project card shows: the garment, the next step and how far along it is */
 export function projectCardData({ garment, project, totalSteps }: ProjectSummary) {
-  const steps = getGarmentGuide(garment.id)?.steps ?? []
+  const steps = getGuideOutline(garment.id)?.steps ?? []
   return {
     name: garment.name,
     photoSrc: garment.photo,
