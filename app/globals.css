@@ -709,7 +709,8 @@ body { background: transparent !important; isolation: isolate; }
    the trailing edge on phones so it's clear there's more */
 :root .scroll-row { scroll-padding-inline: 1rem; scrollbar-width: none; }
 @media (max-width: 639px) {
-  :root .scroll-row { mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent); }
+  /* Hints that a long row scrolls; a few short options fit, so they don't fade */
+  :root .scroll-row:not(:has(> :nth-child(-n+4):last-child)) { mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent); }
 }
 
 /* ─── 12-column grid ──────────────────────────────────────────────────────────

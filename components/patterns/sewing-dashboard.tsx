@@ -93,7 +93,7 @@ export function SewingDashboard({ activity, projects }: { activity: StepDone[]; 
       </Panel>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Panel label="When you sew" className="lg:col-span-2" meta={`${activeDays} days in ${WEEKS} weeks`}>
+        <Panel label="When you sew" className="lg:col-span-2" meta={`${activeDays} ${activeDays === 1 ? 'day' : 'days'} in ${WEEKS} weeks`}>
           <Inset className="overflow-x-auto p-4">
             <div className="flex justify-between gap-1 min-w-88" role="img" aria-label={`Sewing activity over the last ${WEEKS} weeks: ${activeDays} active days`}>
               <div className="mr-1 grid grid-rows-7 gap-1 text-2xs text-muted-foreground" aria-hidden>

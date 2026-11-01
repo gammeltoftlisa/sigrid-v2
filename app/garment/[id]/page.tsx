@@ -153,14 +153,16 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   // Somewhere to go next: the same maker's other patterns, else something at the same level
   const fromMaker = creator ? catalogGarments.filter((g) => g.creatorId === creator.id && g.id !== id) : []
   const more = (fromMaker.length > 0 ? fromMaker : catalogGarments.filter((g) => g.difficulty === garment.difficulty && g.id !== id)).slice(0, 4)
+  // The guide isn't written yet, so it can't be started or bought
+  const comingSoon = mounted && totalSteps === 0
   const sizeRange = `${garment.sizes[0]}–${garment.sizes[garment.sizes.length - 1]}`
 
   const printHref = `/garment/${id}/pattern?print=true${project ? `&size=${project.size}` : ''}`
 
   const cta = (
     <div className="flex flex-col gap-2">
-      <Button size="lg" className="w-full" disabled={paying || (paymentsEnabled && !project && purchases.loading)} onClick={onCta}>
-        {ctaLabel}
+      <Button size="lg" className="w-full" disabled={comingSoon || paying || (paymentsEnabled && !project && purchases.loading)} onClick={onCta}>
+        {comingSoon ? 'Guide coming soon' : ctaLabel}
         {inProgress && <IconArrowRight data-icon="inline-end" />}
       </Button>
     </div>

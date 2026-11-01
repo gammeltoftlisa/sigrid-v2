@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 
-import { getCatalogItem } from '@/lib/data'
+import { getCatalogItem, getGuideOutline } from '@/lib/data'
 import { paymentsEnabled } from '@/lib/payments'
 import { rateLimit } from '@/lib/rate-limit'
 import { hasEntitlement } from '@/lib/server/entitlements'
@@ -28,6 +28,8 @@ export async function POST(request: Request) {
   const { garmentId } = parsed.data
   const item = getCatalogItem(garmentId)
   if (!item) return Response.json({ error: 'Unknown pattern' }, { status: 404 })
+  // Never charge for a pattern that can't be sewn yet
+  if (!getGuideOutline(garmentId)?.steps.length) return Response.json({ error: 'This guide isn’t ready yet' }, { status: 409 })
 
   try {
     if (await hasEntitlement(userId, garmentId)) return Response.json({ error: 'Already yours' }, { status: 409 })

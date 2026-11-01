@@ -206,10 +206,10 @@ function creatorGarment(pattern: Pattern): Garment {
 /** Every pattern Sigrid has, Sigrid's own and the makers', as garments */
 export const catalogGarments: Garment[] = [...garments, ...creatorPatterns.map(creatorGarment)]
 
-/** The easiest patterns to begin with */
+/** The easiest patterns someone can sew today: one without a guide can't be started yet */
 export function easiestPatterns(count: number): Garment[] {
   const order: Difficulty[] = ['Beginner', 'Intermediate', 'Advanced']
-  return [...catalogGarments].sort((a, b) => order.indexOf(a.difficulty) - order.indexOf(b.difficulty)).slice(0, count)
+  return catalogGarments.filter((g) => guideOutlines[g.id]?.steps.length).sort((a, b) => order.indexOf(a.difficulty) - order.indexOf(b.difficulty)).slice(0, count)
 }
 
 export const getGarmentById = (id: string): Garment =>

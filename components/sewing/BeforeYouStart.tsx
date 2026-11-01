@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import { IconPrinter, IconScissors, IconShirt } from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
@@ -22,9 +23,11 @@ export default function BeforeYouStart({
   tools: string
   onReady: () => void
 }) {
+  // Start on the main button, not on the first link
+  const readyButton = useRef<HTMLButtonElement>(null)
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onReady() }}>
-      <DialogContent>
+      <DialogContent initialFocus={readyButton}>
         <DialogHeader>
           <DialogTitle>Before you start</DialogTitle>
           <DialogDescription>Get these ready and the steps go smoothly.</DialogDescription>
@@ -52,7 +55,7 @@ export default function BeforeYouStart({
           )}
         </div>
         <DialogFooter>
-          <Button size="lg" className="w-full" onClick={onReady}>I’m ready</Button>
+          <Button ref={readyButton} size="lg" className="w-full" onClick={onReady}>I’m ready</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

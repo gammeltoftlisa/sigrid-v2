@@ -18,7 +18,7 @@ export function MakerCard({ creator, patterns }: { creator: Creator; patterns: P
           <span className="truncate text-xs text-muted-foreground">{creator.handle}</span>
         </div>
       </div>
-      <p className="line-clamp-2 min-h-10 text-sm text-muted-foreground">{creator.bio}</p>
+      <p className="line-clamp-2 min-h-11 text-sm text-muted-foreground">{creator.bio}</p>
       <div className="grid grid-cols-3 gap-1">
         {patterns.slice(0, 3).map((p) => (
           <GarmentImage
