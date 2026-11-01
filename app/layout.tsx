@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
+import { SewingSync } from '@/components/patterns/sewing-sync'
 import { Be_Vietnam_Pro, Fraunces, JetBrains_Mono } from 'next/font/google'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
@@ -42,6 +43,7 @@ export default function RootLayout({
             <MotionProvider>
               <TooltipProvider>
                 <Atmosphere />
+                <SewingSync />
                 {children}
                 <Toaster position="bottom-center" />
               </TooltipProvider>

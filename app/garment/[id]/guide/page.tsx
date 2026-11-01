@@ -10,6 +10,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { getGarmentById, getGarmentGuide, standardSizes } from '@/lib/data'
 import type { Garment, StandardSize, UserMeasurements } from '@/lib/types'
 import { loadProject, saveProject } from '@/lib/projects'
+import { useSewingVersion } from '@/hooks/use-mounted'
 import { logStepDone } from '@/lib/activity'
 import { sizeLabel } from '@/lib/sizes'
 import SizeSheet from '@/components/garment/SizeSheet'
@@ -57,6 +58,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [doneOpen, setDoneOpen] = useState(false)
   // Bumped when the project restarts so the step list rebuilds from scratch
   const [runId, setRunId] = useState(0)
+  // Re-read when progress made on another device arrives
+  const sewingVersion = useSewingVersion()
 
   useEffect(() => {
     const project = loadProject(id)
@@ -71,7 +74,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     setMeasurements(standardSizes[project.size])
     setCompletedUntil(resumeAt)
     setViewStep(Math.min(resumeAt, last))
-  }, [id, guide, router])
+  }, [id, guide, router, sewingVersion])
 
   // Remember progress so leaving and coming back resumes where you were
   useEffect(() => {

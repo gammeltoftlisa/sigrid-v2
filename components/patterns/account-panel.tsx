@@ -8,6 +8,7 @@ import { Panel, PanelRow } from '@/components/patterns/panel'
 import { usePurchases } from '@/hooks/use-purchases'
 import { getCatalogItem } from '@/lib/data'
 import { paymentsEnabled } from '@/lib/payments'
+import { flushSewing } from '@/lib/sewing-sync'
 
 /** Log in, or manage the account. The account screens themselves are Clerk's. */
 export function AccountPanel() {
@@ -20,7 +21,7 @@ export function AccountPanel() {
   if (!isSignedIn) {
     return (
       <Panel label="Account">
-        <p className="px-1 pb-2 text-sm text-muted-foreground">Log in to buy patterns and keep them on your account. Browsing needs no account.</p>
+        <p className="px-1 pb-2 text-sm text-muted-foreground">Log in to keep your projects and progress on all your devices. Browsing needs no account.</p>
         <div className="flex flex-wrap gap-2">
           <Button nativeButton={false} render={<Link href="/sign-in?redirect_url=/profile" />}>Log in</Button>
           <Button variant="outline" nativeButton={false} render={<Link href="/sign-up?redirect_url=/profile" />}>Create account</Button>
@@ -37,7 +38,7 @@ export function AccountPanel() {
       ))}
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={() => openUserProfile()}>Manage account</Button>
-        <Button variant="ghost" onClick={() => signOut({ redirectUrl: '/profile' })}>Log out</Button>
+        <Button variant="ghost" onClick={async () => { await flushSewing(); await signOut({ redirectUrl: '/profile' }) }}>Log out</Button>
       </div>
     </Panel>
   )
