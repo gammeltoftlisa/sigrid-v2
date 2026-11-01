@@ -3,10 +3,6 @@ import type {
   Garment,
   Creator,
   Pattern,
-  Project,
-  SewingStep,
-  PatternPiece,
-  FabricOption,
   GarmentGuide,
   UserMeasurements,
   StandardSize,
@@ -189,169 +185,6 @@ export const creatorPatterns: Pattern[] = [
   },
 ]
 
-export const activeProject: Project = {
-  id: 'proj-1',
-  garmentId: 'classic-tshirt',
-  garmentName: 'Classic T-Shirt',
-  difficulty: 'Beginner',
-  status: 'active',
-  progressPercent: 42,
-  startedAt: '2026-07-15',
-}
-
-export const completedProjects: Project[] = [
-  {
-    id: 'proj-completed-1',
-    garmentId: 'aline-skirt',
-    garmentName: 'A-Line Skirt',
-    difficulty: 'Beginner',
-    status: 'completed',
-    progressPercent: 100,
-    startedAt: '2026-06-20',
-    completedAt: '2026-06-22',
-    userPhotoColor: '#C4A882',
-  },
-]
-
-export const tshirtSteps: SewingStep[] = [
-  {
-    id: 1,
-    title: 'Cut the front panel',
-    description: 'Place pattern piece A face-down on your folded fabric. Pin carefully along the edges. Cut around the pattern leaving a 1.5 cm seam allowance on all sides.',
-    measurement: '1.5 cm seam allowance',
-    highlight: 'front',
-    camera: { position: [0, 0.1, 3.2], target: [0, -0.1, 0] },
-  },
-  {
-    id: 2,
-    title: 'Cut the back panel',
-    description: 'Repeat with pattern piece B for the back. Make sure to transfer all notch markings — they\'ll guide you when joining pieces later.',
-    measurement: '1.5 cm seam allowance',
-    highlight: 'back',
-    camera: { position: [0, 0.1, -3.2], target: [0, -0.1, 0] },
-  },
-  {
-    id: 3,
-    title: 'Pin the shoulder seams',
-    description: 'Place front and back panels right sides together. Match the shoulder notches carefully and pin every 5 cm along the shoulder line.',
-    measurement: '5 cm between pins',
-    highlight: 'shoulder',
-    camera: { position: [0, 1.8, 2.2], target: [0, 0.5, 0] },
-  },
-  {
-    id: 4,
-    title: 'Sew the shoulder seams',
-    description: 'Sew along each shoulder seam with a straight stitch. Start and end with a few backstitches to lock the thread. Press the seam open with your iron.',
-    measurement: '1.5 cm from edge',
-    stitchType: 'Straight stitch',
-    highlight: 'shoulder',
-    camera: { position: [0, 1.8, 2.2], target: [0, 0.5, 0] },
-  },
-  {
-    id: 5,
-    title: 'Pin the side seams',
-    description: 'Open your garment flat and fold right sides together again. Match the side notches and pin from armhole down to the hem.',
-    measurement: '1.5 cm seam allowance',
-    highlight: 'side',
-    camera: { position: [2.8, 0, 0.5], target: [0, 0, 0] },
-  },
-  {
-    id: 6,
-    title: 'Sew the side seams',
-    description: 'Sew both side seams with a straight stitch. If your fabric stretches, use a narrow zigzag stitch instead. Press seams towards the back.',
-    measurement: '1.5 cm from edge',
-    stitchType: 'Straight stitch',
-    highlight: 'side',
-    camera: { position: [2.8, 0, 0.5], target: [0, 0, 0] },
-  },
-  {
-    id: 7,
-    title: 'Attach the sleeves',
-    description: 'With the body inside out, slide a sleeve in through the armhole, right sides together. Match the sleeve cap notch to the shoulder seam. Pin and sew around the armhole.',
-    measurement: '1.5 cm seam allowance',
-    stitchType: 'Straight stitch',
-    highlight: 'sleeve',
-    camera: { position: [2.2, 0.6, 1.8], target: [0.3, 0.3, 0] },
-  },
-  {
-    id: 8,
-    title: 'Hem the neckline',
-    description: 'Fold the neckline edge under by 0.5 cm then again by 1 cm. Pin in place. Sew close to the fold with a straight stitch, stretching slightly as you go if the fabric is jersey.',
-    measurement: '0.5 cm + 1 cm fold',
-    stitchType: 'Stretch stitch',
-    highlight: 'collar',
-    camera: { position: [0, 2.2, 1.8], target: [0, 0.6, 0] },
-  },
-  {
-    id: 9,
-    title: 'Hem the sleeve ends',
-    description: 'Fold each sleeve end under by 0.5 cm then 1.5 cm. Pin and sew in place. The key is to keep even tension all the way around.',
-    measurement: '0.5 cm + 1.5 cm fold',
-    stitchType: 'Straight stitch',
-    highlight: 'sleeve',
-    camera: { position: [2.6, -0.5, 1.0], target: [0.6, -0.2, 0] },
-  },
-  {
-    id: 10,
-    title: 'Sew the bottom hem',
-    description: 'Turn up the bottom edge by 0.5 cm then 2.5 cm. Press well with your iron — this makes sewing straight so much easier. Sew close to the upper fold.',
-    measurement: '0.5 cm + 2.5 cm fold',
-    stitchType: 'Straight stitch',
-    highlight: 'hem',
-    camera: { position: [0, -1.8, 2.6], target: [0, -0.6, 0] },
-  },
-  {
-    id: 11,
-    title: 'Press all seams',
-    description: 'Give every seam a final press with a hot iron. This step makes a huge difference to the finished look — professional garments are pressed at every stage.',
-    highlight: 'all',
-    camera: { position: [0, 0.5, 4.0], target: [0, 0, 0] },
-  },
-  {
-    id: 12,
-    title: 'Your t-shirt is finished',
-    description: 'You made this from scratch. Try it on and take a moment. You sewed every seam yourself.',
-    highlight: 'all',
-    camera: { position: [0, 0.5, 4.0], target: [0, 0, 0] },
-  },
-]
-
-export const tshirtPatternPieces: PatternPiece[] = [
-  { id: 'A', label: 'A', name: 'Front Panel', width: 52, height: 68, quantity: 1 },
-  { id: 'B', label: 'B', name: 'Back Panel', width: 52, height: 66, quantity: 1 },
-  { id: 'C', label: 'C', name: 'Left Sleeve', width: 38, height: 24, quantity: 1 },
-  { id: 'D', label: 'D', name: 'Right Sleeve', width: 38, height: 24, quantity: 1 },
-]
-
-export const tshirtFabrics: FabricOption[] = [
-  {
-    name: 'Jersey Cotton',
-    description: 'Soft, stretchy, and forgiving for beginners. Washes beautifully.',
-    difficulty: 'Easy',
-    quantityMeters: 1.8,
-  },
-  {
-    name: 'French Terry',
-    description: 'Slightly thicker than jersey, with a looped back. Cozy and durable.',
-    difficulty: 'Easy',
-    quantityMeters: 1.8,
-    isEco: true,
-  },
-  {
-    name: 'Viscose Jersey',
-    description: 'Drapey and silky. A little slippery to cut, so pin closely and go slowly.',
-    difficulty: 'Medium',
-    quantityMeters: 2.0,
-  },
-  {
-    name: 'Organic Cotton Jersey',
-    description: 'Better for the environment. Slightly stiffer than regular cotton jersey.',
-    difficulty: 'Easy',
-    quantityMeters: 1.8,
-    isEco: true,
-  },
-]
-
 export const standardSizes: Record<StandardSize, UserMeasurements> = {
   XXS: { bust: 76,  waist: 58, hips: 83,  height: 162, inseam: 73 },
   XS:  { bust: 80,  waist: 62, hips: 87,  height: 164, inseam: 74 },
@@ -392,6 +225,13 @@ export const getPatternsByCreator = (creatorId: string) =>
   creatorPatterns.filter((p) => p.creatorId === creatorId)
 
 // ── 2D Garment Guides ────────────────────────────────────────────────────────
+
+/** The T-shirt's front and back are cut to the same size */
+const bodyPanelDims = (m: UserMeasurements) => ({
+  topWidth: Math.round(m.bust / 4 + 2),
+  bottomWidth: Math.round(m.hips / 4 + 3),
+  height: Math.round(m.height * 0.38),
+})
 
 export const garmentGuides: GarmentGuide[] = [
   {
@@ -728,11 +568,7 @@ export const garmentGuides: GarmentGuide[] = [
         id: 'front-panel',
         label: 'A',
         shape: 'trapezoid',
-        dims: (m: UserMeasurements) => ({
-          topWidth: Math.round(m.bust / 4 + 2),
-          bottomWidth: Math.round(m.hips / 4 + 3),
-          height: Math.round(m.height * 0.38),
-        }),
+        dims: bodyPanelDims,
         grainLine: 'vertical',
         seamAllowance: 1.5,
       },
@@ -740,11 +576,7 @@ export const garmentGuides: GarmentGuide[] = [
         id: 'back-panel',
         label: 'B',
         shape: 'trapezoid',
-        dims: (m: UserMeasurements) => ({
-          topWidth: Math.round(m.bust / 4 + 2),
-          bottomWidth: Math.round(m.hips / 4 + 3),
-          height: Math.round(m.height * 0.38),
-        }),
+        dims: bodyPanelDims,
         grainLine: 'vertical',
         seamAllowance: 1.5,
       },

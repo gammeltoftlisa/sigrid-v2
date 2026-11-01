@@ -4,7 +4,7 @@ These rules are **mandatory** for anyone building UI in this repo, people and AI
 The visual reference is the Storybook in the `sewing-app` repo (`npm run storybook`, http://localhost:6006), which documents the components in this repo.
 
 Where things live here: tokens and the brand layer in `app/globals.css`, shadcn components in `components/ui/`, patterns in `components/patterns/`, imagery in `components/garment/`.
-The sewing guide (`components/sewing/`, `components/legacy/`) is older code that still uses legacy class aliases (`bg-surface`, `text-ink`…); don't use those names or `components/legacy` in new code.
+The sewing guide (`components/sewing/`, `components/legacy/`) is older code; don't use `components/legacy` in new code.
 
 > **Brand: liquid glass, warm editorial atelier.** Built on the `liquid-glass-frontend` skill (`.claude/skills/liquid-glass-frontend`, read its `references/` before UI work).
 > Real Apple-style frosted glass over a calm page with one soft, still light and a faint grain, in the skill's own colours. A characterful serif (Fraunces) does the talking, with italic brown accents and small mono kickers.

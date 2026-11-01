@@ -9,7 +9,7 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, D
 import { SizePicker } from '@/components/patterns/size-picker'
 import { StatusMessage } from '@/components/patterns/status-message'
 import { useMediaQuery } from '@/hooks/use-media-query'
-import { standardSizes, tshirtFabrics } from '@/lib/data'
+import { standardSizes } from '@/lib/data'
 import { sizeLabel } from '@/lib/sizes'
 import type { Garment, StandardSize, UserMeasurements } from '@/lib/types'
 
@@ -33,11 +33,12 @@ interface Props {
   progress?: { size: StandardSize; done: number; total: number }
 }
 
+const FABRIC = { meters: 1.8, name: 'jersey cotton' }
+
 /** Choose (or change) the size a project is sewn in. Bottom drawer on phones, dialog from md up. */
 export default function SizeSheet({ garment, open, onClose, initialSize, onConfirm, progress }: Props) {
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const [size, setSize] = useState<StandardSize | null>(initialSize)
-  const fabric = tshirtFabrics[0]
 
   // Re-sync each time the sheet opens
   const [wasOpen, setWasOpen] = useState(open)
@@ -96,7 +97,7 @@ export default function SizeSheet({ garment, open, onClose, initialSize, onConfi
           <li className="flex items-start gap-2">
             <IconColorSwatch className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span className="tabular-nums">
-              {fabric.quantityMeters} m of {fabric.name.toLowerCase()} for {sizeLabel(size)}
+              {FABRIC.meters} m of {FABRIC.name} for {sizeLabel(size)}
             </span>
           </li>
         )}

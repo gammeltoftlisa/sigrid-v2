@@ -1,14 +1,11 @@
 'use client'
 
 import { use, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
 
-import { Button } from '@/components/ui/button'
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { AppShell } from '@/components/patterns/app-nav'
 import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
+import { PatternMissing } from '@/components/studio/PatternMissing'
 import { StatusChip } from '@/components/studio/StatusChip'
 import { StudioPatternPage } from '@/components/studio/StudioPatternPage'
 import { CheckSheet, SizesSheet } from '@/components/studio/StudioSheets'
@@ -34,23 +31,7 @@ export default function StudioPatternRoute({ params }: { params: Promise<{ id: s
   const [sizesOpen, setSizesOpen] = useState(false)
   const [checkOpen, setCheckOpen] = useState(false)
 
-  if (missing) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center p-6">
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>This pattern isn’t here</EmptyTitle>
-            <EmptyDescription>It may have been deleted, or it was made in another browser.</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button nativeButton={false} render={<Link href="/studio" />}>
-              Go to the studio
-            </Button>
-          </EmptyContent>
-        </Empty>
-      </main>
-    )
-  }
+  if (missing) return <PatternMissing />
   if (!pattern) return null
 
   const openGuide = () => router.push(`/studio/${id}/guide`)
@@ -93,10 +74,6 @@ export default function StudioPatternRoute({ params }: { params: Promise<{ id: s
         pattern={pattern}
         onChange={change}
         onOpen={openPart}
-        onMarkReady={() => {
-          change({ status: 'ready', publishedAt: Date.now() })
-          toast.success('Published. It’s in Explore now.')
-        }}
       />
     </AppShell>
   )

@@ -1,21 +1,17 @@
 'use client'
 
 import { use, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { IconChevronDown, IconPrinter } from '@tabler/icons-react'
-import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import FlowHeader from '@/components/legacy/FlowHeader'
+import { PatternMissing } from '@/components/studio/PatternMissing'
 import { StatusChip } from '@/components/studio/StatusChip'
 import { StudioGuide } from '@/components/studio/StudioGuide'
 import { CheckSheet, SizesSheet } from '@/components/studio/StudioSheets'
 import { useStudioPattern } from '@/lib/studio/use-pattern'
 import { isDone, type WizardStep } from '@/lib/studio/wizard'
-
-/** A chip in the guide's top bar, styled like the sewer's size chip */
 
 /**
  * The guide editor: the sewing guide exactly as sewers see it, with editing
@@ -32,23 +28,7 @@ export default function StudioGuidePage({ params }: { params: Promise<{ id: stri
   const [pieceFocusState, setPieceFocus] = useState<string | null | undefined>(undefined)
   const [checkOpen, setCheckOpen] = useState(false)
 
-  if (missing) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center p-6">
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>This pattern isn’t here</EmptyTitle>
-            <EmptyDescription>It may have been deleted, or it was made in another browser.</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button nativeButton={false} render={<Link href="/studio" />}>
-              Go to the studio
-            </Button>
-          </EmptyContent>
-        </Empty>
-      </main>
-    )
-  }
+  if (missing) return <PatternMissing />
   if (!pattern) return null
 
   // The guide opens on the pieces step when asked to (?pieces), or while the pieces aren't measured and no steps are written yet
@@ -115,10 +95,6 @@ export default function StudioGuidePage({ params }: { params: Promise<{ id: stri
         pattern={pattern}
         onChange={change}
         onOpen={openPart}
-        onMarkReady={() => {
-          change({ status: 'ready', publishedAt: Date.now() })
-          toast.success('Published. It’s in Explore now.')
-        }}
       />
     </>
   )

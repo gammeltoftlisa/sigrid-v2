@@ -2,7 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
@@ -11,33 +10,13 @@
   --font-sans: var(--font-body-face);
   --font-mono: var(--font-jetbrains);
   --font-heading: var(--font-heading-face);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-success: var(--success);
-  --color-success-solid: var(--success-solid);
-  --color-destructive-solid: var(--destructive-solid);
-  --color-warning-solid: var(--warning-solid);
-  --color-info-solid: var(--info-solid);
-  --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
-  --color-info-foreground: var(--info-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -50,6 +29,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-success-soft: color-mix(in oklch, var(--success) 12%, var(--background));
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: var(--radius);
@@ -154,32 +134,16 @@
   --destructive-solid: #E0553F;
   --success: #2F6B42;
   --success-solid: #4FA06A;
-  --success-foreground: #FFFFFF;
   --warning: #7D5508;
   --warning-solid: #E2A132;
-  --warning-foreground: #FFFFFF;
   --info: #2F5C8F;
   --info-solid: #4F86C6;
-  --info-foreground: #FFFFFF;
   --status-base: var(--app-panel);
   --border: var(--app-border);
   --input: var(--app-border-strong);
   --ring: rgb(var(--tri-primary));
-  --chart-1: rgb(var(--tri-primary));
-  --chart-2: rgb(var(--tri-accent));
-  --chart-3: #4B5E70;
-  --chart-4: #465F44;
-  --chart-5: var(--app-text-faint);
   /* Surfaces 22px, controls 14px (buttons are pills), photos 16px */
   --radius: 22px;
-  --sidebar: var(--app-panel);
-  --sidebar-foreground: var(--app-text);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--muted);
-  --sidebar-accent-foreground: var(--app-text);
-  --sidebar-border: var(--app-border);
-  --sidebar-ring: var(--ring);
 
   /* Typography: Fraunces for display, Be Vietnam Pro for text, JetBrains Mono for kickers */
   --font-heading-face: var(--font-fraunces), Georgia, serif;
@@ -194,25 +158,10 @@
   --celebrate: rgb(var(--tri-primary));
   --brand: rgb(var(--tri-primary));
   --brand-ink: var(--app-text-soft);
-  --brand-on-dark: var(--app-text);
-
-  --inverse: var(--app-panel);
-  --inverse-foreground: var(--app-text);
-  --inverse-muted: var(--app-text-soft);
-  --spotlight: var(--muted);
-
-  --hero: var(--muted);
-  --hero-foreground: var(--app-text);
-  --hero-muted: var(--app-text-soft);
-  --hero-stitch: rgb(var(--tri-primary));
-  --hero-stitch-track: var(--app-border-strong);
-  --hero-action: rgb(var(--tri-primary));
-  --hero-action-foreground: var(--primary-foreground);
 
   /* Frosted fill without blur: fields and chips on the page, bg-glass, the guide */
   --glass-tint: color-mix(in srgb, var(--app-elev) 50%, transparent);
   --glass: var(--glass-tint);
-  --glass-strong: color-mix(in srgb, var(--app-panel) 94%, transparent);
 
   /* Heatmap: one hue light → dark, every step ≥ 3:1 on the panel */
   --data-1: color-mix(in oklch, rgb(var(--tri-primary)) 55%, white);
@@ -255,9 +204,6 @@
   --success: #7CC492;
   --warning: #E9B85A;
   --info: #8DB5E6;
-  --success-foreground: #15110D;
-  --warning-foreground: #15110D;
-  --info-foreground: #15110D;
   --ring: rgb(var(--tri-primary-soft));
   --data-1: color-mix(in oklch, rgb(var(--tri-primary-soft)) 40%, var(--bg-dark));
   --data-2: color-mix(in oklch, rgb(var(--tri-primary-soft)) 65%, var(--bg-dark));
@@ -289,19 +235,8 @@
 }
 
 @theme inline {
-  --color-spotlight: var(--spotlight);
-  --color-celebrate: var(--celebrate);
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
-  --color-brand-on-dark: var(--brand-on-dark);
-  --color-inverse: var(--inverse);
-  --color-inverse-foreground: var(--inverse-foreground);
-  --color-inverse-muted: var(--inverse-muted);
-  --color-hero: var(--hero);
-  --color-hero-foreground: var(--hero-foreground);
-  --color-hero-muted: var(--hero-muted);
-  --color-hero-action: var(--hero-action);
-  --color-hero-action-foreground: var(--hero-action-foreground);
 }
 
 /* ─── Brand layer: liquid glass ───────────────────────────────────────────────
@@ -808,7 +743,6 @@ body { background: transparent !important; isolation: isolate; }
 :root .intro-art { border-radius: var(--radius); background: var(--glass-tint); }
 :root .intro-art svg { color: var(--foreground); stroke-width: 1; }
 
-
 /* Onboarding art: a quiet sand panel */
 
 /* ─── Motion ──────────────────────────────────────────────────────────────────
@@ -862,65 +796,6 @@ body { background: transparent !important; isolation: isolate; }
   font-size: 0.875rem;
 }
 @media (pointer: coarse) { :root [data-slot="toggle-group-item"][data-segment] { height: 2.5rem; } }
-
-/* ─── Legacy aliases ───────────────────────────────────────────────────────
-   The sewing guide (components/legacy, components/sewing, guide page) still uses
-   the old Sigrid names: bg-surface, text-ink, bg-primary-soft, var(--sig-*)…
-   They now point at the design-system tokens above, so the guide follows the
-   same look. Don't use these names in new code — use the semantic tokens. */
-:root {
-  --sig-bg: var(--background);
-  --sig-surface: var(--card);
-  --sig-surface-2: var(--muted);
-  --sig-border: var(--border);
-  --sig-border-soft: color-mix(in oklch, var(--border) 60%, var(--background));
-  --sig-primary: var(--primary);
-  --sig-primary-deep: color-mix(in oklch, var(--primary) 85%, black);
-  --sig-primary-soft: var(--accent);
-  --sig-ink: var(--foreground);
-  --sig-ink-2: var(--muted-foreground);
-  --sig-ink-3: var(--muted-foreground);
-  --sig-success: var(--success);
-  --sig-success-soft: color-mix(in oklch, var(--success) 12%, var(--background));
-  --sig-warn: var(--warning);
-  --sig-warn-soft: color-mix(in oklch, var(--warning) 15%, var(--background));
-  --sig-danger: var(--destructive);
-  --sig-danger-soft: color-mix(in oklch, var(--destructive) 12%, var(--background));
-  --sig-overlay: oklch(0.145 0 0 / 50%);
-}
-
-@theme inline {
-  --color-bg: var(--sig-bg);
-  --color-surface: var(--sig-surface);
-  --color-surface-2: var(--sig-surface-2);
-  --color-rim: var(--sig-border);
-  --color-rim-soft: var(--sig-border-soft);
-  --color-primary-deep: var(--sig-primary-deep);
-  --color-primary-soft: var(--sig-primary-soft);
-  --color-ink: var(--sig-ink);
-  --color-ink-2: var(--sig-ink-2);
-  --color-ink-3: var(--sig-ink-3);
-  --color-success-soft: var(--sig-success-soft);
-  --color-warn: var(--sig-warn);
-  --color-warn-soft: var(--sig-warn-soft);
-  --color-danger: var(--sig-danger);
-  --color-danger-soft: var(--sig-danger-soft);
-}
-
-/* Legacy type scale and shadows, still used by the guide. Mapped onto the rhythm scale. */
-@theme {
-  --text-display: 1.75rem;
-  --text-title: 1.375rem;
-  --text-heading: 1.0625rem;
-  --text-body: 0.9375rem;
-  --text-label: 0.9375rem;
-  --text-caption: 0.8125rem;
-
-  --shadow-soft: 0 2px 12px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.04);
-  --shadow-card: 0 4px 20px rgb(0 0 0 / 0.08), 0 2px 6px rgb(0 0 0 / 0.04);
-  --shadow-modal: 0 20px 60px rgb(0 0 0 / 0.18), 0 4px 20px rgb(0 0 0 / 0.1);
-  --shadow-tab: 0 -1px 0 var(--sig-border);
-}
 
 * {
   -webkit-tap-highlight-color: transparent;
