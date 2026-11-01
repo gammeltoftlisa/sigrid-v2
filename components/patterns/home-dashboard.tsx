@@ -41,7 +41,7 @@ function ProjectRow({ project, primary }: { project: ProjectSummary; primary?: b
 
       <div className="flex min-w-0 flex-1 flex-col gap-4 sm:py-1">
         <div className="flex flex-col gap-1">
-          <h2 className="text-2xl">{garment.name}</h2>
+          <h2 className="title-md">{garment.name}</h2>
           <p className="text-sm text-muted-foreground">{sizeLabel(size)}</p>
         </div>
 
@@ -54,7 +54,7 @@ function ProjectRow({ project, primary }: { project: ProjectSummary; primary?: b
 
         <div className="flex flex-col gap-1">
           <p className="eyebrow text-muted-foreground">Next step</p>
-          <p className="font-heading text-xl">{next?.title ?? 'Ready to start'}</p>
+          <p className="title-md">{next?.title ?? 'Guide coming soon'}</p>
         </div>
 
         <ul className="flex flex-col gap-1.5 text-sm">
@@ -78,8 +78,8 @@ function ProjectRow({ project, primary }: { project: ProjectSummary; primary?: b
           </li>
         </ul>
 
-        <Button size="lg" variant={primary ? 'default' : 'outline'} className="mt-auto w-full" nativeButton={false} render={<Link href={`${href}/guide`} />}>
-          Continue sewing
+        <Button size="lg" variant={primary ? 'default' : 'outline'} className="mt-auto w-full" nativeButton={false} render={<Link href={totalSteps > 0 ? `${href}/guide` : href} />}>
+          {totalSteps > 0 ? 'Continue sewing' : 'View pattern'}
           <IconArrowRight data-icon="inline-end" />
         </Button>
       </div>
@@ -98,16 +98,16 @@ function CompactRow({ project }: { project: ProjectSummary }) {
         <GarmentImage name={garment.name} photoSrc={garment.photo} sizes="80px" className="aspect-product rounded-(--image-radius)" />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <h3 className="truncate font-heading text-lg">{garment.name}</h3>
-        <p className="truncate text-xs text-muted-foreground">{next ? `Next: ${next.title}` : 'Ready to start'}</p>
+        <h3 className="title-sm truncate">{garment.name}</h3>
+        <p className="truncate text-xs text-muted-foreground">{next ? `Next: ${next.title}` : 'Guide coming soon'}</p>
         {totalSteps > 0 && (
           <div className="flex items-center gap-2">
             <Progress value={project.percent} aria-label={`${garment.name} progress`} className="flex-1" />
             <span className="text-2xs text-muted-foreground tabular-nums">{done} / {totalSteps}</span>
           </div>
         )}
-        <Button size="sm" variant="outline" className="w-fit" nativeButton={false} render={<Link href={`/garment/${garment.id}/guide`} />}>
-          Continue
+        <Button size="sm" variant="outline" className="w-fit" nativeButton={false} render={<Link href={`/garment/${garment.id}${totalSteps > 0 ? '/guide' : ''}`} />}>
+          {totalSteps > 0 ? 'Continue' : 'View pattern'}
         </Button>
       </div>
     </article>

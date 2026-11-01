@@ -42,7 +42,7 @@ export function Panel({
       {!glass && <Stipple />}
       <header className="flex flex-col gap-2 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="eyebrow !font-medium text-muted-foreground">{label}</h2>
+          <h2 className="eyebrow text-muted-foreground">{label}</h2>
           <div className="flex items-center gap-3">
             {meta !== undefined && <span className="text-xs font-medium text-brand-ink tabular-nums">{meta}</span>}
             {action}

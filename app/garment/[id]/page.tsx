@@ -53,7 +53,6 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const inProgress = !!project && !finished
 
   const enterGuide = () => {
-    sessionStorage.setItem('sigrid_flow_enter', '1')
     router.push(`/garment/${id}/guide`)
   }
 
@@ -153,14 +152,16 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   // Somewhere to go next: the same maker's other patterns, else something at the same level
   const fromMaker = creator ? catalogGarments.filter((g) => g.creatorId === creator.id && g.id !== id) : []
   const more = (fromMaker.length > 0 ? fromMaker : catalogGarments.filter((g) => g.difficulty === garment.difficulty && g.id !== id)).slice(0, 4)
+  // The guide isn't written yet, so it can't be started or bought
+  const comingSoon = mounted && totalSteps === 0
   const sizeRange = `${garment.sizes[0]}–${garment.sizes[garment.sizes.length - 1]}`
 
   const printHref = `/garment/${id}/pattern?print=true${project ? `&size=${project.size}` : ''}`
 
   const cta = (
     <div className="flex flex-col gap-2">
-      <Button size="lg" className="w-full" disabled={paying || (paymentsEnabled && !project && purchases.loading)} onClick={onCta}>
-        {ctaLabel}
+      <Button size="lg" className="w-full" disabled={comingSoon || paying || (paymentsEnabled && !project && purchases.loading)} onClick={onCta}>
+        {comingSoon ? 'Guide coming soon' : ctaLabel}
         {inProgress && <IconArrowRight data-icon="inline-end" />}
       </Button>
     </div>
@@ -191,7 +192,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             priority
             photoSrc={garment.photo}
           >
-            {!garment.photo && garmentPhoto(garment.name) && <PhotoLabel className="absolute bottom-3 left-3 normal-case tracking-normal">Inspiration photo</PhotoLabel>}
+            {!garment.photo && garmentPhoto(garment.name) && <PhotoLabel className="absolute bottom-3 left-3">Inspiration photo</PhotoLabel>}
           </GarmentImage>
           </ProductFrame>
         </div>
@@ -201,8 +202,8 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             <header className="flex flex-col gap-2">
               <div className="flex items-baseline justify-between gap-4">
                 {/* Smaller than a page hero: it shares the screen with the photo */}
-                <h1 className="[--h1-size:clamp(2.25rem,3.4vw,3.5rem)]">{garment.name}</h1>
-                <p className="text-xl font-medium tabular-nums">€{garment.price}</p>
+                <h1 className="title-compact">{garment.name}</h1>
+                <p className="title-md tabular-nums">€{garment.price}</p>
               </div>
               <p className="text-xs text-muted-foreground">
                 {garment.difficulty} · {garment.estimatedTime} · {sizeRange}

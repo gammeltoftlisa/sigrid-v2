@@ -17,7 +17,7 @@ export function PublishedGate({ id, children }: { id: string; children: React.Re
   if (!findPublishedGarment(id)) {
     return (
       <div className="mx-auto flex min-h-svh max-w-sm flex-col items-center justify-center gap-3 px-6 text-center">
-        <h1 className="text-4xl">This pattern isn’t <em className="display-italic">published</em></h1>
+        <h1 className="title-compact">This pattern isn’t <em className="display-italic">published</em></h1>
         <p className="text-base text-muted-foreground">It may have been unpublished, or it was published in another browser.</p>
         <Button variant="outline" className="mt-2" nativeButton={false} render={<Link href="/explore" />}>
           Go to Explore

@@ -20,7 +20,7 @@ export function StatTile({ label, value, unit, hero }: { label: string; value: s
       <span className="text-xs text-muted-foreground">{label}</span>
       <span className="flex items-baseline gap-1">
         {hero && <IconFlame className="size-5 self-center text-primary" aria-hidden />}
-        <span className={cn('font-heading tabular-nums', hero ? 'text-5xl' : 'text-4xl')}>{value}</span>
+        <span className={'title-xl tabular-nums'}>{value}</span>
         {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
       </span>
     </Inset>
@@ -93,7 +93,7 @@ export function SewingDashboard({ activity, projects }: { activity: StepDone[]; 
       </Panel>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Panel label="When you sew" className="lg:col-span-2" meta={`${activeDays} days in ${WEEKS} weeks`}>
+        <Panel label="When you sew" className="lg:col-span-2" meta={`${activeDays} ${activeDays === 1 ? 'day' : 'days'} in ${WEEKS} weeks`}>
           <Inset className="overflow-x-auto p-4">
             <div className="flex justify-between gap-1 min-w-88" role="img" aria-label={`Sewing activity over the last ${WEEKS} weeks: ${activeDays} active days`}>
               <div className="mr-1 grid grid-rows-7 gap-1 text-2xs text-muted-foreground" aria-hidden>

@@ -6,11 +6,10 @@ import { cn } from 'cn'
 
 import { Button } from '@/components/ui/button'
 import { PageBreadcrumbs, type Crumb } from '@/components/patterns/page-breadcrumbs'
-import { MaskedLine, Rise } from '@/components/patterns/reveal'
 
 /**
  * Top of a screen. Tab screens: big display title + optional kicker, description and action.
- * Sub-screens (`back`): a back button above the title. The title wipes in from behind a mask.
+ * Sub-screens (`back`): a back button above the title.
  */
 export function PageHeader({
   kicker,
@@ -41,21 +40,11 @@ export function PageHeader({
       <header className={cn('page-header flex flex-col pt-4', className)}>
         <div className="flex items-end justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-4">
-            {kicker && (
-              <Rise>
-                <p className="kicker">{kicker}</p>
-              </Rise>
-            )}
-            <h1>
-              <MaskedLine>{title}</MaskedLine>
-            </h1>
-            {description && (
-              <Rise index={1}>
-                <p className="max-w-prose text-base text-muted-foreground md:text-lg">{description}</p>
-              </Rise>
-            )}
+            {kicker && <p className="kicker">{kicker}</p>}
+            <h1>{title}</h1>
+            {description && <p className="max-w-prose text-base text-muted-foreground">{description}</p>}
           </div>
-          {action && <Rise index={2}>{action}</Rise>}
+          {action}
         </div>
       </header>
     </>

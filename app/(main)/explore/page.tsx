@@ -15,7 +15,7 @@ import { MakerCard } from '@/components/patterns/maker-card'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
 import { ProductGrid } from '@/components/patterns/product-grid'
 import { useMounted } from '@/hooks/use-mounted'
-import { catalogGarments, creators, getPatternsByCreator } from '@/lib/data'
+import { catalogGarments, creators, getGuideOutline, getPatternsByCreator } from '@/lib/data'
 import { listPublishedGarments } from '@/lib/published'
 import type { Difficulty, Garment, GarmentCategory } from '@/lib/types'
 
@@ -49,7 +49,9 @@ export default function ExplorePage({ searchParams }: { searchParams: Promise<{ 
   // Patterns published from the studio on this device sit first, as "Your pattern"
   const mounted = useMounted()
   const yours = mounted ? listPublishedGarments() : []
-  const everything = [...yours, ...catalogGarments]
+  const hasGuide = (g: Garment) => !!getGuideOutline(g.id)?.steps.length
+  // What can be sewn today comes first
+  const everything = [...yours, ...catalogGarments.filter(hasGuide), ...catalogGarments.filter((g) => !hasGuide(g))]
   const categories = allCategories.filter((c) => everything.some((g) => g.category === c))
   const typeOptions = [{ value: 'All', label: 'All types' }, ...categories.map((c) => ({ value: c, label: c }))]
 
@@ -79,7 +81,7 @@ export default function ExplorePage({ searchParams }: { searchParams: Promise<{ 
         <div className="flex flex-wrap items-center gap-2">
           <CategoryTabs label="What to explore" options={views} value={view} onValueChange={setView} />
           <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
-            <InputGroup className="flex-1 sm:w-64 sm:flex-none">
+            <InputGroup className="w-full sm:w-64">
               <InputGroupAddon>
                 <IconSearch />
               </InputGroupAddon>
@@ -136,7 +138,7 @@ export default function ExplorePage({ searchParams }: { searchParams: Promise<{ 
             </Empty>
           ) : view === 'Patterns' ? (
             <ProductGrid>
-              <div key={`${category}-${level}`} className="tile-grid tiles">
+              <div className="tiles">
                 {patterns.map((g) => (
                   <GarmentCard
                     key={g.id}
@@ -146,13 +148,14 @@ export default function ExplorePage({ searchParams }: { searchParams: Promise<{ 
                     byline={g.published ? 'Your pattern' : (makerOf(g)?.handle ?? 'Sigrid')}
                     price={g.price}
                     photoSrc={g.photo}
+                    tag={hasGuide(g) ? undefined : 'Coming soon'}
                   />
                 ))}
               </div>
             </ProductGrid>
           ) : (
             <ProductGrid>
-              <div className="tile-grid maker-rows">
+              <div className="maker-rows">
                 {makers.map((c) => (
                   <MakerCard key={c.id} creator={c} patterns={getPatternsByCreator(c.id)} />
                 ))}

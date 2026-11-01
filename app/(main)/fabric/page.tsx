@@ -2,7 +2,8 @@
 
 import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { IconAdjustmentsHorizontal, IconSearch, IconZoomQuestion } from '@tabler/icons-react'
+import Link from 'next/link'
+import { IconAdjustmentsHorizontal, IconSearch, IconX, IconZoomQuestion } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -10,7 +11,6 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CategoryTabs } from '@/components/patterns/category-tabs'
 import { FabricBagButton, FabricBagSheet } from '@/components/patterns/fabric-bag'
 import { PanelSheet } from '@/components/patterns/panel-sheet'
 import { FabricCard } from '@/components/patterns/fabric-card'
@@ -22,8 +22,8 @@ import { Panel } from '@/components/patterns/panel'
 import { ProductGrid } from '@/components/patterns/product-grid'
 import { StatusMessage } from '@/components/patterns/status-message'
 import { useMounted } from '@/hooks/use-mounted'
-import { catalogGarments, getGarmentById } from '@/lib/data'
-import { isPublishedId, listPublishedGarments } from '@/lib/published'
+import { getGarmentById } from '@/lib/data'
+import { isPublishedId } from '@/lib/published'
 import { addToBag, removeFromBag, useBag } from '@/lib/fabric/bag'
 import { cleanSearch, departments, getDepartment } from '@/lib/fabric/catalog'
 import { activeFilterCount, noFilters, passes, type FabricFilters } from '@/lib/fabric/filters'
@@ -31,13 +31,10 @@ import { marketplaces } from '@/lib/fabric/marketplaces'
 import { getFabricNeed, metersFor } from '@/lib/fabric/needs'
 import { approxEur, costFor, coversLength, formatMeters, pricePerMeter, unitsFor } from '@/lib/fabric/pricing'
 import type { FabricListing, FabricSearchResponse } from '@/lib/fabric/types'
-import { listProjects } from '@/lib/project-summary'
 import { loadProject } from '@/lib/projects'
 import { loadSavedSize, sizeLabel } from '@/lib/sizes'
 import type { StandardSize } from '@/lib/types'
 
-const modes = ['All fabric', 'For a pattern'] as const
-type Mode = (typeof modes)[number]
 
 type Sort = 'match' | 'price'
 
@@ -64,10 +61,8 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   const [bagOpen, setBagOpen] = useState(false)
 
   // No garment in the link: the whole store. With one: exactly what that garment needs.
-  const mode: Mode = params.garment ? 'For a pattern' : 'All fabric'
   // A pattern published from the studio lives in this browser: wait until mounted to look it up
   const garment = params.garment && (!isPublishedId(params.garment) || mounted) ? getGarmentById(params.garment) : null
-  const garmentOptions = [...catalogGarments, ...(mounted ? listPublishedGarments() : [])]
   const need = garment ? getFabricNeed(garment.id) : null
   // A recommended fabric to narrow to, or null for all of them
   const choice = need?.choices.find((c) => c.id === params.choice) ?? null
@@ -178,12 +173,6 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
     toast('Added to your bag', { action: { label: 'View bag', onClick: () => setBagOpen(true) } })
   }
 
-  const setMode = (m: Mode) => {
-    if (m === 'All fabric') return router.replace('/fabric', { scroll: false })
-    const started = listProjects().find((p) => !p.finished)?.garment ?? catalogGarments[0]
-    router.replace(hrefFor({ garment: started.id }), { scroll: false })
-  }
-
   const secondhandQuery = need?.secondhandQuery ?? (search ? `${search} tyg` : 'tyg')
   const secondhandLinks = (
     <p className="text-sm text-muted-foreground">
@@ -215,40 +204,34 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   return (
     <PageContainer>
       <PageHeader
-                barActions={<FabricBagButton count={bag.length} onClick={() => setBagOpen(true)} />}
+        breadcrumbs={garment ? [{ label: garment.name, href: `/garment/${garment.id}` }, { label: 'Fabric' }] : undefined}
+        barActions={<FabricBagButton count={bag.length} onClick={() => setBagOpen(true)} />}
         title="Find fabric"
         description="From independent shops and secondhand sellers. You buy from the shop; some shops may pay Sigrid a commission, which never changes your price."
       />
-
-      <CategoryTabs label="How to shop" options={modes} value={mode} onValueChange={setMode} />
 
       <div className="grid-12">
         <div className="col-side flex flex-col gap-6">
           {garment && need && size && meters ? (
             <Panel
               glass
-              label="What you’re making"
+              label="For this pattern"
               meta={<span aria-label={`You need ${formatMeters(meters)}`}>Need {formatMeters(meters)}</span>}
               action={clearAction}
             >
-              <div className="flex items-center gap-2">
+              {/* You came from this pattern, and everything on the right is what it needs */}
+              <div className="flex items-center gap-3 rounded-(--control-radius) border p-2">
                 <GarmentThumb id={garment.id} name={garment.name} photoSrc={garment.photo} />
-                <Select
-                  items={garmentOptions.map((g) => ({ value: g.id, label: g.name }))}
-                  value={garment.id}
-                  onValueChange={(v) => router.replace(hrefFor({ garment: v as string }), { scroll: false })}
-                >
-                  <SelectTrigger aria-label="Pattern" className="min-w-0 flex-1 bg-background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {garmentOptions.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
-                        {g.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <Link href={`/garment/${garment.id}`} className="title-sm underline-offset-4 hover:underline">{garment.name}</Link>
+                  <p className="text-xs text-muted-foreground">Only fabric that suits it</p>
+                </div>
+                <Button variant="ghost" size="icon" aria-label="Show all fabric" title="Show all fabric" nativeButton={false} render={<Link href="/fabric" />}>
+                  <IconX />
+                </Button>
+              </div>
+              <div className="flex items-center justify-between gap-3 px-1">
+                <span className="text-sm">Your size</span>
                 <Select items={sizes.map((s) => ({ value: s, label: sizeLabel(s) }))} value={size} onValueChange={(v) => setPickedSize(v as StandardSize)}>
                   <SelectTrigger aria-label={`Size ${sizeLabel(size)}`} className="w-18 shrink-0 bg-background tabular-nums">
                     {/* Just the letter in the narrow field; the list shows the EU size too */}
@@ -389,7 +372,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
             ) : (
               <div className="flex flex-col items-center gap-6">
                 <ProductGrid className="w-full">
-                <div key={listKey} className="tile-grid tiles">
+                <div key={listKey} className="tiles">
                   {listings.slice(0, shownCount).map((l, i) => (
                     <FabricCard key={l.id} eager={i < 4} listing={l} meters={meters} size={size} inBag={inBag.has(l.id)} onToggleBag={() => toggleBag(l)} />
                   ))}

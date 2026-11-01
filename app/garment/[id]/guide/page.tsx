@@ -299,7 +299,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                   <GarmentImage name={garment.name} photoSrc={garment.photo} sizes="144px" className="size-28 rounded-(--radius) md:size-36" />
                   <div className="flex flex-col gap-2">
                     <p className="kicker">All {steps.length} steps done</p>
-                    <p className="font-heading text-4xl">{garment.name} is <em className="display-italic">finished.</em></p>
+                    <p className="title-xl">{garment.name} is <em className="display-italic">finished.</em></p>
                   </div>
                   <Button variant="outline" onClick={() => setDoneOpen(true)}>View summary</Button>
                 </motion.div>

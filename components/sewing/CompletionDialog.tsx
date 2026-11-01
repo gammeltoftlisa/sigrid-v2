@@ -109,7 +109,7 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
 
               <div className="px-6 pt-6 pb-4">
                 <p className="kicker mb-3">Finished</p>
-                <h2 id="done-title" className="text-5xl mb-3">You <em className="display-italic">made</em> this.</h2>
+                <h2 id="done-title" className="title-xl mb-3">You <em className="display-italic">made</em> this.</h2>
                 <p className="text-base text-muted-foreground mb-6">{garment.name} is finished, and you sewed every seam. Take a moment to enjoy it.</p>
 
                 {/* Rating */}

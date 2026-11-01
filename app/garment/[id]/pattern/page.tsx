@@ -165,7 +165,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
       <div className="min-h-screen">
         {header}
         <div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
-          <h1 className="text-4xl">The pattern didn’t open</h1>
+          <h1 className="title-compact">The pattern didn’t open</h1>
           <p className="text-base text-muted-foreground">This is usually a connection problem.</p>
           <Button className="mt-3" onClick={retryGuide}>Try again</Button>
         </div>
@@ -178,7 +178,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
       <div className="min-h-screen">
         {header}
         <div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
-          <h1 className="text-4xl">Pattern <em className="display-italic">coming soon</em></h1>
+          <h1 className="title-compact">Pattern <em className="display-italic">coming soon</em></h1>
           <p className="text-base text-muted-foreground">The printable pattern for {garment.name} isn&apos;t ready yet.</p>
         </div>
       </div>
@@ -190,7 +190,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
       <div className="min-h-screen">
         {header}
         <div className="mx-auto flex max-w-sm flex-col items-center gap-3 px-5 py-16 text-center">
-          <h1 className="text-4xl">Choose a <em className="display-italic">size</em> first</h1>
+          <h1 className="title-compact">Choose a <em className="display-italic">size</em> first</h1>
           <p className="text-base text-muted-foreground">Your pattern is printed in the size you choose when you start the project.</p>
           <Button variant="outline" className="mt-3" nativeButton={false} render={<a href={`/garment/${id}`} />}>
             Go to {garment.name}

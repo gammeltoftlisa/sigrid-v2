@@ -101,15 +101,22 @@ Image shapes: `aspect-product` (4:5, product tiles), `aspect-cover` (4:3, projec
 
 **Typography is the design.** Big, characterful and mixed: a roman line, then an italic ink line.
 
-| Type | Size | Use |
-| --- | --- | --- |
-| `kicker` / `eyebrow` | 11px mono, 0.22em tracking, uppercase | Above titles, panel labels (`kicker` is ink) |
-| `text-xs` | 13px | Details, meta, captions, field labels |
-| `text-sm` | 15px | Body, lists (the default UI size) |
-| `text-base` | 17px | Lead text under a title, reading text |
-| `page-section-title` | 26–36px Fraunces 380 | Section titles (`PageSection`) |
-| `h1` | `clamp(2.75rem, 6.2vw, 5.75rem)`, Fraunces 360, leading 0.95 | The page title, one per screen |
-| `hero-title` | `clamp(3.5rem, 9vw, 8.5rem)`, leading 0.9 | `HeroBand` only |
+| Level | Class | Look | Use |
+| --- | --- | --- | --- |
+| Page title | `h1` | `clamp(2.75rem, 6.2vw, 5.75rem)`, Fraunces 360 | One per screen |
+| Compact page title | `h1.title-compact` | `clamp(2.25rem, 3.4vw, 3.5rem)`, Fraunces 360 | The title shares the screen: garment, maker, a message page |
+| Section | `page-section-title` | 26–36px Fraunces 400 | Sections of a page (`PageSection`) |
+| Big moment | `title-xl` | 34px Fraunces 400 | A celebration, a stat |
+| Main subject | `title-lg` | 28px Fraunces 400 | The one thing a panel is about: the current step, a plan's price |
+| Subject | `title-md` | 22px Fraunces 400 | What a block is about: a project, a maker, a legal section, a garment's price |
+| Small subject | `title-sm` | 19px Fraunces 400 | Product names, dialog and empty-state titles (automatic on those) |
+| Lead | `text-base` | 17px, 400 | Under a title, reading text |
+| Body | `text-sm` | 15px, 400 | Default text, buttons (500), fields, menus, breadcrumbs |
+| Detail | `text-xs` | 13px, 400 | Meta, captions, small buttons and chips (500) |
+| Tiny mark | `text-2xs` | 12px, 500 or 400 | Counters, step numbers, tab bar labels |
+| Label | `eyebrow`, `kicker` | 11px mono 500, 0.22em, uppercase | Panel labels, badges, every small uppercase label |
+
+Text is 400, or 500 for emphasis. **Never 600 or 700, and never a size that isn't in this table.** Don't reach for `text-xl` or `font-heading` directly: use the level.
 
 Put the line that carries the feeling in `<em className="display-italic">` (italic, WONK axis, ink). Body is Be Vietnam Pro 400, emphasis 500. `tabular-nums` on measurements, counts and prices. Reading text is `max-w-prose`.
 
@@ -129,7 +136,7 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 
 | Control | Height | Notes |
 | --- | --- | --- |
-| Fields and dropdowns | 36px (44px on touch) | 14px text, 12px side padding, 14px corners, 16px muted icons |
+| Fields and dropdowns | 36px (44px on touch) | 15px text, 12px side padding, 14px corners, 16px muted icons |
 | Button | 40px | `size="lg"` (44px) for the one main action |
 | Small button and chips | 32px (40px on touch) | `size="sm"`; filter chips, removable filters, the bag |
 | Icon button | 36–44px | `size="icon-lg"` in bars, always with `aria-label` |
@@ -157,9 +164,7 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 
 | Need | Use |
 | --- | --- |
-| The big top of a tab screen | `HeroBand` (kicker, lines, description, actions) |
 | A page title | `PageHeader` (optional `kicker`); it wipes in by itself |
-| Headline lines that wipe in / content that rises after them | `MaskedLine` / `Rise` from `components/patterns/reveal` |
 | Main / secondary / quiet action | `Button` (black, stitched) / `variant="outline"` (frosted pill) / `variant="ghost"` |
 | Delete or reset | `Button variant="destructive"` (outlined text) + `AlertDialog` that says what will be lost |
 | Icon-only action | `Button size="icon-lg"` + `aria-label` |
@@ -213,14 +218,8 @@ One easing everywhere: `[0.22, 1, 0.36, 1]` (`ease` in `reveal.tsx`, `--ease-out
 
 | What | How |
 | --- | --- |
-| Signature: titles wipe up from a mask | Built into `PageHeader` and `HeroBand` (`MaskedLine`) |
-| Page-load cascade | `Rise index={n}`: kicker, then lines, then copy and actions, 100ms apart |
-| Sections rise in | Automatic for children of `PageContainer` (headers run their own reveal) |
-| Grids stagger in | `tile-grid` on the grid; key it by the active filter so it replays |
 | Atmosphere | `Atmosphere`: one soft, still light in the top corner. Nothing drifts |
-| Gentle parallax | `HeroBand` only: the headline drifts up 48px over the first screen |
 | Sliding marker (tabs, navigation) | Built into `CategoryTabs`, `AppSidebar`, `AppTabBar` |
-| Progress draws in | Automatic on `Progress` |
 | Hover | Buttons lift 1px; glass tiles frost in (`glass-inset-hover`), never swap colour; `hover-zoom` on photos |
 
 No bounce. Animate after hydration (`useRevealReady`). Reduced motion is respected everywhere (`MotionConfig reducedMotion="user"` plus the global CSS rule).
@@ -263,3 +262,5 @@ Sigrid sounds like a calm, experienced friend at the sewing table. Every sentenc
 ## Site structure
 
 Each main page answers one question. **Home:** what am I sewing and how is it going (no browsing). **Explore:** what could I sew next (every pattern and maker). **Find fabric:** what do I sew it with. **Profile:** my account and settings. A *pattern* is what you find and buy, a *project* is what you're sewing. Main pages have no breadcrumbs, because the menu shows where you are; deeper pages do.
+
+**No entrance animations.** Pages and their content are simply there when you arrive: no rising, fading, wiping or staggering. Motion only answers something you do, like a hover, a press or opening a panel.

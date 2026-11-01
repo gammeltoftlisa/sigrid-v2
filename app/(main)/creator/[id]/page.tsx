@@ -35,7 +35,7 @@ export default function CreatorPage({ params }: { params: Promise<{ id: string }
           <p className="py-8 text-sm text-muted-foreground">No patterns published yet.</p>
         ) : (
           <ProductGrid>
-          <div className="tile-grid tiles">
+          <div className="tiles">
             {patterns.map((p) => (
               <GarmentCard
                 key={p.id}

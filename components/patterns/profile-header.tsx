@@ -32,7 +32,7 @@ export function ProfileHeader({
       {avatar}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <h1 className="!text-3xl md:!text-4xl">{name}</h1>
+          <h1 className="title-compact">{name}</h1>
           {label && <Pill>{label}</Pill>}
         </div>
         {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
