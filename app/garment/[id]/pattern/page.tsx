@@ -6,6 +6,7 @@ import { IconChevronLeft, IconPrinter } from '@tabler/icons-react'
 import { getGarmentById, standardSizes } from '@/lib/data'
 import { useGarmentGuide } from '@/hooks/use-garment-guide'
 import { loadProject } from '@/lib/projects'
+import { useSewingVersion } from '@/hooks/use-mounted'
 import { allSizes, sizeLabel } from '@/lib/sizes'
 import { Button } from '@/components/ui/button'
 import { Inset } from '@/components/patterns/inset'
@@ -116,6 +117,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
   // Size comes from the link (so the right size always prints), else the saved project
   const [size, setSize] = useState<StandardSize | null>(null)
   const [ready, setReady] = useState(false)
+  const sewingVersion = useSewingVersion()
   useEffect(() => {
     const fromLink = searchParams.get('size')
     const valid = fromLink && (allSizes as string[]).includes(fromLink) ? (fromLink as StandardSize) : null
@@ -123,7 +125,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSize(valid ?? loadProject(id)?.size ?? null)
     setReady(true)
-  }, [id, searchParams])
+  }, [id, searchParams, sewingVersion])
 
   const layouts = size && guide ? guide.pieces.map((p) => layoutPiece(p, size)) : []
   const totalPages = 1 + layouts.reduce((n, l) => n + l.cols * l.rows, 0)
