@@ -486,23 +486,6 @@ export const isDrawable = (p: StudioPiece) => p.dims.height > 0 && Math.max(p.di
 
 export type Part = 'about' | 'materials' | 'pieces' | 'steps'
 
-export function missingIn(p: StudioPattern): Record<Part, string[]> {
-  const about: string[] = []
-  if (!p.name.trim() || p.name === 'Untitled pattern') about.push('a name')
-  if (!p.description.trim()) about.push('a description')
-  if (!p.estimatedTime.trim()) about.push('the sewing time')
-  if (!p.price) about.push('a price')
-  if (p.sizes.length === 0) about.push('the sizes')
-  const materials: string[] = []
-  if (!p.fabric.name.trim()) materials.push('the fabric')
-  if (p.sizes.some((sz) => !p.fabric.metersBySize[sz])) materials.push('how much fabric for every size')
-  const pieces = p.pieces.length === 0 ? ['at least one piece'] : p.pieces.some((x) => !isDrawable(x)) ? ['the size of every piece'] : []
-  const steps: string[] = []
-  if (p.steps.length === 0) steps.push('the steps')
-  else if (p.steps.some((s) => !s.title.trim() || !s.instruction.trim())) steps.push('an instruction for every step')
-  return { about, materials, pieces, steps }
-}
-
 // ── Assistant output → studio data ───────────────────────────────────────────
 
 function pieceFromDraft(p: DeepPartial<DraftPiece> | undefined): StudioPiece | null {

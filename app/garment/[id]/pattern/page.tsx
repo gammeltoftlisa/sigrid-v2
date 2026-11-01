@@ -71,7 +71,7 @@ function PieceDrawing({ layout, preview = false }: { layout: Layout; preview?: b
   return (
     <g>
       {/* Cut line */}
-      <polygon points={outline(layout)} fill={preview ? 'var(--sig-primary-soft)' : 'none'} stroke="#1C1B19" {...line(0.06, 1.25)} />
+      <polygon points={outline(layout)} fill={preview ? 'var(--accent)' : 'none'} stroke="#1C1B19" {...line(0.06, 1.25)} />
       {/* Stitch line */}
       <polygon points={outline(layout, sa)} fill="none" stroke="#9A6E45" {...line(0.04, 1)} strokeDasharray={preview ? '3 2' : '0.4 0.3'} />
       {/* Grain line */}

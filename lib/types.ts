@@ -54,49 +54,6 @@ export interface Measurements {
   inseam?: number
 }
 
-export interface Project {
-  id: string
-  garmentId: string
-  garmentName: string
-  difficulty: Difficulty
-  status: 'active' | 'completed'
-  progressPercent: number
-  startedAt: string
-  completedAt?: string
-  userPhotoColor?: string
-}
-
-export interface SewingStep {
-  id: number
-  title: string
-  description: string
-  measurement?: string
-  stitchType?: string
-  highlight: 'front' | 'back' | 'shoulder' | 'side' | 'sleeve' | 'collar' | 'hem' | 'all'
-  camera: {
-    position: [number, number, number]
-    target: [number, number, number]
-  }
-}
-
-export interface PatternPiece {
-  id: string
-  label: string
-  name: string
-  width: number
-  height: number
-  quantity: number
-}
-
-export interface FabricOption {
-  name: string
-  description: string
-  difficulty: 'Easy' | 'Medium' | 'Harder'
-  quantityMeters: number
-  isEco?: boolean
-  isSecondhand?: boolean
-}
-
 // ── 2D Step-by-step guide ────────────────────────────────────────────────────
 
 export type StepAction =

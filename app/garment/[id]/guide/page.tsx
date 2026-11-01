@@ -48,8 +48,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [measurements, setMeasurements] = useState<UserMeasurements>(DEFAULT_MEASUREMENTS)
   const [doneAnim, setDoneAnim] = useState(false)
   const [exiting, setExiting] = useState(false)
-  // The sheet always slides up when the guide opens (same on server and client, so hydration matches)
-  const animateIn = true
 
   // The project (size + progress) is set up on the garment page; without one, go back there
   const [size, setSize] = useState<StandardSize | null>(null)
@@ -115,15 +113,18 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
   const printPattern = () => window.open(`/garment/${id}/pattern?print=true${size ? `&size=${size}` : ''}`, '_blank')
 
+  // The sheet slides up when the guide opens and back down before leaving
+  const sheet = {
+    className: 'guide-sheet fixed inset-x-0 bottom-0 top-3 flex flex-col rounded-t-pane-lg overflow-hidden',
+    initial: { y: '100%' },
+    animate: { y: exiting ? '100%' : 0 },
+    transition: { type: 'spring', stiffness: 320, damping: 32 } as const,
+    onAnimationComplete: () => { if (exiting) router.push(`/garment/${id}`) },
+  }
+
   if (!guide || guide.steps.length === 0) {
     return (
-      <motion.div
-        className="guide-sheet fixed inset-x-0 bottom-0 top-3 flex flex-col rounded-t-pane-lg overflow-hidden"
-        initial={{ y: animateIn ? '100%' : 0 }}
-        animate={{ y: exiting ? '100%' : 0 }}
-        transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-        onAnimationComplete={() => { if (exiting) router.push(`/garment/${id}`) }}
-      >
+      <motion.div {...sheet}>
         <FlowHeader garmentName={garment.name} garmentId={id} onClose={() => setExiting(true)} />
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
           <IconNeedleThread className="size-10 text-muted-foreground" stroke={1.5} aria-hidden />
@@ -190,13 +191,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const assembly = assemblyAt(guide.steps, viewStep)
 
   return (
-    <motion.div
-      className="guide-sheet fixed inset-x-0 bottom-0 top-3 flex flex-col rounded-t-pane-lg overflow-hidden"
-      initial={{ y: animateIn ? '100%' : 0 }}
-      animate={{ y: exiting ? '100%' : 0 }}
-      transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-      onAnimationComplete={() => { if (exiting) router.push(`/garment/${id}`) }}
-    >
+    <motion.div {...sheet}>
       <FlowHeader garmentName={garment.name} garmentId={id} onClose={() => setExiting(true)}>
         {size && (
           <div className="flex items-center gap-1 shrink-0">
@@ -320,8 +315,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
               </div>
             )}
           </div>
-
-
         </div>
       </div>
     </motion.div>
