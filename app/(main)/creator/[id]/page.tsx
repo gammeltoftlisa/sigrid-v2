@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { CreatorAvatar } from '@/components/patterns/creator-avatar'
 import { GarmentCard } from '@/components/patterns/garment-card'
 import { PageSection } from '@/components/patterns/page-section'
+import { ProductGrid } from '@/components/patterns/product-grid'
 import { ProfileHeader } from '@/components/patterns/profile-header'
 import { PageContainer, TopBar } from '@/components/patterns/page-header'
 import { getCreatorById, getPatternsByCreator } from '@/lib/data'
@@ -42,6 +43,7 @@ export default function CreatorPage({ params }: { params: Promise<{ id: string }
         {patterns.length === 0 ? (
           <p className="py-8 text-sm text-muted-foreground">No patterns published yet.</p>
         ) : (
+          <ProductGrid>
           <div className="tile-grid tiles">
             {patterns.map((p) => (
               <GarmentCard
@@ -54,6 +56,7 @@ export default function CreatorPage({ params }: { params: Promise<{ id: string }
               />
             ))}
           </div>
+          </ProductGrid>
         )}
       </PageSection>
     </PageContainer>

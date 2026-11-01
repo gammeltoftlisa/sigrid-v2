@@ -17,8 +17,8 @@ export interface Garment {
   fits?: FitType[]
   sizes: StandardSize[]
   description: string
-  /** A photo of this exact garment (a published studio pattern's own photo) */
-  photo?: string
+  /** The photo attached to this garment. null: a published pattern with no photo of its own */
+  photo?: string | null
   /** Published from the pattern studio on this device */
   published?: boolean
 }
@@ -44,6 +44,8 @@ export interface Pattern {
   fit: FitType
   timesMade: number
   category: GarmentCategory
+  estimatedTime: string
+  description: string
 }
 
 export interface Measurements {
@@ -136,4 +138,10 @@ export interface GarmentGuide {
   keepSections?: boolean
   /** The maker's icon per section title (keys of the studio's section icons) */
   sectionIcons?: Record<string, string>
+}
+
+/** A guide's outline: see getGuideOutline in lib/data.ts */
+export interface GuideOutline {
+  steps: { title: string; tool?: SewingStep2D['tool'] }[]
+  pieces: number
 }

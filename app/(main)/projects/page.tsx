@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
+import { ProductGrid } from '@/components/patterns/product-grid'
 import { ProjectGrid } from '@/components/patterns/project-grid'
 import { useMounted } from '@/hooks/use-mounted'
 import { listProjects } from '@/lib/project-summary'
@@ -27,10 +28,12 @@ export default function ProjectsPage() {
       <PageHeader breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Projects' }]} title="Projects" />
 
       {projects === null ? (
-        <div className="tiles">
-          <Skeleton className="h-64 rounded-(--radius)" />
-          <Skeleton className="h-64 rounded-(--radius)" />
-        </div>
+        <ProductGrid>
+          <div className="tiles">
+            <Skeleton className="h-64 rounded-(--radius)" />
+            <Skeleton className="h-64 rounded-(--radius)" />
+          </div>
+        </ProductGrid>
       ) : projects.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>

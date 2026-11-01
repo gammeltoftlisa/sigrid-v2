@@ -61,7 +61,7 @@ export default function OnboardingPage() {
       </div>
 
       {/* Fade between steps; reduced motion turns it off globally */}
-      <div key={step} className="flex flex-1 flex-col animate-in fade-in duration-200">
+      <div key={step} className="flex flex-1 flex-col">
         {isIntro && IntroIcon && (
           <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center">
             <div className="intro-art flex aspect-product w-48 items-center justify-center bg-muted">

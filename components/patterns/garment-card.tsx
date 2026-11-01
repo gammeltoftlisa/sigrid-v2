@@ -3,7 +3,7 @@ import { cn } from 'cn'
 
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { GarmentImage } from '@/components/garment/GarmentArt'
+import { GarmentImage } from '@/components/garment/GarmentImage'
 import type { Difficulty } from '@/lib/types'
 import { PhotoLabel } from '@/components/patterns/photo-label'
 
@@ -40,8 +40,8 @@ export function GarmentCard({
   lead?: boolean
   /** Shown on the lead tile only */
   description?: string
-  /** The garment's own photo, instead of the stock one */
-  photoSrc?: string
+  /** The photo attached to the garment; see GarmentImage */
+  photoSrc?: string | null
   className?: string
 }) {
   const details = [difficulty, time].filter(Boolean).join(' · ')
@@ -54,8 +54,8 @@ export function GarmentCard({
         name={name}
         photoSrc={photoSrc}
         sizes={lead ? '(min-width: 1280px) 40vw, (min-width: 768px) 60vw, 100vw' : undefined}
-        className="product-image aspect-product p-6 sm:p-8"
-        artClassName={cn('hover-zoom', lead ? 'max-w-72' : 'max-w-40')}
+        className="product-image aspect-product"
+        imageClassName="hover-zoom"
       >
         {tag && (
           <PhotoLabel className="absolute top-3 left-3">{tag}</PhotoLabel>

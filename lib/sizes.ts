@@ -1,4 +1,5 @@
 import { writeRaw } from './local-store'
+import { sewingSaved } from './sewing-store'
 import type { StandardSize } from './types'
 
 export const allSizes: StandardSize[] = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL']
@@ -28,5 +29,7 @@ export function loadSavedSize(): StandardSize | null {
 }
 
 export function saveSize(size: StandardSize) {
-  writeRaw(STORAGE_KEY, size)
+  if (!writeRaw(STORAGE_KEY, size).ok) return
+  writeRaw(`${STORAGE_KEY}_at`, new Date().toISOString())
+  sewingSaved()
 }

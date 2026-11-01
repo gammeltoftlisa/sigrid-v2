@@ -1,11 +1,12 @@
 import Link from 'next/link'
+import { cn } from 'cn'
 
-import { GarmentImage } from '@/components/garment/GarmentArt'
+import { GarmentImage } from '@/components/garment/GarmentImage'
 import { CreatorAvatar } from '@/components/patterns/creator-avatar'
 import type { Creator, Pattern } from '@/lib/types'
 
 /**
- * A pattern maker as a white card: two of their patterns as a cover, the avatar overlapping it,
+ * A pattern maker inside a ProductGrid: two of their patterns as a cover, the avatar overlapping it,
  * then handle, one line of bio and how many patterns they have. The whole card links to their page.
  */
 export function MakerCard({ creator, patterns }: { creator: Creator; patterns: Pattern[] }) {
@@ -13,16 +14,16 @@ export function MakerCard({ creator, patterns }: { creator: Creator; patterns: P
   return (
     <Link
       href={`/creator/${creator.id}`}
-      className="group/maker flex flex-col overflow-hidden rounded-(--control-radius) bg-card p-2 outline-none"
+      className="group/maker flex flex-col outline-none"
     >
-      <div className="grid aspect-wide grid-cols-2 gap-1 overflow-hidden rounded-(--image-radius)">
+      <div className={cn('grid aspect-wide gap-1 overflow-hidden rounded-(--image-radius)', cover.length > 1 && 'grid-cols-2')}>
         {cover.map((p) => (
           <GarmentImage
             key={p.id}
             name={p.name}
             sizes="(min-width: 1280px) 10vw, 25vw"
             className="h-full w-full"
-            artClassName="hover-zoom"
+            imageClassName="hover-zoom"
           />
         ))}
       </div>

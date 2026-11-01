@@ -49,14 +49,14 @@ export default function GuideScene({ scene, label }: { scene: Scene; label: stri
   }, [scene, reduce, uid])
 
   return (
-    <div className="guide-scene relative h-full w-full overflow-hidden rounded-3xl" role="img" aria-label={label}>
+    <div className="guide-scene relative h-full w-full overflow-hidden" role="img" aria-label={label}>
       <div ref={stageRef} className="gs-stage absolute inset-0" />
       {!reduce && (
         <button
           type="button"
           onClick={() => setPaused((p) => !p)}
           aria-label={paused ? 'Play' : 'Pause'}
-          className="glass-inset-hover absolute right-3 bottom-3 flex size-8 items-center justify-center rounded-full bg-card"
+          className="glass-chip absolute right-3 bottom-3 flex size-8 items-center justify-center rounded-full"
         >
           {paused ? <IconPlayerPlayFilled size={14} /> : <IconPlayerPauseFilled size={14} />}
         </button>

@@ -1,4 +1,4 @@
-import { garments, getGarmentGuide } from './data'
+import { garments, getGuideOutline } from './data'
 import { listPublishedGarments } from './published'
 import { loadProject, type ProjectState } from './projects'
 import { sizeLabel } from './sizes'
@@ -12,13 +12,20 @@ export interface ProjectSummary {
   percent: number
 }
 
+/** Average minutes per step for a garment, from its estimate ("3–4 hours") and step count */
+export function minutesPerStep(estimate: string, steps: number) {
+  const nums = estimate.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [3]
+  const hours = nums.reduce((a, b) => a + b, 0) / nums.length
+  return steps ? (hours * 60) / steps : 0
+}
+
 /** Every project the user has started on this device, in-progress first. Browser only. */
 export function listProjects(): ProjectSummary[] {
   return [...garments, ...listPublishedGarments()]
     .flatMap((garment) => {
       const project = loadProject(garment.id)
       if (!project) return []
-      const totalSteps = getGarmentGuide(garment.id)?.steps.length ?? 0
+      const totalSteps = getGuideOutline(garment.id)?.steps.length ?? 0
       const done = Math.min(project.completedUntil, totalSteps)
       const finished = totalSteps > 0 && done >= totalSteps
       return [{ garment, project, totalSteps, finished, percent: totalSteps ? Math.round((done / totalSteps) * 100) : 0 }]
@@ -28,9 +35,10 @@ export function listProjects(): ProjectSummary[] {
 
 /** What a project card shows: the garment, the next step and how far along it is */
 export function projectCardData({ garment, project, totalSteps }: ProjectSummary) {
-  const steps = getGarmentGuide(garment.id)?.steps ?? []
+  const steps = getGuideOutline(garment.id)?.steps ?? []
   return {
     name: garment.name,
+    photoSrc: garment.photo,
     href: `/garment/${garment.id}`,
     continueHref: `/garment/${garment.id}/guide`,
     sizeLabel: sizeLabel(project.size),

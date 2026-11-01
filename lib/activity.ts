@@ -1,10 +1,11 @@
 import { z } from 'zod'
 
 import { readJson, validEntries, writeRaw } from './local-store'
+import { sewingSaved } from './sewing-store'
 import type { StepAction } from './types'
 
 /**
- * Every step a user marks done, with when. Saved in the browser like projects are,
+ * Every step a user marks done, with when. Saved in the browser like projects are, and on the account when logged in,
  * and used for the Projects dashboard (streaks, activity, techniques).
  */
 export interface StepDone {
@@ -33,7 +34,7 @@ export function loadActivity(): StepDone[] {
 export function logStepDone(entry: Omit<StepDone, 'at'>) {
   const list = loadActivity().filter((e) => !(e.garmentId === entry.garmentId && e.step === entry.step))
   list.push({ ...entry, at: new Date().toISOString() })
-  writeRaw(KEY, JSON.stringify(list.slice(-2000)))
+  if (writeRaw(KEY, JSON.stringify(list.slice(-2000))).ok) sewingSaved()
 }
 
 /** Local calendar day, e.g. "2026-10-11" */

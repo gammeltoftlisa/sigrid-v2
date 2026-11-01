@@ -46,7 +46,7 @@ export default function TermsPage() {
 
       <LegalSection title="Photos and content">
         <p>
-          Garment photos are inspiration from Unsplash and show what a garment of that kind can look like, not a garment made from our
+          Garment photos are inspiration and show what a garment of that kind can look like, not a garment made from our
           pattern. Fabric photos belong to the shops that sell them.
         </p>
       </LegalSection>

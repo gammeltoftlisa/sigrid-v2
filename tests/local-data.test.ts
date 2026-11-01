@@ -14,7 +14,15 @@ beforeEach(() => {
 describe('projects', () => {
   it('reads back what was saved', () => {
     saveProject('a', { size: 'M', completedUntil: 3 })
-    expect(loadProject('a')).toEqual({ size: 'M', completedUntil: 3 })
+    expect(loadProject('a')).toMatchObject({ size: 'M', completedUntil: 3 })
+  })
+
+  it('saving without a change does not count as newer, so another device keeps its progress', () => {
+    localStorage.setItem('sigrid_project_a', JSON.stringify({ size: 'M', completedUntil: 3, updatedAt: '2026-01-01T00:00:00.000Z' }))
+    saveProject('a', { size: 'M', completedUntil: 3 })
+    expect(loadProject('a')?.updatedAt).toBe('2026-01-01T00:00:00.000Z')
+    saveProject('a', { size: 'M', completedUntil: 4 })
+    expect(loadProject('a')?.updatedAt).not.toBe('2026-01-01T00:00:00.000Z')
   })
 
   it.each([['{"size":"HUGE","completedUntil":1}'], ['{"size":"M","completedUntil":-1}'], ['nope']])('turns away %s and keeps a copy', (raw) => {

@@ -5,14 +5,14 @@ import Link from 'next/link'
 import { IconLeaf } from '@tabler/icons-react'
 
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { GarmentImage } from '@/components/garment/GarmentArt'
+import { GarmentImage } from '@/components/garment/GarmentImage'
 import type { FabricChoice } from '@/lib/fabric/needs'
 
 /** A small photo of the garment, linking back to its page. Sits in front of the garment field. */
-export function GarmentThumb({ id, name, photoSrc }: { id: string; name: string; photoSrc?: string }) {
+export function GarmentThumb({ id, name, photoSrc }: { id: string; name: string; photoSrc?: string | null }) {
   return (
     <Link href={`/garment/${id}`} aria-label={`${name}: open the garment`} className="group/tile shrink-0 rounded-(--image-radius) outline-none">
-      <GarmentImage name={name} photoSrc={photoSrc} sizes="64px" className="garment-thumb rounded-(--image-radius)" artClassName="max-w-8 hover-zoom" />
+      <GarmentImage name={name} photoSrc={photoSrc} sizes="64px" className="garment-thumb rounded-(--image-radius)" imageClassName="max-w-8 hover-zoom" />
     </Link>
   )
 }

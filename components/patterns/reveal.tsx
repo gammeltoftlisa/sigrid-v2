@@ -8,10 +8,10 @@ import { useMounted } from '@/hooks/use-mounted'
 /** The house easing: one curve for every movement in the app */
 export const ease = [0.22, 1, 0.36, 1] as const
 
-/** Rises in after `i` steps of the page-load cascade */
+/** Rises in after `i` steps of the page-load cascade. Movement only: a fade would cut any glass inside it off from the page. */
 export const rise: Variants = {
-  hidden: { y: 28, opacity: 0 },
-  show: (i: number = 0) => ({ y: 0, opacity: 1, transition: { duration: 0.9, ease, delay: 0.12 + i * 0.1 } }),
+  hidden: { y: 28 },
+  show: (i: number = 0) => ({ y: 0, transition: { duration: 0.9, ease, delay: 0.12 + i * 0.1 } }),
 }
 
 /** Animate only after hydration, so server and browser render the same first frame */

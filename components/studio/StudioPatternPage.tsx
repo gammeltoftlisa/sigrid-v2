@@ -10,7 +10,8 @@ import { photoFromFile } from '@/lib/studio/photo'
 import { ActionBar } from '@/components/patterns/action-bar'
 import { ChipGroup } from '@/components/patterns/chip-group'
 import { Panel, PanelRow, StepDot } from '@/components/patterns/panel'
-import { GarmentImage } from '@/components/garment/GarmentArt'
+import { GarmentImage } from '@/components/garment/GarmentImage'
+import { ProductFrame } from '@/components/patterns/product-grid'
 import { TOOLS, type Tool } from '@/components/sewing/tools'
 import { baseSize, plural, type StudioPattern } from '@/lib/studio/patterns'
 import { isDone } from '@/lib/studio/wizard'
@@ -84,15 +85,16 @@ export function StudioPatternPage({
     <div className="md:grid md:min-h-0 md:flex-1 md:grid-cols-12 md:gap-x-(--grid-gutter) md:pr-8 md:pl-4">
       {/* Garment image, as on the garment page */}
       <div className="md:col-span-6 md:h-full md:min-h-0 md:pb-6">
+        <ProductFrame className="mx-4 mt-4 sm:mx-6 md:m-0 md:h-full">
         <GarmentImage
           name={pattern.name}
-          className="mx-4 mt-4 aspect-product rounded-(--radius) sm:mx-6 md:m-0 md:aspect-auto md:h-full"
-          artClassName="max-w-72 md:max-w-sm"
+          className="aspect-product rounded-(--image-radius) md:aspect-auto md:h-full"
           sizes="(min-width: 768px) 50vw, 100vw"
-          photoSrc={pattern.photo}
+          photoSrc={pattern.photo ?? null}
         >
           <PhotoControls photo={pattern.photo} onChange={(photo) => onChange({ photo })} />
         </GarmentImage>
+        </ProductFrame>
       </div>
 
       <div className="flex flex-col md:col-span-6 md:min-h-0 md:pb-6">

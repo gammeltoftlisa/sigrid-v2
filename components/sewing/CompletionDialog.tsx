@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { IconX, IconCamera, IconShare, IconStar, IconStarFilled } from '@tabler/icons-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { GarmentArt } from '@/components/garment/GarmentArt'
+import { GarmentImage } from '@/components/garment/GarmentImage'
 import { cn } from '@/lib/utils'
 import type { Garment } from '@/lib/types'
 
@@ -90,9 +90,9 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
                   initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: 'spring', stiffness: 240, damping: 16, delay: 0.15 }}
-                  className="w-40 h-40 rounded-(--radius) bg-muted flex items-center justify-center p-8"
+                  className="size-40"
                 >
-                  <GarmentArt name={garment.name} className="w-full h-full" />
+                  <GarmentImage name={garment.name} photoSrc={garment.photo} sizes="160px" className="size-full rounded-(--radius)" />
                 </motion.div>
                 <div className="absolute inset-0 pointer-events-none">
                   {confetti.map((c, i) => (

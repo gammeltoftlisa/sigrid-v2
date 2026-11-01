@@ -136,7 +136,7 @@
 - [x] Route: app/(main)/profile/page.tsx
 
 ## Payment Placeholder Screen
-- [x] Two plan cards (Pay per project / Monthly subscription)
+- [x] One pricing card: patterns are always bought one at a time, no subscription
 - [x] "Coming soon" badges + disabled buttons
 - [x] Beta access note at bottom
 - [x] Route: app/payment/page.tsx

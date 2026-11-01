@@ -1,20 +1,26 @@
 'use client'
 
 import { useState, use, useEffect, useMemo, useRef } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import { IconPrinter, IconChevronDown, IconNeedleThread } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
-import { getGarmentById, getGarmentGuide, standardSizes } from '@/lib/data'
-import type { StandardSize, UserMeasurements } from '@/lib/types'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { getGarmentById, standardSizes } from '@/lib/data'
+import { useGarmentGuide } from '@/hooks/use-garment-guide'
+import { Spinner } from '@/components/ui/spinner'
+import type { Garment, StandardSize, UserMeasurements } from '@/lib/types'
 import { loadProject, saveProject } from '@/lib/projects'
+import { useSewingVersion } from '@/hooks/use-mounted'
 import { logStepDone } from '@/lib/activity'
 import { sizeLabel } from '@/lib/sizes'
 import SizeSheet from '@/components/garment/SizeSheet'
 import PatternCanvas from '@/components/sewing/PatternCanvas'
 import GuideSidePanel from '@/components/sewing/GuideSidePanel'
-import FlowHeader from '@/components/legacy/FlowHeader'
-import { GarmentArt } from '@/components/garment/GarmentArt'
+import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
+import { ProductFrame } from '@/components/patterns/product-grid'
+import { GarmentImage } from '@/components/garment/GarmentImage'
 import CompletionDialog from '@/components/sewing/CompletionDialog'
 import StepInstruction from '@/components/sewing/StepInstruction'
 import { groupIntoJourneys } from '@/lib/journeys'
@@ -35,8 +41,7 @@ const slideVariants = {
 export default function GuidePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const garment = getGarmentById(id)
-  // Stable per id: a published pattern's guide is rebuilt from storage on every call
-  const guide = useMemo(() => getGarmentGuide(id), [id])
+  const { guide, state: guideState, retry: retryGuide } = useGarmentGuide(id)
   const router = useRouter()
   const journeys = useMemo(() => (guide ? groupIntoJourneys(guide.steps, { keepSections: guide.keepSections }) : []), [guide])
 
@@ -47,7 +52,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [direction, setDirection] = useState(1)
   const [measurements, setMeasurements] = useState<UserMeasurements>(DEFAULT_MEASUREMENTS)
   const [doneAnim, setDoneAnim] = useState(false)
-  const [exiting, setExiting] = useState(false)
 
   // The project (size + progress) is set up on the garment page; without one, go back there
   const [size, setSize] = useState<StandardSize | null>(null)
@@ -55,10 +59,14 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [doneOpen, setDoneOpen] = useState(false)
   // Bumped when the project restarts so the step list rebuilds from scratch
   const [runId, setRunId] = useState(0)
+  // Re-read when progress made on another device arrives
+  const sewingVersion = useSewingVersion()
 
   useEffect(() => {
     const project = loadProject(id)
     if (!project) { router.replace(`/garment/${id}`); return }
+    // Wait for the guide: resuming against an empty one would reset the saved progress to 0
+    if (guideState !== 'ready') return
     const total = guide?.steps.length ?? 0
     const last = Math.max(0, total - 1)
     // completedUntil === total means every step is done
@@ -69,7 +77,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     setMeasurements(standardSizes[project.size])
     setCompletedUntil(resumeAt)
     setViewStep(Math.min(resumeAt, last))
-  }, [id, guide, router])
+  }, [id, guide, guideState, router, sewingVersion])
 
   // Remember progress so leaving and coming back resumes where you were
   useEffect(() => {
@@ -113,28 +121,51 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
   const printPattern = () => window.open(`/garment/${id}/pattern?print=true${size ? `&size=${size}` : ''}`, '_blank')
 
-  // The sheet slides up when the guide opens and back down before leaving
-  const sheet = {
-    className: 'guide-sheet fixed inset-x-0 bottom-0 top-3 flex flex-col rounded-t-pane-lg overflow-hidden',
-    initial: { y: '100%' },
-    animate: { y: exiting ? '100%' : 0 },
-    transition: { type: 'spring', stiffness: 320, damping: 32 } as const,
-    onAnimationComplete: () => { if (exiting) router.push(`/garment/${id}`) },
+  // Not bought: the garment page offers it
+  if (guideState === 'locked') {
+    router.replace(`/garment/${id}`)
+    return null
+  }
+
+  if (guideState === 'loading' || guideState === 'error') {
+    return (
+      <main className="guide-page">
+        <GuideTopBar garment={garment} />
+        <div className="px-4 pb-6 md:pr-8 md:pl-4">
+          <Empty className="border">
+            <EmptyHeader>
+              {guideState === 'loading' ? <Spinner /> : <EmptyMedia variant="icon"><IconNeedleThread /></EmptyMedia>}
+              <EmptyTitle>{guideState === 'loading' ? 'Opening your guide' : 'The guide didn’t open'}</EmptyTitle>
+              {guideState === 'error' && <EmptyDescription>This is usually a connection problem. Your progress is safe.</EmptyDescription>}
+            </EmptyHeader>
+            {guideState === 'error' && (
+              <EmptyContent>
+                <Button onClick={retryGuide}>Try again</Button>
+              </EmptyContent>
+            )}
+          </Empty>
+        </div>
+      </main>
+    )
   }
 
   if (!guide || guide.steps.length === 0) {
     return (
-      <motion.div {...sheet}>
-        <FlowHeader garmentName={garment.name} garmentId={id} onClose={() => setExiting(true)} />
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
-          <IconNeedleThread className="size-10 text-muted-foreground" stroke={1.5} aria-hidden />
-          <h2 className="text-3xl">This guide is still <em className="display-italic">being written</em></h2>
-          <p className="max-w-prose text-base text-muted-foreground">We’re writing the steps for this garment carefully. They’ll appear here when they’re ready.</p>
-          <Button variant="outline" className="mt-2" onClick={() => setExiting(true)}>
-            Go back
-          </Button>
+      <main className="guide-page">
+        <GuideTopBar garment={garment} />
+        <div className="px-4 pb-6 md:pr-8 md:pl-4">
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon"><IconNeedleThread /></EmptyMedia>
+              <EmptyTitle>This guide is still being written</EmptyTitle>
+              <EmptyDescription>We’re writing the steps for this garment carefully. They’ll appear here when they’re ready.</EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button variant="outline" nativeButton={false} render={<Link href={`/garment/${id}`} />}>Go back</Button>
+            </EmptyContent>
+          </Empty>
         </div>
-      </motion.div>
+      </main>
     )
   }
 
@@ -191,10 +222,10 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const assembly = assemblyAt(guide.steps, viewStep)
 
   return (
-    <motion.div {...sheet}>
-      <FlowHeader garmentName={garment.name} garmentId={id} onClose={() => setExiting(true)}>
+    <main className="guide-page">
+      <GuideTopBar garment={garment}>
         {size && (
-          <div className="flex items-center gap-1 shrink-0">
+          <>
             <Button variant="outline" size="sm" className="tabular-nums" onClick={() => setSizeSheetOpen(true)} aria-label={`Size ${sizeLabel(size)}. Change size`}>
               {sizeLabel(size)}
               <IconChevronDown data-icon="inline-end" />
@@ -202,9 +233,9 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
             <Button variant="outline" size="icon" onClick={printPattern} aria-label="Print pattern" title="Print pattern">
               <IconPrinter />
             </Button>
-          </div>
+          </>
         )}
-      </FlowHeader>
+      </GuideTopBar>
 
       <SizeSheet
         garment={garment}
@@ -217,7 +248,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
       <CompletionDialog garment={garment} open={doneOpen} onClose={() => setDoneOpen(false)} />
 
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-3 overflow-hidden p-3 pt-0">
+      <div className="guide-body px-4 pb-3 md:pr-8 md:pb-6 md:pl-4">
         {size && <GuideSidePanel
           keepSections={guide.keepSections}
           sectionIcons={guide.sectionIcons}
@@ -232,21 +263,17 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
           onPreview={preview}
         />}
 
-        {/* Right 2/3: canvas (on phones: a fixed-height strip above the steps) */}
-        <div className="order-1 md:order-none h-[32vh] shrink-0 md:h-auto md:flex-1 flex flex-row overflow-hidden">
-
-          {/* Canvas column */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div data-slot="inset" className="guide-canvas flex-1 relative min-h-0 rounded-(--radius) overflow-hidden">
+        {/* The scene and its instructions (on phones: a fixed-height strip above the steps) */}
+        <div className="order-1 flex h-[32vh] shrink-0 flex-col gap-(--grid-gutter) md:order-none md:col-span-8 md:h-auto md:min-h-0 xl:col-span-9">
+          <ProductFrame className="flex min-h-0 flex-1 flex-col p-2 md:p-3">
+            <div className="relative min-h-0 flex-1 overflow-hidden rounded-(--image-radius)">
               {allDone ? (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="w-full h-full flex flex-col items-center justify-center gap-4 text-center px-6"
                 >
-                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-(--radius) bg-muted flex items-center justify-center p-6 md:p-8">
-                    <GarmentArt name={garment.name} className="w-full h-full" />
-                  </div>
+                  <GarmentImage name={garment.name} photoSrc={garment.photo} sizes="144px" className="size-28 rounded-(--radius) md:size-36" />
                   <div className="flex flex-col gap-2">
                     <p className="kicker">All {steps.length} steps done</p>
                     <p className="font-heading text-4xl">{garment.name} is <em className="display-italic">finished.</em></p>
@@ -300,10 +327,11 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                 )}
               </AnimatePresence>
             </div>
+          </ProductFrame>
 
-            {/* Instructions for the step on the canvas (desktop; phones read them in the list) */}
-            {!allDone && (
-              <div className="hidden md:block shrink-0 pt-3">
+          {/* Instructions for the step on the canvas (desktop; phones read them in the list) */}
+          {!allDone && (
+              <div className="hidden shrink-0 md:block">
                 <StepInstruction
                   step={step}
                   index={viewStep}
@@ -313,10 +341,32 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                   state={progressStateOf(viewStep, completedUntil)}
                 />
               </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
-    </motion.div>
+    </main>
+  )
+}
+
+/** The same top line as every screen: where you are, and this project's settings on the right. */
+function GuideTopBar({ garment, children }: { garment: Garment; children?: React.ReactNode }) {
+  return (
+    <div className="shrink-0 px-4 md:pr-8 md:pl-4">
+      <div className="top-bar flex h-14 items-center gap-2">
+        {/* Phones: just the garment, so nothing gets cut off; the full trail from sm */}
+        <Link href={`/garment/${garment.id}`} className="min-w-0 truncate text-sm font-medium underline-offset-4 hover:underline sm:hidden">
+          {garment.name}
+        </Link>
+        <PageBreadcrumbs
+          className="hidden min-w-0 whitespace-nowrap sm:flex"
+          items={[
+            { label: 'Home', href: '/home' },
+            { label: garment.name, href: `/garment/${garment.id}` },
+            { label: 'Sewing guide' },
+          ]}
+        />
+        {children && <div className="ml-auto flex shrink-0 items-center gap-2">{children}</div>}
+      </div>
+    </div>
   )
 }

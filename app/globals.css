@@ -76,23 +76,21 @@
 }
 
 /* ─── Tokens: liquid glass (see .claude/skills/liquid-glass-frontend) ─────────────
-   The whole palette comes from THREE brand triplets (space-separated R G B, so they
-   compose at any opacity: rgb(var(--tri-primary) / 0.4)). Everything that has colour is a
-   warm brown: saddle brown, a lighter tan and caramel, on warm obsidian and ivory neutrals.
-   Main buttons are black (see --cta-fill). Status colours (success, error…) stay functional.
-   Light and dark share the brand; only the neutral surfaces and the aura change.
+   The whole palette comes from THREE triplets (space-separated R G B, so they compose at
+   any opacity: rgb(var(--tri-primary) / 0.4)). There is no brand colour for now: everything is
+   black, white or beige. Status colours (success, error…) stay functional.
    Components read the shadcn names below (background, card, primary…), which point
    at the app surface tokens, so nothing in component code knows about themes. */
 :root {
-  --tri-primary: 123 75 42;        /* saddle brown #7B4B2A: accents, markers, chosen states (6.1:1) */
-  --tri-primary-soft: 185 138 98;  /* tan #B98A62: the light behind the glass, accents on dark */
-  --tri-accent: 210 174 132;       /* caramel #D2AE84: the second colour in the light */
+  --tri-primary: 33 28 22;         /* ink #211C16: accents, markers, chosen states */
+  --tri-primary-soft: 176 166 148; /* beige #B0A694: accents on dark */
+  --tri-accent: 196 186 168;       /* beige #C4BAA8: the net and dots on dark, charts */
   --bg-light: #EFEADE;             /* ivory */
   --bg-dark: #15110D;              /* obsidian */
 
-  /* App surfaces, light: a tinted ivory, never pure grey */
+  /* App surfaces, light: only the page is warm, whatever sits on it is neutral */
   --app-bg: var(--bg-light);
-  --app-panel: #FBF8F1;
+  --app-panel: #FFFFFF;
   --app-elev: #FFFFFF;
   --app-border: rgba(28, 24, 19, 0.10);
   --app-border-strong: rgba(28, 24, 19, 0.22);
@@ -100,7 +98,7 @@
   --app-text-soft: #6B6052;        /* 5.1:1 on the page */
   --app-text-faint: #9A8E7C;       /* decoration only, never text you need to read */
   --app-hover: rgba(28, 24, 19, 0.045);
-  --app-shadow: 0 24px 60px -38px rgba(76, 52, 34, 0.45);
+  --app-shadow: 0 24px 60px -38px rgb(0 0 0 / 0.3);
   --accent-ink: rgb(var(--tri-primary));   /* kickers and small accent text (6.1:1) */
   --aura: 0.28;                    /* strength of the colour behind the glass */
   /* Fills for the main button, lines and the italic headline word */
@@ -109,20 +107,22 @@
   --cta-hover: linear-gradient(#2B2622, #2B2622);
   --cta-ink: #FAF7F2;
   --ink-fill: linear-gradient(rgb(var(--tri-primary)), rgb(var(--tri-primary)));  /* the italic headline word */
-  --atmo-blend: multiply;
   --atmo-opacity: 0.55;
-  --sheen: rgb(255 255 255 / 0.55);
+  --mat-line: rgb(var(--tri-primary) / 0.1);
+  --mat-dot: rgb(var(--tri-primary) / 0.14);
+  --product-fill: #F8F5EE;         /* product containers: lighter than the page */
+  --sheen: rgb(255 255 255 / 0.8);
   color-scheme: light;
 
   /* shadcn names, pointed at the app tokens */
   --background: var(--app-bg);
   --foreground: var(--app-text);
-  --card: color-mix(in srgb, var(--app-elev) 72%, transparent);
+  --card: var(--glass-inset);
   --card-foreground: var(--app-text);
   --popover: var(--app-panel);
   --popover-foreground: var(--app-text);
   --primary: rgb(var(--tri-primary));
-  --primary-foreground: #FFF8F0;   /* cream on brown (6.9:1) */
+  --primary-foreground: #FFFFFF;
   --secondary: #E7E0D1;
   --secondary-foreground: var(--app-text);
   --muted: #E7E0D1;
@@ -160,7 +160,22 @@
   --brand-ink: var(--app-text-soft);
 
   /* Frosted fill without blur: fields and chips on the page, bg-glass, the guide */
-  --glass-tint: color-mix(in srgb, var(--app-elev) 50%, transparent);
+  --glass-tint: var(--glass-fill);
+  /* One glass everywhere, whatever its size. What sits inside glass adds no fill of its own
+     (--glass-inset), so a button in a panel looks the same as a button on the page. Only things that
+     text scrolls under are thicker.
+     Glass is white: a white tint over a real blur. --glass-blur drains the warm page and lifts it
+     towards white. Never darken it or raise its contrast: that turns small differences in the page
+     into gray, which was the bug. It only suits the quiet page: over photos use --glass-blur-solid. */
+  --glass-fill: rgb(255 255 255 / 0.45);
+  --glass-inset: transparent;
+  --glass-hover: rgb(255 255 255 / 0.72);
+  --glass-fill-solid: rgb(255 255 255 / 0.8);
+  --glass-fill-bar: rgb(255 255 255 / 0.78);
+  --glass-fill-menu: rgb(255 255 255 / 0.9);
+  --glass-edge: inset 0 1px 0 var(--sheen), 0 10px 30px -24px rgb(0 0 0 / 0.2);
+  --glass-blur: saturate(0) brightness(1.08) blur(8px);
+  --glass-blur-solid: blur(24px);
   --glass: var(--glass-tint);
 
   /* Heatmap: one hue light → dark, every step ≥ 3:1 on the panel */
@@ -175,8 +190,14 @@
 /* Dark: warm obsidian, a richer aura, light text. Set by next-themes on <html data-theme>. */
 :root[data-theme="dark"] {
   --app-bg: var(--bg-dark);
-  --app-panel: #1E1813;
-  --app-elev: #2A2219;
+  --app-panel: #1C1C1C;
+  --app-elev: #2B2B2B;
+  --glass-fill: rgb(255 255 255 / 0.07);
+  --glass-blur: saturate(0) blur(8px);
+  --glass-hover: rgb(255 255 255 / 0.1);
+  --glass-fill-solid: rgb(32 32 32 / 0.66);
+  --glass-fill-bar: rgb(32 32 32 / 0.62);
+  --glass-fill-menu: rgb(32 32 32 / 0.82);
   --app-border: rgba(243, 238, 227, 0.10);
   --app-border-strong: rgba(243, 238, 227, 0.20);
   --app-text: #F0ECE1;
@@ -187,10 +208,12 @@
   --accent-ink: rgb(var(--tri-primary-soft));
   --ink-fill: linear-gradient(rgb(var(--tri-primary-soft)), rgb(var(--tri-primary-soft)));
   --aura: 0.32;
-  --atmo-blend: screen;
   --atmo-opacity: 0.8;
+  --mat-line: rgb(var(--tri-accent) / 0.08);
+  --mat-dot: rgb(var(--tri-accent) / 0.16);
+  --product-fill: #221D18;
   --sheen: rgb(255 255 255 / 0.15);
-  --tri-primary: 185 138 98;       /* on dark the brown would vanish: tan instead (6.2:1) */
+  --tri-primary: 240 236 225;      /* on dark the ink would vanish: bone instead */
   --primary-foreground: #15110D;
   --cta-fill: linear-gradient(#F3EEE6, #F3EEE6);
   --cta-hover: linear-gradient(#FFFFFF, #FFFFFF);
@@ -242,8 +265,8 @@
 /* ─── Brand layer: liquid glass ───────────────────────────────────────────────
    Unlayered on purpose so it beats shadcn's utility classes. See DESIGN.md.
    Warm editorial atelier: a characterful serif doing the talking, mono kickers,
-   real frosted glass (heavy blur + saturate + a specular top edge) floating over a
-   slowly drifting clay-and-gold atmosphere with a faint grain. */
+   real frosted glass (a neutral tint + soft blur + a specular top edge) floating over a
+   calm page: a cutting mat as the floor, on tiny dots. */
 
 /* Type */
 :root body { letter-spacing: -0.004em; font-feature-settings: "ss01", "cv01"; }
@@ -288,26 +311,26 @@
 /* Section titles: the display face at a real size, so sections feel like chapters */
 :root .page-section-title { font-size: clamp(1.625rem, 2.6vw, 2.25rem); font-weight: 380; }
 
-/* Grain: analog warmth that hides banding in the aura. It lives INSIDE the atmosphere,
-   behind the content: a blended layer above the page would stop every glass surface
-   from blurring what's behind it. */
-.atmosphere::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  opacity: 0.09; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-}
+/* Stipple: tiny dots across the whole page, like printed paper (components/patterns/atmosphere).
+   They live INSIDE the atmosphere, behind the content: a layer above the page would stop every
+   glass surface from blurring what's behind it. */
+.stipple { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stipple path { fill: none; stroke: var(--mat-dot); stroke-width: 1.1; stroke-linecap: round; }
 
-/* ─── Atmosphere: drifting colour the glass refracts (components/patterns/atmosphere) ─── */
+/* ─── Atmosphere: the cutting mat and stipple the glass frosts (components/patterns/atmosphere) ─── */
 .atmosphere { position: fixed; inset: 0; z-index: -10; overflow: hidden; pointer-events: none; opacity: var(--atmo-opacity); }
-/* One soft, still light in the top corner: just enough for the glass to have something to frost.
-   No drifting blobs and no moving fades. */
-.glow {
-  position: absolute; right: -10vw; top: -20vh; width: 70vw; height: 70vh; border-radius: 999px;
-  background: radial-gradient(closest-side, rgb(var(--tri-primary-soft) / 0.45), rgb(var(--tri-accent) / 0.2) 60%, transparent);
-  filter: blur(40px); mix-blend-mode: var(--atmo-blend);
-}
-@media (max-width: 767px) { .glow { width: 120vw; height: 50vh; right: -30vw; } }
 @media print { .atmosphere { display: none; } }
+/* The cutting mat: the floor under the whole screen, thin and quiet, fading only slightly with
+   distance so it stays visible all the way to the top right. Its lines stay solid, like the
+   printed cut lines: a mat is printed, not stitched. */
+.cutting-mat {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  -webkit-mask-image: linear-gradient(to top right, black, rgb(0 0 0 / 0.65));
+  mask-image: linear-gradient(to top right, black, rgb(0 0 0 / 0.65));
+}
+.cutting-mat path { fill: none; stroke: var(--mat-line); vector-effect: non-scaling-stroke; }
+.cutting-mat-minor { stroke-width: 0.8; }
+.cutting-mat-major { stroke-width: 1.3; }
 
 /* Controls: pill buttons, soft fields */
 :root :is([data-slot="toggle-group-item"], [data-slot="input-group"], [data-slot="select-trigger"], input, textarea) {
@@ -329,13 +352,11 @@
 :root .group\/button:hover:not(:disabled) { transform: translateY(-1px); }
 :root .group\/button:active:not(:disabled) { transform: translateY(0) scale(0.98); }
 
-/* Primary: brand-tinted frosted glass with a clay glow */
+/* Primary: solid black (light in dark mode) */
 :root .group\/button[data-variant="default"] {
   background: var(--cta-fill);
   color: var(--cta-ink);
   border: 1px dashed color-mix(in srgb, var(--cta-ink) 18%, transparent);
-  -webkit-backdrop-filter: blur(26px) saturate(185%);
-  backdrop-filter: blur(26px) saturate(185%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 8px 20px -14px rgb(0 0 0 / 0.35);
 }
 :root .group\/button[data-variant="default"]:hover:not(:disabled) {
@@ -351,7 +372,7 @@
 }
 /* Ghost: a frosted tile that lifts in on hover, not a colour swap */
 :root .group\/button[data-variant="ghost"]:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--app-elev) 70%, transparent);
+  background: var(--glass-hover);
   box-shadow: inset 0 1px 0 var(--sheen), inset 0 0 0 1px var(--app-border);
 }
 /* Destructive: quiet outlined text, never a coloured block */
@@ -362,10 +383,12 @@
 }
 :root .group\/button.bg-destructive\/10:hover { background: color-mix(in oklch, var(--destructive) 8%, transparent); }
 
-/* ─── Form fields: frosted fills, a clay focus ring ───────────────────────────── */
+/* ─── Form fields: frosted fills, a ink focus ring ───────────────────────────── */
 :root { --field-focus-ring: rgb(var(--tri-primary) / 0.18); }
 :root :is([data-slot="input"], [data-slot="select-trigger"], [data-slot="input-group"], [data-slot="textarea"]) {
-  background-color: color-mix(in srgb, var(--app-elev) 70%, transparent);
+  background-color: var(--glass-fill);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   border: 1px dashed var(--app-border) !important;
   box-shadow: inset 0 1px 0 var(--sheen);
   transition: background-color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
@@ -385,7 +408,7 @@
 :root [data-slot="field-label"] { font-size: 0.8125rem; line-height: 1.125rem; font-weight: 500; }
 :root [data-slot="field-group"] { gap: 1.25rem; }
 
-/* Slider: a fine clay track, small glass handles */
+/* Slider: a fine ink track, small glass handles */
 :root [data-slot="slider-range"] { background: rgb(var(--tri-primary)); }
 :root [data-slot="slider-thumb"] { background: var(--app-elev); box-shadow: inset 0 1px 0 var(--sheen), 0 2px 8px -2px rgb(0 0 0 / 0.35); transition: box-shadow 0.15s ease; }
 
@@ -437,7 +460,7 @@
 [data-sonner-toast][data-type="warning"] [data-icon] { color: var(--warning-solid); }
 [data-sonner-toast][data-type="info"] [data-icon] { color: var(--info-solid); }
 
-/* Filter chips become text tabs with a clay underline */
+/* Filter chips become text tabs with a ink underline */
 :root [data-slot="toggle-group-item"]:not([data-shape="tile"]) {
   height: 2.25rem;
   padding-inline: 0;
@@ -456,7 +479,7 @@
   color: var(--foreground) !important;
   border-bottom-color: rgb(var(--tri-primary));
 }
-/* Size tiles: frosted, clay when chosen */
+/* Size tiles: frosted, ink when chosen */
 :root [data-slot="toggle-group-item"][data-shape="tile"] { border-radius: var(--control-radius); border: 1px dashed var(--app-border); }
 :root [data-slot="toggle-group-item"][data-shape="tile"][data-pressed] {
   background: var(--cta-fill) !important;
@@ -466,7 +489,7 @@
 }
 :root [data-slot="tabs-trigger"]:not([data-active]) { color: var(--muted-foreground); }
 
-/* Product tiles: no box at all, just image and text */
+/* Product tiles: no box of their own. They sit in a ProductGrid, with a stroke between them */
 :root [data-slot="card"][data-variant="product"] {
   border: 0;
   background: transparent;
@@ -485,7 +508,7 @@
 }
 :root [data-slot="card-footer"] { background: transparent; border-top: 1px dashed var(--app-border); }
 
-/* Progress: a thin rounded clay line with a soft glow */
+/* Progress: a thin rounded ink line with a soft glow */
 :root [data-slot="progress-track"] { height: 3px; border-radius: 9999px; background: var(--stitch-track, var(--app-border-strong)); }
 :root [data-slot="progress-indicator"] { border-radius: 9999px; background: var(--stitch, var(--line-fill, var(--cta-fill))); box-shadow: 0 0 10px rgb(var(--tri-primary-soft) / 0.55); }
 
@@ -514,64 +537,55 @@
 :root .top-bar > .group\/button[aria-label="Back"] { width: 2.5rem; height: 2.5rem; margin-left: 0; margin-right: 0.25rem; }
 
 /* ─── Liquid glass: the material ─────────────────────────────────────────────────
-   Glass = heavy blur + saturate (puts back the colour blur greys out) + a specular top
-   edge + the atmosphere behind it to refract. Four steps:
+   Glass = a neutral see-through tint + a soft blur + a specular top edge, over the
+   atmosphere. Only the page is warm. Four steps:
      surface   panels, cards, alerts, the segmented control              (.glass-surface)
-     soft      floating bars and sheets: heaviest frost, lifts off       (.glass-surface-soft)
-     menu      popovers, dropdowns, tooltips, toasts: ~94% so text reads (.glass-menu)
+     soft      floating bars and sheets: same glass, lifts off           (.glass-surface-soft)
+     menu      popovers, dropdowns, tooltips, toasts: ~82% so text reads (.glass-menu)
      inset     everything INSIDE glass: a tint + sheen, NO backdrop-filter, because
                nesting backdrop-filter breaks compositing                (.glass-inset)
    Product photos and reading text are never glass. */
 html { background: var(--app-bg); }
-/* Never scroll sideways: decoration (the soft light) may bleed past the edge, the page may not.
+/* Never scroll sideways: decoration may bleed past the edge, the page may not.
    `clip` rather than `hidden`, so sticky side panels keep working. */
 html, body { overflow-x: clip; }
 body { background: transparent !important; isolation: isolate; }
 :root *, :root *::before, :root *::after { border-color: var(--app-border); }
 
 .glass-surface, .glass-panel, .glass-control,
-:root :is([data-slot="card"]:not([data-variant="product"]), [data-slot="alert"], [data-slot="empty"].border) {
-  background-color: color-mix(in srgb, var(--app-panel) 42%, transparent) !important;
-  -webkit-backdrop-filter: blur(34px) saturate(190%);
-  backdrop-filter: blur(34px) saturate(190%);
-  border: 1px dashed var(--app-border) !important;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.15), inset 0 0 0 1px rgb(255 255 255 / 0.03);
-  color: var(--foreground);
-}
+:root :is([data-slot="card"]:not([data-variant="product"]), [data-slot="alert"], [data-slot="empty"].border),
 .glass, .glass-bar, .glass-surface-soft,
 :root [data-slot="sheet-content"], :root [data-slot="dialog-content"], :root [data-slot="alert-dialog-content"], :root [data-slot="drawer-content"] {
-  background-color: color-mix(in srgb, var(--app-panel) 46%, transparent) !important;
-  -webkit-backdrop-filter: blur(44px) saturate(200%);
-  backdrop-filter: blur(44px) saturate(200%);
+  background-color: var(--glass-fill) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   border: 1px dashed var(--app-border) !important;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), inset 0 -10px 28px rgb(0 0 0 / 0.06), 0 20px 55px -20px rgb(0 0 0 / 0.55);
+  box-shadow: var(--glass-edge);
   color: var(--foreground);
 }
-/* Light: THINNER glass and MORE saturate, so the pastel aura reads through */
-:root:not([data-theme="dark"]) :is(.glass-surface, .glass-panel, .glass-control, [data-slot="card"]:not([data-variant="product"]), [data-slot="alert"], [data-slot="empty"].border) {
-  background-color: color-mix(in srgb, var(--app-panel) 34%, transparent) !important;
-  -webkit-backdrop-filter: blur(30px) saturate(210%);
-  backdrop-filter: blur(30px) saturate(210%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), inset 0 0 0 1px rgb(255 255 255 / 0.25);
+/* Bars fixed over scrolling content (phone tab bar, ActionBar): photos pass under their labels */
+.glass.fixed {
+  background-color: var(--glass-fill-bar) !important;
+  -webkit-backdrop-filter: var(--glass-blur-solid);
+  backdrop-filter: var(--glass-blur-solid);
+  box-shadow: var(--glass-edge), 0 20px 55px -20px rgb(0 0 0 / 0.3);
 }
-:root:not([data-theme="dark"]) :is(.glass, .glass-bar, .glass-surface-soft, [data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="drawer-content"]) {
-  background-color: color-mix(in srgb, var(--app-panel) 40%, transparent) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(220%);
-  backdrop-filter: blur(40px) saturate(220%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7), 0 20px 55px -20px rgba(76, 52, 34, 0.35);
-}
-/* Sheets and dialogs hold reading text: more solid than the bars */
+/* Sheets and dialogs hold reading text over a busy page: more solid than the bars, with enough
+   blur that the page's own text can't be read through them */
 :root :is([data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="drawer-content"]) {
-  background-color: color-mix(in srgb, var(--app-panel) 82%, transparent) !important;
+  background-color: var(--glass-fill-solid) !important;
+  -webkit-backdrop-filter: var(--glass-blur-solid);
+  backdrop-filter: var(--glass-blur-solid);
+  box-shadow: var(--glass-edge), 0 20px 55px -20px rgb(0 0 0 / 0.3);
 }
 
 /* Menus over busy content: keep the frost hint, raise the opacity so text reads */
 .glass-menu, .glass-strong,
 :root :is([data-slot="select-content"], [data-slot="popover-content"], [data-slot="dropdown-menu-content"], [data-slot="tooltip-content"]),
 :root [data-sonner-toast] {
-  background-color: color-mix(in srgb, var(--app-panel) 94%, transparent) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
+  background-color: var(--glass-fill-menu) !important;
+  -webkit-backdrop-filter: var(--glass-blur-solid);
+  backdrop-filter: var(--glass-blur-solid);
   border: 1px dashed var(--app-border) !important;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), var(--app-shadow) !important;
   color: var(--foreground) !important;
@@ -579,25 +593,38 @@ body { background: transparent !important; isolation: isolate; }
 :root [data-slot="tooltip-content"] :is(svg[class*="fill-foreground"], [class*="bg-foreground"]) { display: none; }
 :root [data-slot="sheet-overlay"], :root [data-slot="dialog-overlay"], :root [data-slot="alert-dialog-overlay"] {
   background: color-mix(in srgb, var(--app-bg) 30%, rgb(0 0 0 / 0.25));
-  -webkit-backdrop-filter: blur(6px) saturate(120%);
-  backdrop-filter: blur(6px) saturate(120%);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 /* Outline and secondary buttons: a frosted glass pill */
 :root .group\/button:is([data-variant="outline"], [data-variant="secondary"]) {
-  background-color: color-mix(in srgb, var(--app-elev) 22%, transparent) !important;
-  -webkit-backdrop-filter: blur(26px) saturate(185%);
-  backdrop-filter: blur(26px) saturate(185%);
-  border: 1px dashed var(--app-border-strong) !important;
+  background-color: var(--glass-fill) !important;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px dashed var(--app-border) !important;
   color: var(--foreground);
-  box-shadow: inset 0 1px 0 var(--sheen), inset 0 -8px 18px rgb(0 0 0 / 0.04), 0 10px 30px -16px rgb(0 0 0 / 0.35);
+  box-shadow: var(--glass-edge);
 }
 :root .group\/button:is([data-variant="outline"], [data-variant="secondary"]):hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--app-elev) 45%, transparent) !important;
+  background-color: var(--glass-hover) !important;
   border-color: color-mix(in srgb, var(--app-text) 32%, transparent) !important;
 }
 :root .group\/button:is([data-variant="outline"], [data-variant="secondary"])[aria-pressed="true"] {
   background-color: color-mix(in srgb, rgb(var(--tri-primary)) 16%, var(--app-elev)) !important;
+}
+
+/* Buttons on a photo: plain thick glass, which keeps the photo's colours */
+:root :is(.garment-image, .product-image, [data-slot="aspect-ratio"]) .group\/button:is([data-variant="outline"], [data-variant="secondary"]) {
+  background-color: var(--glass-fill-bar) !important;
+  -webkit-backdrop-filter: var(--glass-blur-solid);
+  backdrop-filter: var(--glass-blur-solid);
+}
+
+/* Buttons in a product container: there's nothing behind them to blur */
+:root .product-grid .group\/button:is([data-variant="outline"], [data-variant="secondary"]) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Inside glass: tiles, rows, fields and buttons become .glass-inset (no backdrop-filter) */
@@ -608,23 +635,37 @@ body { background: transparent !important; isolation: isolate; }
   [data-slot="input"], [data-slot="select-trigger"], [data-slot="input-group"], [data-slot="textarea"],
   [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed])
 ) {
-  background-color: color-mix(in srgb, var(--app-elev) 60%, transparent) !important;
+  background-color: var(--glass-inset) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  box-shadow: inset 0 1px 0 var(--sheen);
+  box-shadow: none;
+}
+/* bg-card inside glass has no fill now, so an edge keeps rows and tiles readable as blocks */
+:is(.glass, .glass-bar, .glass-surface, .glass-surface-soft, .glass-panel, .glass-control, .guide-sheet, .done-dialog, [data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="drawer-content"], [data-slot="card"]:not([data-variant="product"])) .bg-card:not(.border) { box-shadow: inset 0 0 0 1px var(--app-border); }
+/* Dialog footers are part of the same glass, with no tint of their own */
+:root :is([data-slot="dialog-footer"], [data-slot="alert-dialog-footer"]) { background: transparent; }
+/* Rows in a panel: chosen and hovered rows are a lift of the same glass, never a solid block */
+:root [data-state].bg-background, :root a[data-state]:hover { background-color: var(--glass-hover) !important; }
+/* A row being dragged floats over other rows: it has to be solid */
+:root .bg-card.z-20 { background-color: var(--app-elev) !important; }
+/* Cards and rows sitting directly on the page (bg-card) are the same glass; inside glass they stay insets */
+:root .bg-card:not([data-variant="product"]):not(:is(.glass, .glass-bar, .glass-surface, .glass-surface-soft, .glass-panel, .glass-control, .guide-sheet, .done-dialog, .bg-card, [data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="drawer-content"], [data-slot="card"]:not([data-variant="product"])) *) {
+  background-color: var(--glass-fill);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
 }
 :is(.glass, .glass-bar, .glass-surface, .glass-panel, [data-slot="sheet-content"], [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="card"]:not([data-variant="product"])) .group\/button:is([data-variant="outline"], [data-variant="secondary"]):hover:not(:disabled),
 .glass-inset-hover:hover {
-  background-color: color-mix(in srgb, var(--app-elev) 78%, transparent) !important;
+  background-color: var(--glass-hover) !important;
   box-shadow: inset 0 1px 0 var(--sheen), inset 0 0 0 1px var(--app-border);
 }
-:is(.glass, .glass-surface, .glass-panel) [class*="bg-muted"][class*="rounded-full"]:not([data-slot="avatar-fallback"]) { background-color: color-mix(in srgb, var(--app-elev) 60%, transparent); }
+:is(.glass, .glass-surface, .glass-panel) [class*="bg-muted"][class*="rounded-full"]:not([data-slot="avatar-fallback"]) { background-color: var(--glass-inset); box-shadow: inset 0 0 0 1px var(--app-border); }
 :root :is([data-slot="inset"], .bg-card) [data-slot="progress-track"] { background-color: var(--app-border-strong) !important; }
 /* Small glass pill over a photo (PhotoLabel) */
 .glass-chip {
-  background-color: color-mix(in srgb, var(--app-panel) 55%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  background-color: var(--glass-fill-menu);
+  -webkit-backdrop-filter: var(--glass-blur-solid);
+  backdrop-filter: var(--glass-blur-solid);
   border: 1px dashed rgb(255 255 255 / 0.25);
   box-shadow: inset 0 1px 0 var(--sheen);
   color: var(--foreground);
@@ -636,8 +677,8 @@ body { background: transparent !important; isolation: isolate; }
 }
 
 /* On the plain page: tiles and fields are frosted fills */
-:root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed]) { background-color: color-mix(in srgb, var(--app-elev) 45%, transparent); }
-:root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed]):hover { background-color: color-mix(in srgb, var(--app-elev) 75%, transparent); }
+:root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed]) { background-color: var(--glass-fill); }
+:root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-pressed]):hover { background-color: var(--glass-hover); }
 
 /* States */
 :root [data-slot="switch"]:not([data-checked]) { background-color: var(--app-border-strong); }
@@ -745,12 +786,55 @@ body { background: transparent !important; isolation: isolate; }
 
 /* Onboarding art: a quiet sand panel */
 
+/* ─── Products: one filled container, a stroke between products (patterns/product-grid) ─── */
+.product-grid {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background-color: var(--product-fill);
+  border: 1px dashed var(--app-border-strong);
+}
+.product-grid > :not(.stipple) { position: relative; }
+/* The dots match the page, which shows them through the atmosphere's opacity */
+.product-grid > .stipple { opacity: var(--atmo-opacity); }
+.product-grid-header { border-bottom: 1px dashed var(--app-border-strong); }
+/* Strokes on each product's right and bottom; the grid hangs 1px past the container to hide the outer ones */
+:root .product-grid :is(.tiles, .project-rows) { gap: 0; margin: 0 -1px -1px 0; }
+/* Projects with their details: side by side when there's room for two */
+.project-rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 36rem), 1fr)); }
+:root .product-grid :is(.tiles, .project-rows) > * {
+  padding: 0.75rem;
+  border-style: dashed;
+  border-color: var(--app-border-strong);
+  border-width: 0 1px 1px 0;
+  border-radius: 0;
+}
+/* An avatar overlapping a photo needs its own solid fill */
+:root .product-grid [data-slot="avatar-fallback"] { background-color: var(--product-fill) !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* ─── Login: Clerk's screens in the same glass (app/(main)/sign-in, sign-up) ─── */
+.auth-page { display: flex; justify-content: center; padding: 3rem 1rem; }
+/* Clerk's headings aren't page titles: keep the site-wide h1 size out of its screens */
+:root [class*="cl-"] h1 { font-size: 1.25rem; line-height: 1.2; letter-spacing: normal; }
+.auth-page .cl-cardBox {
+  background-color: var(--glass-fill);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px dashed var(--app-border);
+  border-radius: var(--radius);
+  box-shadow: var(--glass-edge);
+}
+.auth-page :is(.cl-card, .cl-footer) { background: transparent; box-shadow: none; }
+.auth-page .cl-headerTitle { font-family: var(--font-heading-face); font-weight: var(--heading-weight); font-size: 1.75rem; }
+
 /* ─── Motion ──────────────────────────────────────────────────────────────────
    Quiet and purposeful: content rises in once, grids stagger, progress draws in.
    All of it is switched off by the global prefers-reduced-motion rule above. */
+/* Movement only, never opacity or filter: while an ancestor animates those, the browser cuts every
+   glass surface inside it off from the page, so it has nothing to blur and turns into a flat tint. */
 @keyframes sg-rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
+  from { transform: translateY(14px); }
+  to { transform: none; }
 }
 @keyframes sg-draw {
   from { transform: scaleX(0); }
@@ -759,7 +843,7 @@ body { background: transparent !important; isolation: isolate; }
 :root { --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1); }  /* the house easing: one curve everywhere */
 
 /* Page sections rise in, one after another */
-.page > * { animation: sg-rise 0.8s var(--ease-out-soft) both; }
+.page > * { animation: sg-rise 0.8s var(--ease-out-soft) backwards; }
 .page > :is(.page-header, .top-bar) { animation: none; }
 .page > :nth-child(2) { animation-delay: 70ms; }
 .page > :nth-child(3) { animation-delay: 140ms; }
@@ -767,7 +851,7 @@ body { background: transparent !important; isolation: isolate; }
 .page > :nth-child(n + 5) { animation-delay: 280ms; }
 
 /* Product grids stagger in (and again when a filter changes the grid's key) */
-.tile-grid > * { animation: sg-rise 0.6s var(--ease-out-soft) both; }
+.tile-grid > * { animation: sg-rise 0.6s var(--ease-out-soft) backwards; }
 .tile-grid > :nth-child(2) { animation-delay: 50ms; }
 .tile-grid > :nth-child(3) { animation-delay: 100ms; }
 .tile-grid > :nth-child(4) { animation-delay: 150ms; }
@@ -855,7 +939,7 @@ body { background: transparent !important; isolation: isolate; }
   outline-offset: 2px;
 }
 /* Product tiles: the link covers the whole tile, so the tile shows the ring */
-:root [data-variant="product"]:has(a:focus-visible) { outline: 2px solid var(--foreground); outline-offset: 4px; border-radius: var(--image-radius); }
+:root [data-variant="product"]:has(a:focus-visible) { outline: 2px solid var(--foreground); outline-offset: -4px; border-radius: var(--image-radius); }
 :root [data-variant="product"] a:focus-visible { outline: none !important; }
 :root [data-slot="input-group"]:focus-within { outline: 2px solid var(--foreground); outline-offset: 1px; }
 :root [data-slot="slider-thumb"]:has(:focus-visible) { outline: 2px solid var(--foreground); outline-offset: 2px; }
@@ -961,8 +1045,8 @@ body { background: transparent !important; isolation: isolate; }
 :root [data-slot="progress-indicator"] { transform: scaleY(1.5); }
 
 /* ─── Studio: what's still to fill in ───────────────────────────────────────────────
-   A required field that's still empty shows a brown basting line underneath and a soft brown
-   tint, like a seam that isn't sewn yet; its placeholder turns brown. It goes quiet while you
+   A required field that's still empty shows a dark basting line underneath and a soft dark
+   tint, like a seam that isn't sewn yet; its placeholder turns dark. It goes quiet while you
    type and disappears once it's filled. Optional fields never get it. */
 :root:root [data-required][data-empty="true"]:not(:focus),
 :root:root :is(.glass, .glass-panel, .guide-sheet, [data-slot="inset"], [data-slot="sheet-content"], [data-slot="dialog-content"]) [data-required][data-empty="true"]:not(:focus) {
@@ -973,11 +1057,11 @@ body { background: transparent !important; isolation: isolate; }
 }
 :root [data-required][data-empty="true"]::placeholder { color: var(--accent-ink); opacity: 0.9; }
 :root :is(button, [role="button"])[data-required][data-empty="true"] { color: var(--accent-ink) !important; }
-/* Number cells in the size tables: the whole field gets the brown stitch */
+/* Number cells in the size tables: the whole field gets the dark stitch */
 :root:root [data-slot="input"][data-required][data-empty="true"]:not(:focus) {
   border: 1px dashed rgb(var(--tri-primary) / 0.65) !important;
 }
-/* Rows that still need something: a brown stitched edge, and a small "To do" mark */
+/* Rows that still need something: a dark stitched edge, and a small "To do" mark */
 :root [data-missing] { outline: 1.5px dashed rgb(var(--tri-primary) / 0.55); outline-offset: -1px; }
 :root [data-missing]:focus-visible { outline: 2px solid var(--foreground) !important; outline-offset: 2px; }
 .todo-bar { background: rgb(var(--tri-primary) / 0.07); outline: 1.5px dashed rgb(var(--tri-primary) / 0.5); outline-offset: -1px; }
@@ -994,9 +1078,9 @@ body { background: transparent !important; isolation: isolate; }
 /* ─── Sewing guide: the same glass language ───────────────────────────────────── */
 /* The sheet: heavy frost over the garment page, solid enough to read at arm's length */
 .guide-sheet, .done-dialog {
-  background-color: color-mix(in srgb, var(--app-panel) 80%, transparent);
-  -webkit-backdrop-filter: blur(44px) saturate(200%);
-  backdrop-filter: blur(44px) saturate(200%);
+  background-color: var(--glass-fill-solid);
+  -webkit-backdrop-filter: var(--glass-blur-solid);
+  backdrop-filter: var(--glass-blur-solid);
   border: 1px dashed var(--app-border);
   box-shadow: inset 0 1px 0 var(--sheen), 0 -20px 60px -30px rgb(0 0 0 / 0.45);
   color: var(--foreground);
@@ -1006,14 +1090,14 @@ body { background: transparent !important; isolation: isolate; }
 .done-hero { background: var(--muted); }
 /* Inside the sheet, panels are insets: the sheet already frosts the page once */
 :is(.guide-sheet, .done-dialog) :is(.glass-panel, [data-slot="inset"]) {
-  background-color: color-mix(in srgb, var(--app-elev) 55%, transparent) !important;
+  background-color: var(--glass-inset) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   border: 1px dashed var(--app-border) !important;
   box-shadow: inset 0 1px 0 var(--sheen) !important;
 }
 :is(.guide-sheet, .done-dialog) .group\/button:is([data-variant="outline"], [data-variant="secondary"]) {
-  background-color: color-mix(in srgb, var(--app-elev) 60%, transparent) !important;
+  background-color: var(--glass-inset) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
@@ -1038,14 +1122,28 @@ body { background: transparent !important; isolation: isolate; }
 :root .panel-sheet[data-side="right"] { width: 100%; }
 @media (min-width: 640px) { :root .panel-sheet[data-side="right"] { max-width: 28rem; } }
 
+/* The sewing guide page: fills the screen beside the rail; only the step list scrolls.
+   On phones it leaves room for the tab bar. */
+.guide-page { display: flex; flex-direction: column; overflow: hidden; height: calc(100svh - 4.5rem - max(0.75rem, env(safe-area-inset-bottom))); }
+.guide-body { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: var(--grid-gutter); }
+@media (min-width: 768px) {
+  .guide-page { height: 100svh; }
+  .guide-body { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
+}
+/* A step in the list. The outline marks the step on screen, which isn't always the one you're on:
+   the dot says how far you've got, the outline says what you're looking at. */
+.guide-step { border: 1px dashed transparent; transition: background-color 0.15s ease; }
+.guide-step:hover { background-color: var(--glass-hover); }
+.guide-step[aria-current] { background-color: var(--glass-hover); border-color: color-mix(in srgb, var(--app-text) 45%, transparent); }
+
 /* Guide scenes: a step played out on a cutting mat in soft 3D (components/sewing/GuideScene).
    One plain fabric for every guide: greige, the right side a shade darker than the wrong side. */
 .guide-scene {
-  --gs-mat: #CBD0C0; --gs-mat-line: rgba(255,255,255,.55); --gs-mat-line-2: rgba(255,255,255,.28);
+  --gs-mat: #B9B2A4; --gs-mat-line: rgba(255,255,255,.42); --gs-mat-line-2: rgba(255,255,255,.2);
   --gs-right: #CBC3B6; --gs-wrong: #E8E3DA; --gs-edge: #8E8577; --gs-thread: #4E321C; --gs-interf: #FBF8F2; --gs-chalk: #fff;
   background: var(--gs-mat);
 }
-:root[data-theme="dark"] .guide-scene { --gs-mat: #2C3028; --gs-mat-line: rgba(255,255,255,.09); --gs-mat-line-2: rgba(255,255,255,.045); }
+:root[data-theme="dark"] .guide-scene { --gs-mat: #2B2723; --gs-mat-line: rgba(255,255,255,.09); --gs-mat-line-2: rgba(255,255,255,.045); }
 .gs-stage { perspective: 1700px; perspective-origin: 50% 20%; }
 .gs-cam, .gs-table { position: absolute; inset: 0; transform-style: preserve-3d; }
 .gs-table { transform-origin: 50% 50%; }

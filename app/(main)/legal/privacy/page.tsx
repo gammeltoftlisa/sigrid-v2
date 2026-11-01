@@ -18,7 +18,7 @@ export default function PrivacyPage() {
       <LegalSection title="What stays on your device">
         <p>
           Your projects, chosen size, progress through each guide, the dates you mark steps done (for streaks), your fabric bag and your profile picture
-          are saved in your browser’s local storage. They are not sent to us. Clearing your browser data removes them.
+          are saved in your browser’s local storage. If you’re not logged in, they are not sent to us, and clearing your browser data removes them. Your fabric bag and profile picture always stay on your device.
         </p>
       </LegalSection>
 
@@ -34,8 +34,19 @@ export default function PrivacyPage() {
             Only the search words are sent, never anything about you.
           </li>
           <li>
-            <strong>Sign-up details.</strong> During the beta, the sign-up form does not send or store your email or password.
-            When accounts launch we will update this policy before collecting anything.
+            <strong>Your account.</strong> If you create an account, Clerk Inc. stores your email address, your login details and your sign-in
+            sessions for us. Legal basis: running the account you asked for (GDPR art. 6.1 b). You can delete your account in Profile.
+          </li>
+          <li>
+            <strong>Your sewing, if you’re logged in.</strong> Your projects, chosen size, progress and the dates you mark steps done are saved to your
+            account so they follow you across devices. They are stored in a database in Frankfurt, Germany, run for us by Neon. Logging out removes them
+            from that browser, not from your account. You can delete them with Delete my data in Profile. Legal basis: running the account you asked
+            for (GDPR art. 6.1 b).
+          </li>
+          <li>
+            <strong>Payments.</strong> If you buy a pattern, you pay on a page run by Stripe, which handles your card details. Sigrid never
+            sees or stores your full card number. Stripe tells us what was bought and whether it was paid. Legal basis: carrying out the purchase
+            (GDPR art. 6.1 b) and keeping accounting records (art. 6.1 c).
           </li>
         </ul>
         <p>We do not use analytics, advertising trackers or social media pixels, and we do not sell personal data.</p>

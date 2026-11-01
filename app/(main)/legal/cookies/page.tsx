@@ -6,7 +6,8 @@ export const metadata = { title: 'Cookie policy · Sigrid' }
 
 const storage = [
   { key: 'sigrid_project_…', what: 'Your size and how far you’ve come in each garment', kept: 'Until you clear it' },
-  { key: 'sigrid_user_size', what: 'The size new patterns start in', kept: 'Until you clear it' },
+  { key: 'sigrid_user_size', what: 'The size new patterns start in, and when you chose it', kept: 'Until you clear it' },
+  { key: 'sigrid_sync_owner', what: 'Which account the sewing saved in this browser belongs to', kept: 'Until you log out' },
   { key: 'sigrid_activity', what: 'The days you marked steps done, for your streak', kept: 'Until you clear it' },
   { key: 'sigrid_fabric_bag', what: 'Fabrics you added to your bag', kept: 'Until you clear it' },
   { key: 'sigrid_flow_enter', what: 'Plays the opening animation of the sewing guide once', kept: 'Until you close the tab' },

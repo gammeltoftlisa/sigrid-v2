@@ -25,61 +25,103 @@ export interface FabricNeed {
 
 const needs: FabricNeed[] = [
   {
-    garmentId: 'classic-tshirt',
-    meters: { XS: 1.4, S: 1.5, M: 1.6, L: 1.7, XL: 1.8, XXL: 2.0 },
-    secondhandQuery: 'trikå tyg',
+    garmentId: 'cap-sleeve-button-top',
+    meters: { XS: 1.3, S: 1.4, M: 1.5, L: 1.6, XL: 1.7 },
+    secondhandQuery: 'kostymtyg',
     choices: [
-      { id: 'cotton-jersey', name: 'Cotton jersey', why: 'Soft and forgiving. The edges don’t fray, so small wobbles won’t show.', ease: 'Easy', query: 'cotton jersey', match: ['jersey'] },
-      { id: 'organic-jersey', name: 'Organic cotton jersey', why: 'The same easy jersey, grown without synthetic pesticides.', ease: 'Easy', query: 'organic cotton jersey', match: ['jersey'], isEco: true },
-      { id: 'viscose-jersey', name: 'Viscose jersey', why: 'Drapes and feels cool. A little slippery, so pin closely.', ease: 'Medium', query: 'viscose jersey', match: ['jersey'] },
+      { id: 'tropical-wool', name: "Lightweight wool suiting", why: "Holds the neat shape of the front and presses very well.", ease: 'Medium', query: 'wool', match: ['wool'] },
+      { id: 'cotton-twill', name: "Fine cotton twill", why: "Stable and easy to sew, a good choice if this is your first set-in sleeve.", ease: 'Easy', query: 'cotton twill', match: ['twill'] },
+      { id: 'tencel-twill', name: "Tencel twill", why: "Soft with a little drape, and made from wood pulp.", ease: 'Medium', query: 'tencel', match: ['tencel','lyocell'], isEco: true },
     ],
   },
   {
-    garmentId: 'aline-skirt',
-    meters: { XS: 1.1, S: 1.2, M: 1.3, L: 1.4, XL: 1.5 },
-    secondhandQuery: 'bomullstyg',
-    choices: [
-      { id: 'cotton-twill', name: 'Cotton twill', why: 'Holds its shape and stays put under the needle.', ease: 'Easy', query: 'cotton twill', match: ['twill'] },
-      { id: 'linen', name: 'Linen', why: 'Breathes well and softens with every wash. Press often while sewing.', ease: 'Easy', query: 'linen', match: ['linen'], isEco: true },
-      { id: 'chambray', name: 'Chambray or light denim', why: 'Sturdy and easy to press, with a quiet texture.', ease: 'Easy', query: 'chambray', match: ['chambray', 'denim'] },
-    ],
-  },
-  {
-    garmentId: 'straight-trousers',
-    meters: { XS: 2.2, S: 2.3, M: 2.4, L: 2.5, XL: 2.6 },
-    secondhandQuery: 'bomullstyg',
-    choices: [
-      { id: 'cotton-twill', name: 'Cotton twill', why: 'Stable and hard-wearing, a good first trouser fabric.', ease: 'Easy', query: 'cotton twill', match: ['twill'] },
-      { id: 'linen', name: 'Linen', why: 'Light and cool for summer. Expect a relaxed, slightly creased look.', ease: 'Medium', query: 'linen', match: ['linen'], isEco: true },
-      { id: 'denim', name: 'Denim', why: 'Very durable. Use a jeans needle and go slowly over thick seams.', ease: 'Medium', query: 'denim', match: ['denim'] },
-    ],
-  },
-  {
-    garmentId: 'oversized-hoodie',
-    meters: { S: 2.0, M: 2.2, L: 2.3, XL: 2.5 },
-    secondhandQuery: 'sweatshirt tyg',
-    choices: [
-      { id: 'french-terry', name: 'French terry', why: 'Soft loops on the back and smooth on the front. Easy to sew on a regular machine.', ease: 'Easy', query: 'french terry', match: ['terry', 'loopback', 'looped'] },
-      { id: 'sweat', name: 'Brushed sweatshirt fleece', why: 'Warmer and fluffier inside. A little thicker to sew through.', ease: 'Medium', query: 'sweatshirt', match: ['sweat', 'fleece'] },
-    ],
-  },
-  {
-    garmentId: 'slip-dress',
-    meters: { XS: 2.4, S: 2.5, M: 2.6, L: 2.8 },
+    garmentId: 'lace-waist-skirt',
+    meters: { XS: 2.0, S: 2.1, M: 2.2, L: 2.4, XL: 2.5 },
     secondhandQuery: 'viskos tyg',
     choices: [
-      { id: 'viscose', name: 'Viscose crepe or challis', why: 'Drapes beautifully on the bias. Cut on a single layer for accuracy.', ease: 'Medium', query: 'viscose', match: ['viscose', 'rayon'] },
-      { id: 'cupro', name: 'Cupro or Tencel', why: 'Silky and breathable, made from wood or cotton waste.', ease: 'Harder', query: 'tencel', match: ['tencel', 'lyocell', 'cupro'], isEco: true },
-      { id: 'satin', name: 'Satin', why: 'The classic slip look. Slippery, so use fine pins and go slowly.', ease: 'Harder', query: 'satin', match: ['satin', 'charmeuse'] },
+      { id: 'viscose', name: "Viscose crepe or challis", why: "Falls in soft folds and moves as you walk. Weigh it down when you cut.", ease: 'Medium', query: 'viscose', match: ['viscose','rayon'] },
+      { id: 'cotton-voile', name: "Cotton voile", why: "Light and floaty, but much calmer under the needle than viscose.", ease: 'Easy', query: 'cotton voile', match: ['voile','lawn'] },
+      { id: 'silk-crepe', name: "Silk crepe de chine", why: "The most fluid choice. Slippery, so use fine pins and go slowly.", ease: 'Harder', query: 'silk', match: ['silk'] },
     ],
   },
   {
-    garmentId: 'tailored-blazer',
-    meters: { XS: 2.2, S: 2.3, M: 2.4, L: 2.5, XL: 2.6 },
-    secondhandQuery: 'ylletyg',
+    garmentId: 'two-tone-wide-jeans',
+    meters: { XS: 2.6, S: 2.7, M: 2.8, L: 3.0, XL: 3.1 },
+    secondhandQuery: 'jeanstyg',
     choices: [
-      { id: 'wool', name: 'Wool suiting', why: 'Shapes well under the iron, which helps with collars and lapels.', ease: 'Medium', query: 'wool', match: ['wool'] },
-      { id: 'linen', name: 'Heavy linen', why: 'A relaxed summer blazer. Choose a medium to heavy weight.', ease: 'Medium', query: 'linen', match: ['linen'], isEco: true },
+      { id: 'denim', name: "Rigid denim in two shades", why: "You need both a dark and a lighter shade. Use a jeans needle over thick seams.", ease: 'Medium', query: 'denim', match: ['denim'] },
+      { id: 'cotton-twill', name: "Heavy cotton twill", why: "A little easier to sew than denim, with the same straight fall.", ease: 'Easy', query: 'cotton twill', match: ['twill'] },
+      { id: 'organic-denim', name: "Organic cotton denim", why: "The same sturdy denim, grown without synthetic pesticides.", ease: 'Medium', query: 'organic denim', match: ['denim'], isEco: true },
+    ],
+  },
+  {
+    garmentId: 'pleated-buckle-shorts',
+    meters: { XS: 1.4, S: 1.5, M: 1.6, L: 1.7, XL: 1.8 },
+    secondhandQuery: 'linnetyg',
+    choices: [
+      { id: 'linen', name: "Medium-weight linen", why: "Takes a sharp pleat and stays cool. Press often while you sew.", ease: 'Easy', query: 'linen', match: ['linen'], isEco: true },
+      { id: 'cotton-twill', name: "Cotton twill", why: "Holds its pleats and doesn’t move around under the needle.", ease: 'Easy', query: 'cotton twill', match: ['twill'] },
+      { id: 'wool', name: "Lightweight wool suiting", why: "Gives the pleats a soft, tailored fall.", ease: 'Medium', query: 'wool', match: ['wool'] },
+    ],
+  },
+  {
+    garmentId: 'fitted-stripe-shirt',
+    meters: { XS: 1.9, S: 2.0, M: 2.1, L: 2.2, XL: 2.4 },
+    secondhandQuery: 'skjorttyg',
+    choices: [
+      { id: 'cotton-shirting', name: "Striped cotton shirting", why: "Crisp and easy to press. Allow a little extra to match the stripes.", ease: 'Medium', query: 'cotton shirting', match: ['shirting','poplin'] },
+      { id: 'poplin', name: "Cotton poplin", why: "Smooth and stable, and it holds a sharp collar point well.", ease: 'Easy', query: 'poplin', match: ['poplin'] },
+      { id: 'organic-poplin', name: "Organic cotton poplin", why: "The same crisp poplin, grown without synthetic pesticides.", ease: 'Easy', query: 'organic poplin', match: ['poplin'], isEco: true },
+    ],
+  },
+  {
+    garmentId: 'mia-fold-waist-trousers',
+    meters: { XS: 2.3, S: 2.4, M: 2.5, L: 2.6, XL: 2.7 },
+    secondhandQuery: 'linnetyg',
+    choices: [
+      { id: 'linen', name: "Washed linen", why: "Soft, cool and forgiving. A few creases only suit this shape.", ease: 'Easy', query: 'linen', match: ['linen'], isEco: true },
+      { id: 'hemp', name: "Hemp or linen blend", why: "A little sturdier than linen, and it softens with every wash.", ease: 'Easy', query: 'hemp', match: ['hemp'] },
+      { id: 'chambray', name: "Chambray", why: "Light and easy to press, with a quiet texture.", ease: 'Easy', query: 'chambray', match: ['chambray'] },
+    ],
+  },
+  {
+    garmentId: 'mia-sequin-camisole',
+    meters: { XS: 1.3, S: 1.4, M: 1.4, L: 1.5, XL: 1.6 },
+    secondhandQuery: 'chiffong tyg',
+    choices: [
+      { id: 'crinkle-chiffon', name: "Crinkle chiffon", why: "Sheer and light. The crinkle hides small wobbles better than a smooth chiffon.", ease: 'Harder', query: 'chiffon', match: ['chiffon'] },
+      { id: 'georgette', name: "Viscose georgette", why: "A little more weight than chiffon, so it’s easier to keep in place.", ease: 'Harder', query: 'georgette', match: ['georgette'] },
+      { id: 'cotton-voile', name: "Cotton voile", why: "The calmest option, with less drape. Good for a first try.", ease: 'Medium', query: 'cotton voile', match: ['voile'] },
+    ],
+  },
+  {
+    garmentId: 'frida-smocked-blouse',
+    meters: { XS: 2.0, S: 2.1, M: 2.2, L: 2.3, XL: 2.5 },
+    secondhandQuery: 'bomullstyg',
+    choices: [
+      { id: 'seersucker', name: "Striped seersucker", why: "Light and textured, and it gathers softly when shirred.", ease: 'Easy', query: 'seersucker', match: ['seersucker'] },
+      { id: 'cotton-shirting', name: "Striped cotton shirting", why: "Crisp stripes that stay straight above and below the shirring.", ease: 'Medium', query: 'cotton shirting', match: ['shirting'] },
+      { id: 'cotton-lawn', name: "Cotton lawn", why: "Very light, so the elastic thread pulls it in easily.", ease: 'Easy', query: 'cotton lawn', match: ['lawn'], isEco: true },
+    ],
+  },
+  {
+    garmentId: 'frida-fringe-top',
+    meters: { XS: 0.9, S: 1.0, M: 1.0, L: 1.1, XL: 1.2 },
+    secondhandQuery: 'trikå tyg',
+    choices: [
+      { id: 'viscose-jersey', name: "Viscose jersey", why: "Smooth with a good stretch, so it stays up on the shoulders. Pin closely.", ease: 'Medium', query: 'viscose jersey', match: ['jersey'] },
+      { id: 'cotton-rib', name: "Cotton rib jersey", why: "Stretchy and stable, and the edges don’t fray.", ease: 'Easy', query: 'rib jersey', match: ['rib','jersey'] },
+      { id: 'organic-jersey', name: "Organic cotton jersey", why: "Easy to sew, and grown without synthetic pesticides.", ease: 'Easy', query: 'organic cotton jersey', match: ['jersey'], isEco: true },
+    ],
+  },
+  {
+    garmentId: 'tfd-western-trousers',
+    meters: { XS: 2.8, S: 2.9, M: 3.0, L: 3.1, XL: 3.2 },
+    secondhandQuery: 'kostymtyg',
+    choices: [
+      { id: 'linen-twill', name: "Heavy linen or twill", why: "Holds the wide leg and hangs straight to the floor.", ease: 'Medium', query: 'linen', match: ['linen','twill'], isEco: true },
+      { id: 'wool', name: "Wool suiting", why: "Falls beautifully and presses into a clean yoke line.", ease: 'Medium', query: 'wool', match: ['wool'] },
+      { id: 'faux-suede', name: "Faux suede or printed fur for the yoke", why: "A small piece of contrast for the yoke. The edges don’t fray, which helps at the points.", ease: 'Harder', query: 'faux suede', match: ['suede','faux'] },
     ],
   },
 ]

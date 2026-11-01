@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+import { GarmentImage } from '@/components/garment/GarmentImage'
 import { useRouter } from 'next/navigation'
 import { IconPlus, IconRuler2, IconTrash } from '@tabler/icons-react'
 import { toast } from 'sonner'
@@ -101,9 +101,8 @@ export default function StudioPage() {
                   href={`/studio/${p.id}`}
                   className="flex-1"
                   leading={
-                    p.photo ? (
-                      <Image src={p.photo} alt="" width={72} height={54} className="aspect-cover w-18 shrink-0 rounded-(--image-radius) object-cover" />
-                    ) : undefined
+                    <GarmentImage name={p.name} photoSrc={p.photo ?? null} sizes="72px" className="aspect-cover w-18 shrink-0 rounded-(--image-radius)" />
+
                   }
                   title={p.name}
                   detail={`${plural(p.steps.length, 'step')} · ${plural(p.pieces.length, 'piece')} · edited ${updated(p.updatedAt)}`}
