@@ -6,7 +6,6 @@ import { IconX, IconCamera, IconShare, IconStar, IconStarFilled } from '@tabler/
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { GarmentImage } from '@/components/garment/GarmentImage'
-import { TAP_ICON } from '@/components/legacy/interaction'
 import { cn } from '@/lib/utils'
 import type { Garment } from '@/lib/types'
 
@@ -122,7 +121,7 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
                       role="radio"
                       aria-checked={rating === star}
                       aria-label={`${star} star${star > 1 ? 's' : ''}`}
-                      whileTap={TAP_ICON}
+                      whileTap={{ scale: 0.9 }}
                       onMouseEnter={() => setHoveredStar(star)}
                       onMouseLeave={() => setHoveredStar(0)}
                       onClick={() => setRating(star)}

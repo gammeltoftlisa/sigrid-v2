@@ -4,6 +4,7 @@ import { IconCheck, IconCircleCheck } from '@tabler/icons-react'
 import { cn } from 'cn'
 
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { PUBLISHED_PREFIX } from '@/lib/published'
@@ -29,7 +30,6 @@ export function CheckSheet({
   pattern,
   onChange,
   onOpen,
-  onMarkReady,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -37,7 +37,6 @@ export function CheckSheet({
   onChange: Change
   /** Takes the maker to where a part is filled in */
   onOpen: (part: WizardStep) => void
-  onMarkReady: () => void
 }) {
   const parts = WIZARD.filter((w) => w.id !== 'publish')
   const left = parts.filter((w) => !isDone(w.id, pattern))
@@ -59,7 +58,10 @@ export function CheckSheet({
             </Button>
           </>
         ) : (
-          <Button size="lg" className="ml-auto" disabled={left.length > 0} onClick={onMarkReady}>
+          <Button size="lg" className="ml-auto" disabled={left.length > 0} onClick={() => {
+            onChange({ status: 'ready', publishedAt: Date.now() })
+            toast.success('Published. It’s in Explore now.')
+          }}>
             <IconCircleCheck data-icon="inline-start" />
             Publish
           </Button>
