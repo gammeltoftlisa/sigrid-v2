@@ -25,7 +25,7 @@ function PageSection({
     <section id={id} className={cn("flex scroll-mt-6 flex-col gap-4", className)}>
       {title && <div className="flex flex-col gap-1">
         <div className="flex items-center gap-4">
-          <h2 className="page-section-title text-xl font-semibold">{title}</h2>
+          <h2 className="page-section-title">{title}</h2>
           {action}
         </div>
         {description && <p className="text-sm text-muted-foreground">{description}</p>}

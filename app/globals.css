@@ -271,19 +271,41 @@
    calm page: a cutting mat as the floor, on tiny dots. */
 
 /* Type */
-:root body { letter-spacing: -0.004em; font-feature-settings: "ss01", "cv01"; }
+:root body { font-size: var(--text-sm); line-height: var(--text-sm--line-height); letter-spacing: -0.004em; font-feature-settings: "ss01", "cv01"; }
 ::selection { background: rgb(var(--tri-primary)); color: var(--primary-foreground); }
-:root .font-heading,
-:root :is(h1, h2) {
+/* ─── Type: one look per level, everywhere (the table is in DESIGN.md §5) ──────────
+   Display face (Fraunces), 400 except the page title:
+     h1                 the page title, one per screen, 360
+     h1.title-compact   a page title that shares the screen: garment, maker, a message page
+     .page-section-title  a section of a page
+     .title-xl          a big moment or a big number
+     .title-lg          the one thing a panel is about: the step you're on
+     .title-md          what a card or block is about: a project, a maker, a price
+     .title-sm          product names, dialog titles, empty-state titles
+   Text face (Be Vietnam Pro), 400, or 500 for emphasis, never heavier:
+     text-base lead, text-sm body and controls, text-xs details, text-2xs tiny marks
+   Mono: .eyebrow and every other small uppercase label. */
+:root :where(.font-heading, h1, h2, .page-section-title, .title-xl, .title-lg, .title-md, .title-sm) {
   font-family: var(--font-heading);
   font-optical-sizing: auto;
-  font-weight: var(--heading-weight);
+  font-weight: 400;
   text-transform: var(--heading-transform);
-  letter-spacing: var(--heading-tracking);
+  letter-spacing: -0.015em;
 }
-:root h1 { font-size: var(--h1-size); line-height: 0.95; text-wrap: balance; }
-:root h2 { font-weight: 400; letter-spacing: -0.018em; line-height: 1.1; }
-:root h3 { letter-spacing: -0.01em; }
+:root h1 { font-size: var(--h1-size); font-weight: var(--heading-weight); letter-spacing: var(--heading-tracking); line-height: 0.95; text-wrap: balance; }
+:root h1.title-compact { --h1-size: clamp(2.25rem, 3.4vw, 3.5rem); }
+:root h2 { line-height: 1.1; }
+:root .page-section-title { font-size: clamp(1.625rem, 2.6vw, 2.25rem); line-height: 1.1; }
+:root .title-xl { font-size: var(--text-4xl); line-height: var(--text-4xl--line-height); }
+:root .title-lg { font-size: var(--text-3xl); line-height: var(--text-3xl--line-height); }
+:root .title-md { font-size: var(--text-xl); line-height: var(--text-xl--line-height); }
+:root :is(.title-sm, [data-slot="card-title"], [data-slot="dialog-title"], [data-slot="alert-dialog-title"], [data-slot="sheet-title"], [data-slot="drawer-title"], [data-slot="empty-title"]) {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.5rem;
+}
 /* Display helpers: an italic brand line inside a headline, and the mono kicker */
 .display-italic {
   font-style: italic; font-variation-settings: "WONK" 1, "SOFT" 50;
@@ -292,8 +314,7 @@
   padding-right: 0.08em; /* the italic overhang would be clipped by the text fill */
 }
 @media (forced-colors: active) { .display-italic { -webkit-text-fill-color: currentColor; background: none; } }
-:root .eyebrow,
-:root .kicker {
+:root :is(.eyebrow, .kicker, [data-slot="badge"], [data-slot="select-label"], .todo-mark) {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   line-height: 1rem;
@@ -302,16 +323,6 @@
   text-transform: uppercase;
 }
 :root .kicker { color: var(--accent-ink); }
-:root [data-slot="badge"] {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  line-height: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-/* Section titles: the display face at a real size, so sections feel like chapters */
-:root .page-section-title { font-size: clamp(1.625rem, 2.6vw, 2.25rem); font-weight: 380; }
 
 /* Stipple: tiny dots across the whole page, like printed paper (components/patterns/atmosphere).
    They live INSIDE the atmosphere, behind the content: a layer above the page would stop every
@@ -342,13 +353,12 @@
 :root .group\/button:is(.size-6, .size-7, .size-8, .size-9, [class*="size-icon"]) { border-radius: 999px; }
 :root [data-slot="badge"] { border-radius: 999px; }
 :root .group\/button:not(:is(.size-6, .size-7, .size-8, .size-9)) {
-  letter-spacing: -0.005em;
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 :root .group\/button.h-9 { height: 2.75rem; padding-inline: 1.5rem; }
 :root .group\/button.h-8 { height: 2.5rem; padding-inline: 1.125rem; }
-:root .group\/button.h-7 { font-size: 0.8125rem; height: 2rem; padding-inline: 0.875rem; }
+:root .group\/button.h-7 { font-size: var(--text-xs); height: 2rem; padding-inline: 0.875rem; }
 @media (pointer: coarse) { :root .group\/button.h-7 { height: 2.5rem; } }
 :root .group\/button { transition: background-color .3s ease, border-color .3s ease, color .3s ease, transform .25s var(--ease-out-soft), box-shadow .3s ease; }
 :root .group\/button:hover:not(:disabled) { transform: translateY(-1px); }
@@ -472,8 +482,7 @@
   border-radius: 0;
   background: transparent !important;
   color: var(--muted-foreground) !important;
-  letter-spacing: -0.005em;
-  font-size: 0.9375rem;
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 :root [data-slot="toggle-group-item"]:not([data-shape="tile"]):last-child { margin-right: 0; }
@@ -501,13 +510,6 @@
   padding-bottom: 0;
 }
 :root [data-variant="product"] .product-image { border-radius: var(--image-radius); }
-:root [data-variant="product"] [data-slot="card-title"] {
-  font-family: var(--font-heading);
-  font-size: 1.1875rem;
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  line-height: 1.5rem;
-}
 :root [data-slot="card-footer"] { background: transparent; border-top: 1px dashed var(--app-border); }
 
 /* Progress: a thin rounded ink line with a soft glow */
@@ -516,7 +518,7 @@
 
 /* Breadcrumbs: like Apple's path bar, earlier steps quiet with a soft hover pill */
 :root [data-slot="breadcrumb-list"] {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   font-weight: 400;
   color: var(--muted-foreground);
   gap: 0.125rem;
@@ -761,18 +763,12 @@ body { background: transparent !important; isolation: isolate; }
 
 /* The lead tile: twice as wide and tall as its siblings, so the grid reads as a bento, not a repeat */
 .tiles > .tile-lead { grid-column: span calc(var(--tile) * 2); grid-row: span 2; }
-.tiles > .tile-lead [data-slot="card-title"] { font-size: clamp(1.5rem, 2.4vw, 2rem) !important; line-height: 1.1 !important; }
 @media (max-width: 767px) { .tiles > .tile-lead .product-image { aspect-ratio: var(--aspect-cover); } }
 @media (min-width: 1280px) { .tiles > .tile-lead { grid-column: span 2; } .col-main .tiles > .tile-lead { grid-column: span calc(var(--tile) * 2); } }
 
 /* Hero band: stacked display headline left, copy + actions anchored to the bottom right */
-.hero-band { padding-top: 2.5rem; padding-bottom: 1rem; overflow-x: clip; }
-@media (min-width: 768px) { .hero-band { padding-top: 4.5rem; padding-bottom: 2rem; } }
-.hero-band-grid { position: relative; display: grid; gap: 2rem; align-items: center; }
-@media (min-width: 1024px) { .hero-band-grid { grid-template-columns: 1.1fr 0.9fr; gap: 4rem; } }
 :root .hero-title { font-size: clamp(3.5rem, 9vw, 8.5rem); line-height: 0.9; letter-spacing: -0.035em; font-weight: 340; }
 /* The masked headline line: the bottom padding keeps descenders inside the mask */
-.mask-line { display: block; overflow: hidden; padding-bottom: 0.14em; margin-bottom: -0.14em; }
 
 /* Photos on dark: ease the white studio backdrops down so they don't glare */
 :root[data-theme="dark"] :is(.product-image, [data-slot="aspect-ratio"]) img { filter: brightness(0.9) saturate(0.95); }
@@ -828,7 +824,7 @@ body { background: transparent !important; isolation: isolate; }
 /* ─── Login: Clerk's screens in the same glass (app/(main)/sign-in, sign-up) ─── */
 .auth-page { display: flex; justify-content: center; padding: 3rem 1rem; }
 /* Clerk's headings aren't page titles: keep the site-wide h1 size out of its screens */
-:root [class*="cl-"] h1 { font-size: 1.25rem; line-height: 1.2; letter-spacing: normal; }
+:root [class*="cl-"] h1 { font-size: var(--text-xl); line-height: var(--text-xl--line-height); font-weight: 400; letter-spacing: -0.015em; }
 .auth-page .cl-cardBox {
   background-color: var(--glass-fill);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -838,45 +834,13 @@ body { background: transparent !important; isolation: isolate; }
   box-shadow: var(--glass-edge);
 }
 .auth-page :is(.cl-card, .cl-footer) { background: transparent; box-shadow: none; }
-.auth-page .cl-headerTitle { font-family: var(--font-heading-face); font-weight: var(--heading-weight); font-size: 1.75rem; }
+.auth-page .cl-headerTitle { font-family: var(--font-heading); font-weight: 400; letter-spacing: -0.015em; font-size: var(--text-xl); line-height: var(--text-xl--line-height); }
 
 /* ─── Motion ──────────────────────────────────────────────────────────────────
-   Quiet and purposeful: content rises in once, grids stagger, progress draws in.
+   Only in response to what you do: hover, press, opening things. Pages and their content are simply
+   there when you arrive, with no entrance animations.
    All of it is switched off by the global prefers-reduced-motion rule above. */
-/* Movement only, never opacity or filter: while an ancestor animates those, the browser cuts every
-   glass surface inside it off from the page, so it has nothing to blur and turns into a flat tint. */
-@keyframes sg-rise {
-  from { transform: translateY(14px); }
-  to { transform: none; }
-}
-@keyframes sg-draw {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
 :root { --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1); }  /* the house easing: one curve everywhere */
-
-/* Page sections rise in, one after another */
-.page > * { animation: sg-rise 0.8s var(--ease-out-soft) backwards; }
-.page > :is(.page-header, .top-bar) { animation: none; }
-.page > :nth-child(2) { animation-delay: 70ms; }
-.page > :nth-child(3) { animation-delay: 140ms; }
-.page > :nth-child(4) { animation-delay: 210ms; }
-.page > :nth-child(n + 5) { animation-delay: 280ms; }
-
-/* Product grids stagger in (and again when a filter changes the grid's key) */
-.tile-grid > * { animation: sg-rise 0.6s var(--ease-out-soft) backwards; }
-.tile-grid > :nth-child(2) { animation-delay: 50ms; }
-.tile-grid > :nth-child(3) { animation-delay: 100ms; }
-.tile-grid > :nth-child(4) { animation-delay: 150ms; }
-.tile-grid > :nth-child(5) { animation-delay: 200ms; }
-.tile-grid > :nth-child(6) { animation-delay: 250ms; }
-.tile-grid > :nth-child(n + 7) { animation-delay: 300ms; }
-
-/* Progress lines draw in from the left */
-[data-slot="progress-indicator"] {
-  transform-origin: left center;
-  animation: sg-draw 1.1s var(--ease-out-soft) 0.25s both;
-}
 
 /* Trailing arrows nudge forward on hover */
 .group\/button [data-icon="inline-end"] { transition: transform 0.25s var(--ease-out-soft); }
@@ -890,7 +854,7 @@ body { background: transparent !important; isolation: isolate; }
   margin-right: 0;
   padding-inline: 1rem;
   border-radius: 9999px;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 @media (pointer: coarse) { :root [data-slot="toggle-group-item"][data-segment] { height: 2.5rem; } }
 
@@ -899,7 +863,7 @@ body { background: transparent !important; isolation: isolate; }
 }
 
 /* ─── Controls: one compact spec ─────────────────────────────────────────────────
-   Fields and dropdowns: 36px tall (44px on touch), 14px text, 12px side padding,
+   Fields and dropdowns: 36px tall (44px on touch), 15px text, 12px side padding,
    10px corners, 16px muted icons. Buttons: 40px, 44px large, 32px small (the chip size).
    Chips: 32px (40px on touch). Dropdown menus open 6px below their field,
    same width, with 4px padding, 32px items and 6px item corners. */
@@ -908,8 +872,7 @@ body { background: transparent !important; isolation: isolate; }
   :root :is([data-slot="select-trigger"][data-size="default"], [data-slot="input-group"], [data-slot="input"]) { height: 2.75rem !important; }
 }
 :root :is([data-slot="input"], [data-slot="input-group-control"], [data-slot="select-trigger"], [data-slot="textarea"]) {
-  font-size: 0.875rem !important;
-  letter-spacing: -0.006em;
+  font-size: var(--text-sm) !important;
 }
 :root [data-slot="input"], :root [data-slot="select-trigger"] { padding-inline: 0.75rem 0.625rem !important; }
 :root [data-slot="input-group"] [data-slot="input-group-addon"] { padding-left: 0.75rem; padding-right: 0; }
@@ -919,7 +882,7 @@ body { background: transparent !important; isolation: isolate; }
 :root [data-slot="select-trigger"] [data-slot="select-value"] { font-weight: 400; }
 
 /* Filter chips */
-:root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-size-picker]) { height: 2rem !important; font-size: 0.8125rem !important; padding-inline: 0.75rem !important; border-radius: 8px; }
+:root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-size-picker]) { height: 2rem !important; font-size: var(--text-xs) !important; padding-inline: 0.75rem !important; border-radius: 8px; }
 @media (pointer: coarse) { :root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-size-picker]) { height: 2.5rem !important; } }
 
 /* Dropdown menus */
@@ -928,23 +891,18 @@ body { background: transparent !important; isolation: isolate; }
   min-height: 2rem;
   padding: 0.375rem 2rem 0.375rem 0.625rem;
   border-radius: 6px;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 :root [data-slot="select-item"]:is(:focus, [data-highlighted]) { background: color-mix(in srgb, var(--app-elev) 80%, transparent); box-shadow: inset 0 1px 0 var(--sheen); color: var(--foreground); }
 :root [data-slot="select-item"][data-selected] { font-weight: 500; }
 :root [data-slot="select-label"] {
   padding: 0.625rem 0.625rem 0.25rem;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--muted-foreground);
 }
 :root [data-slot="select-separator"] { display: none; }
 :root [data-slot="slider-thumb"] { width: 0.875rem !important; height: 0.875rem !important; }
 @media (pointer: coarse) { :root [data-slot="slider-thumb"] { width: 1.25rem !important; height: 1.25rem !important; } }
 :root [data-slot="slider-track"] { height: 2px !important; }
-:root [data-slot="input-group"] input { font-size: 0.875rem !important; }
 
 /* ─── Keyboard focus: always visible (WCAG 2.4.7 / 2.4.11) ─────────────────────── */
 :root a:focus-visible, :root button:focus-visible, :root [role="button"]:focus-visible, :root summary:focus-visible {
@@ -1080,8 +1038,7 @@ body { background: transparent !important; isolation: isolate; }
 .todo-bar { background: rgb(var(--tri-primary) / 0.07); outline: 1.5px dashed rgb(var(--tri-primary) / 0.5); outline-offset: -1px; }
 .todo-mark {
   display: inline-flex; flex-shrink: 0; align-items: center; gap: 0.375rem;
-  font-family: var(--font-mono); font-size: 0.625rem; line-height: 1rem; font-weight: 500;
-  letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-ink);
+  color: var(--accent-ink);
 }
 .todo-mark::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 999px; background: rgb(var(--tri-primary)); }
 

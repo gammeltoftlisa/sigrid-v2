@@ -41,7 +41,7 @@ function ProjectRow({ project, primary }: { project: ProjectSummary; primary?: b
 
       <div className="flex min-w-0 flex-1 flex-col gap-4 sm:py-1">
         <div className="flex flex-col gap-1">
-          <h2 className="text-2xl">{garment.name}</h2>
+          <h2 className="title-md">{garment.name}</h2>
           <p className="text-sm text-muted-foreground">{sizeLabel(size)}</p>
         </div>
 
@@ -54,7 +54,7 @@ function ProjectRow({ project, primary }: { project: ProjectSummary; primary?: b
 
         <div className="flex flex-col gap-1">
           <p className="eyebrow text-muted-foreground">Next step</p>
-          <p className="font-heading text-xl">{next?.title ?? 'Guide coming soon'}</p>
+          <p className="title-md">{next?.title ?? 'Guide coming soon'}</p>
         </div>
 
         <ul className="flex flex-col gap-1.5 text-sm">
@@ -98,7 +98,7 @@ function CompactRow({ project }: { project: ProjectSummary }) {
         <GarmentImage name={garment.name} photoSrc={garment.photo} sizes="80px" className="aspect-product rounded-(--image-radius)" />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <h3 className="truncate font-heading text-lg">{garment.name}</h3>
+        <h3 className="title-sm truncate">{garment.name}</h3>
         <p className="truncate text-xs text-muted-foreground">{next ? `Next: ${next.title}` : 'Guide coming soon'}</p>
         {totalSteps > 0 && (
           <div className="flex items-center gap-2">

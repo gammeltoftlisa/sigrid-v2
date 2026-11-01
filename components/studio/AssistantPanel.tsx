@@ -68,7 +68,7 @@ export function AssistantPanel({
     <section aria-label="Assistant" className={cn('glass-panel flex min-h-0 flex-col overflow-hidden rounded-(--radius)', className)}>
       <header className="flex items-center gap-2 px-4 pt-4 pb-3">
         <IconSparkles className="size-4 text-muted-foreground" aria-hidden />
-        <h2 className="eyebrow !font-medium text-muted-foreground">Assistant</h2>
+        <h2 className="eyebrow text-muted-foreground">Assistant</h2>
         {disabled && <StatusBadge className="ml-auto">Coming soon</StatusBadge>}
       </header>
 

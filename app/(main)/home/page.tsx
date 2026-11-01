@@ -5,7 +5,6 @@ import { IconNeedleThread } from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { Skeleton } from '@/components/ui/skeleton'
 import { GarmentCard } from '@/components/patterns/garment-card'
 import { HomeDashboard } from '@/components/patterns/home-dashboard'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
@@ -17,7 +16,7 @@ import { loadActivity } from '@/lib/activity'
 import { easiestPatterns } from '@/lib/data'
 import { listProjects } from '@/lib/project-summary'
 
-const HEADER = 'pt-8 md:pt-12 [--h1-size:clamp(2.25rem,4vw,3.5rem)]'
+const HEADER = 'pt-8 md:pt-12'
 
 /** Someone with nothing on the table yet: one way forward, and a few easy patterns to make it concrete. */
 function FirstVisit() {
@@ -39,7 +38,7 @@ function FirstVisit() {
         </EmptyContent>
       </Empty>
       <ProductGrid label="Good places to start">
-        <div className="tile-grid tiles">
+        <div className="tiles">
           {easiestPatterns(3).map((g) => (
             <GarmentCard
               key={g.id}
@@ -65,7 +64,6 @@ export default function HomePage() {
     return (
       <PageContainer>
         <PageHeader title="Your sewing" className={HEADER} />
-        <Skeleton className="h-96 rounded-(--radius)" />
       </PageContainer>
     )
   }

@@ -62,7 +62,7 @@ function Chips({
               value={o.value}
               data-shape="tile"
               className={cn(
-                'gap-1 font-normal data-pressed:bg-foreground data-pressed:text-background data-pressed:hover:bg-foreground',
+                'gap-1 data-pressed:bg-foreground data-pressed:text-background data-pressed:hover:bg-foreground',
               )}
             >
               {o.label}

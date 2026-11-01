@@ -47,7 +47,7 @@ export default function StepInstruction({ step, index, journeyTitle, numberInJou
         >
           <div className="flex items-baseline gap-3">
             <StatusBadge status="neutral">{ACTION_LABELS[step.action]}</StatusBadge>
-            <h2 className={`text-3xl ${state === 'done' ? 'text-muted-foreground' : 'text-foreground'}`}>{step.title}</h2>
+            <h2 className={`title-lg ${state === 'done' ? 'text-muted-foreground' : 'text-foreground'}`}>{step.title}</h2>
           </div>
 
           <p className="max-w-prose text-base text-muted-foreground">{step.instruction}</p>

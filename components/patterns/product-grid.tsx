@@ -34,7 +34,7 @@ export function ProductGrid({
       <Stipple />
       {label && (
         <header className="product-grid-header flex items-center justify-between gap-3 px-4 py-3">
-          <h2 className="eyebrow !font-medium text-muted-foreground">{label}</h2>
+          <h2 className="eyebrow text-muted-foreground">{label}</h2>
           {meta !== undefined && <span className="text-xs font-medium text-brand-ink tabular-nums">{meta}</span>}
         </header>
       )}

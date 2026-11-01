@@ -138,7 +138,7 @@ export default function ExplorePage({ searchParams }: { searchParams: Promise<{ 
             </Empty>
           ) : view === 'Patterns' ? (
             <ProductGrid>
-              <div key={`${category}-${level}`} className="tile-grid tiles">
+              <div className="tiles">
                 {patterns.map((g) => (
                   <GarmentCard
                     key={g.id}
@@ -155,7 +155,7 @@ export default function ExplorePage({ searchParams }: { searchParams: Promise<{ 
             </ProductGrid>
           ) : (
             <ProductGrid>
-              <div className="tile-grid maker-rows">
+              <div className="maker-rows">
                 {makers.map((c) => (
                   <MakerCard key={c.id} creator={c} patterns={getPatternsByCreator(c.id)} />
                 ))}

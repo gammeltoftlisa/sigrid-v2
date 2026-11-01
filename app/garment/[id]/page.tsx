@@ -53,7 +53,6 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const inProgress = !!project && !finished
 
   const enterGuide = () => {
-    sessionStorage.setItem('sigrid_flow_enter', '1')
     router.push(`/garment/${id}/guide`)
   }
 
@@ -193,7 +192,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             priority
             photoSrc={garment.photo}
           >
-            {!garment.photo && garmentPhoto(garment.name) && <PhotoLabel className="absolute bottom-3 left-3 normal-case tracking-normal">Inspiration photo</PhotoLabel>}
+            {!garment.photo && garmentPhoto(garment.name) && <PhotoLabel className="absolute bottom-3 left-3">Inspiration photo</PhotoLabel>}
           </GarmentImage>
           </ProductFrame>
         </div>
@@ -203,8 +202,8 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             <header className="flex flex-col gap-2">
               <div className="flex items-baseline justify-between gap-4">
                 {/* Smaller than a page hero: it shares the screen with the photo */}
-                <h1 className="[--h1-size:clamp(2.25rem,3.4vw,3.5rem)]">{garment.name}</h1>
-                <p className="text-xl font-medium tabular-nums">€{garment.price}</p>
+                <h1 className="title-compact">{garment.name}</h1>
+                <p className="title-md tabular-nums">€{garment.price}</p>
               </div>
               <p className="text-xs text-muted-foreground">
                 {garment.difficulty} · {garment.estimatedTime} · {sizeRange}

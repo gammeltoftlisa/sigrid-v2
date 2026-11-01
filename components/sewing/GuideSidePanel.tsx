@@ -141,7 +141,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
         >
           <StepDot state={state} className="size-6">{n}</StepDot>
 
-          <span className={`flex-1 truncate text-sm leading-tight ${state === 'done' && !isOpen ? 'text-muted-foreground' : 'text-foreground'} ${state === 'active' || isOpen ? 'font-medium' : ''}`}>
+          <span className={`flex-1 truncate text-sm ${state === 'done' && !isOpen ? 'text-muted-foreground' : 'text-foreground'} ${state === 'active' || isOpen ? 'font-medium' : ''}`}>
             {s.title}
           </span>
 
@@ -288,7 +288,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
               >
                 <StepDot state={jState}><Icon size={14} /></StepDot>
                 <div className="flex-1 min-w-0">
-                  <p className={`truncate text-sm leading-tight ${jState === 'done' ? 'text-muted-foreground' : 'text-foreground'} ${jState === 'active' ? 'font-medium' : ''}`}>
+                  <p className={`truncate text-sm ${jState === 'done' ? 'text-muted-foreground' : 'text-foreground'} ${jState === 'active' ? 'font-medium' : ''}`}>
                     {j.title}
                   </p>
                 </div>

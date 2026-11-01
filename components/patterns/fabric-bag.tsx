@@ -46,7 +46,7 @@ export function FabricBagSheet({ items, open, onOpenChange }: { items: BagItem[]
               {groups.map((g) => (
                 <section key={g.key} aria-label={g.sourceName} className="glass-panel flex flex-col gap-2 rounded-(--radius) border p-3">
                   <header className="flex items-baseline justify-between gap-3">
-                    <h3 className="eyebrow !font-medium">{g.sourceName}</h3>
+                    <h3 className="eyebrow">{g.sourceName}</h3>
                     <span className="text-sm font-medium tabular-nums">{formatMoney(g.total, g.currency)}</span>
                   </header>
 

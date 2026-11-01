@@ -101,7 +101,7 @@ export function StudioPatternPage({
         <div className="flex w-full flex-1 flex-col gap-6 px-4 pt-6 pb-44 sm:px-6 md:min-h-0 md:px-0 md:pt-2 md:pb-0">
           <header className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-4">
-              <h1 className="min-w-0 flex-1 [--h1-size:clamp(2.25rem,3.4vw,3.5rem)]">
+              <h1 className="min-w-0 flex-1 title-compact">
                 {/* Wraps onto more lines like the real title, instead of being cut off */}
                 <InlineTextarea
                   inheritFont
@@ -113,7 +113,7 @@ export function StudioPatternPage({
                   onChange={(name) => onChange({ name: name.replace(/\n/g, ' ') || 'Untitled pattern' })}
                 />
               </h1>
-              <InlineNumber required todo="price" label="Price" unit="€" unitBefore value={pattern.price} placeholder="0" onChange={(price) => onChange({ price })} className="shrink-0 text-xl font-medium" />
+              <InlineNumber required todo="price" label="Price" unit="€" unitBefore value={pattern.price} placeholder="0" onChange={(price) => onChange({ price })} className="title-md shrink-0" />
             </div>
             <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
               <InlinePick label="Difficulty" text={pattern.difficulty} placeholder="Difficulty">

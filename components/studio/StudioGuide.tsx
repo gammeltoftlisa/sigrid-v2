@@ -296,13 +296,13 @@ export function StudioGuide({
                     >
                       <span
                         className={cn(
-                          'flex size-5 shrink-0 items-center justify-center rounded-full text-2xs font-semibold',
+                          'flex size-5 shrink-0 items-center justify-center rounded-full text-2xs font-medium',
                           on ? 'step-dot-active' : 'step-dot-upcoming text-muted-foreground',
                         )}
                       >
                         {p.label}
                       </span>
-                      <span className={cn('flex-1 truncate text-sm leading-tight', on ? 'font-medium text-foreground' : 'text-foreground')}>
+                      <span className={cn('flex-1 truncate text-sm', on ? 'font-medium text-foreground' : 'text-foreground')}>
                         {p.name === 'New piece' ? <span className="text-muted-foreground">New piece</span> : p.name}
                       </span>
                       {done ? <IconCheck className="size-3.5 text-muted-foreground" aria-label="All sizes measured" /> : <TodoMark>Measure</TodoMark>}
@@ -392,13 +392,13 @@ export function StudioGuide({
                             {/* The step number, also on the step being edited (the guide shows a dot there) */}
                             <span
                               className={cn(
-                                'flex size-5 shrink-0 items-center justify-center rounded-full text-2xs font-semibold tabular-nums transition-colors',
+                                'flex size-5 shrink-0 items-center justify-center rounded-full text-2xs font-medium tabular-nums transition-colors',
                                 isCurrent ? 'step-dot-active' : 'step-dot-upcoming text-muted-foreground',
                               )}
                             >
                               {n + 1}
                             </span>
-                            <span className={cn('flex-1 truncate text-sm leading-tight', isCurrent ? 'font-medium text-foreground' : 'text-foreground')}>
+                            <span className={cn('flex-1 truncate text-sm', isCurrent ? 'font-medium text-foreground' : 'text-foreground')}>
                               {s.title === 'New step' ? <span className="text-muted-foreground">New step</span> : s.title}
                             </span>
                             {(!s.title.trim() || s.title === 'New step' || !s.instruction.trim()) && <TodoMark className="mr-1">To write</TodoMark>}
@@ -546,7 +546,7 @@ export function StudioGuide({
         ) : (
           <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 guide-canvas rounded-(--radius) p-6 text-center md:order-none">
             <IconRulerMeasure className="size-8 text-muted-foreground" aria-hidden />
-            <h2 className="text-3xl">Start with the <em className="display-italic">pattern pieces</em></h2>
+            <h2 className="title-lg">Start with the <em className="display-italic">pattern pieces</em></h2>
             <p className="max-w-sm text-sm text-muted-foreground">
               Measure each piece from top to bottom, in every size. Sigrid draws it from your numbers, and the steps can show it.
             </p>
@@ -632,7 +632,7 @@ export function StudioGuide({
                 value={step.title === 'New step' ? '' : step.title}
                 placeholder="Start with what to do, e.g. Pin the side seams"
                 onChange={(title) => update({ title: title || 'New step', action: actionFromTitle(title, step.action) })}
-                className="font-heading text-3xl leading-tight"
+                className="title-lg"
               />
             </div>
 
@@ -673,7 +673,7 @@ export function StudioGuide({
       ) : (
         <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 guide-canvas rounded-(--radius) p-6 text-center md:order-none">
           <IconNeedleThread className="size-8 text-muted-foreground" aria-hidden />
-          <h2 className="text-3xl">Write the <em className="display-italic">sewing steps</em></h2>
+          <h2 className="title-lg">Write the <em className="display-italic">sewing steps</em></h2>
           <p className="max-w-sm text-sm text-muted-foreground">You write each step right here, exactly where sewers will read it.</p>
           <Button onClick={addSection}>
             <IconPlus data-icon="inline-start" />

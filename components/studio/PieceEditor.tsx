@@ -72,7 +72,7 @@ export function PieceEditor({
   return (
     <section aria-label={`Piece ${piece.label}`} className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-sm font-semibold">
+        <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-sm font-medium">
           {piece.label}
         </span>
         <InlineText
@@ -81,7 +81,7 @@ export function PieceEditor({
           value={piece.name === 'New piece' ? '' : piece.name}
           placeholder="Name the piece, e.g. Front"
           onChange={(name) => onPiece({ ...piece, name: name || 'New piece' })}
-          className="min-w-40 flex-1 text-lg leading-tight font-semibold"
+          className="title-sm min-w-40 flex-1"
         />
         <QuietPick
           label="Cut from"

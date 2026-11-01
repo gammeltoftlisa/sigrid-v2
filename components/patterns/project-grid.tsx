@@ -6,7 +6,7 @@ import { projectCardData, type ProjectSummary } from '@/lib/project-summary'
 export function ProjectGrid({ label, projects, count = false }: { label: string; projects: ProjectSummary[]; count?: boolean }) {
   return (
     <ProductGrid label={label} meta={count ? projects.length : undefined}>
-      <div className="tile-grid tiles tiles-compact">
+      <div className="tiles tiles-compact">
         {projects.map((p) => (
           <ProjectCard key={p.garment.id} {...projectCardData(p)} />
         ))}

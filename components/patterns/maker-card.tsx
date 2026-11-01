@@ -14,7 +14,7 @@ export function MakerCard({ creator, patterns }: { creator: Creator; patterns: P
       <div className="flex items-center gap-3">
         <CreatorAvatar creator={creator} size="lg" />
         <div className="flex min-w-0 flex-col">
-          <span className="truncate font-heading text-xl">{creator.name}</span>
+          <span className="title-md truncate">{creator.name}</span>
           <span className="truncate text-xs text-muted-foreground">{creator.handle}</span>
         </div>
       </div>

@@ -40,7 +40,7 @@ export function SizePicker({
           aria-label={`Size ${s}, EU ${euSizes[s]}${current === s ? ', current size' : ''}`}
           className="h-12 w-full flex-col gap-0 rounded-xl data-pressed:border-primary data-pressed:bg-primary data-pressed:text-primary-foreground"
         >
-          <span className="font-semibold">{s}</span>
+          <span className="font-medium">{s}</span>
           <span className="text-xs font-normal opacity-70 tabular-nums">
             EU {euSizes[s]}
             {current === s && ' · now'}
