@@ -34,8 +34,8 @@ export default function PrivacyPage() {
             Only the search words are sent, never anything about you.
           </li>
           <li>
-            <strong>Your account.</strong> You need an account to use Sigrid. Clerk Inc. stores your email address, your login details and your sign-in
-            sessions for us. Legal basis: running the account you asked for (GDPR art. 6.1 b). You can delete your account in Profile.
+            <strong>Your account.</strong> You need an account to use Sigrid. Clerk Inc. stores your email address, your login details, your sign-in
+            sessions and your account type (sewer or pattern maker) for us. Legal basis: running the account you asked for (GDPR art. 6.1 b). You can delete your account in Profile.
           </li>
           <li>
             <strong>Your sewing.</strong> Your projects, chosen size, progress and the dates you mark steps done are saved to your

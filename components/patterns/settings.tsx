@@ -2,11 +2,22 @@ import Link from 'next/link'
 import { IconChevronRight } from '@tabler/icons-react'
 import { cn } from 'cn'
 
+import { Stipple } from './product-grid'
+
 /**
- * One container for a whole settings page, with a stroke between groups instead of a box around each.
- * It holds controls, so it's glass. Put an optional header, then SettingsGroups, inside.
+ * One container of settings, with a stroke between groups instead of a box around each. A page with
+ * different kinds of settings has one for each kind. It holds controls, so it's glass; pass `solid` when it's
+ * only there to read or to link onward. Put an optional header, then SettingsGroups, inside.
  */
-export function SettingsList({ children, className }: { children: React.ReactNode; className?: string }) {
+export function SettingsList({ solid = false, children, className }: { solid?: boolean; children: React.ReactNode; className?: string }) {
+  if (solid) {
+    return (
+      <div className={cn('product-grid solid-panel settings-list rounded-(--radius)', className)}>
+        <Stipple />
+        {children}
+      </div>
+    )
+  }
   return <div className={cn('glass-panel settings-list rounded-(--radius) border', className)}>{children}</div>
 }
 

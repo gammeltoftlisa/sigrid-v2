@@ -1,8 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
 // Sigrid needs an account. Open to everyone: the address itself (it sends you on), logging in, the legal
-// pages people must be able to read before they agree to them, and Stripe's webhook, which proves itself with a signature.
-const isPublic = createRouteMatcher(['/', '/sign-in(.*)', '/sign-up(.*)', '/legal(.*)', '/api/webhooks(.*)'])
+// pages people must be able to read before they agree to them, Stripe's webhook, which proves itself with a signature,
+// and the scheduled jobs, which prove themselves with CRON_SECRET.
+const isPublic = createRouteMatcher(['/', '/sign-in(.*)', '/sign-up(.*)', '/legal(.*)', '/api/webhooks(.*)', '/api/cron(.*)'])
 const isApi = createRouteMatcher(['/api(.*)', '/trpc(.*)'])
 
 export default clerkMiddleware(

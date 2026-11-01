@@ -6,18 +6,10 @@ import { Panel } from '@/components/patterns/panel'
 import { dayKey, stepsByDay, type StepDone } from '@/lib/activity'
 import { minutesPerStep, type ProjectSummary } from '@/lib/project-summary'
 
-/** One hue, light to dark; a day with nothing sewn stays empty */
-const RAMP = ['bg-data-1', 'bg-data-2', 'bg-data-3', 'bg-data-4']
-const level = (n: number) => (n === 1 ? 0 : n <= 3 ? 1 : n <= 5 ? 2 : 3)
-
-function hoursText(minutes: number) {
-  if (minutes < 45) return 'Under an hour'
-  const hours = Math.round(minutes / 30) / 2
-  return `About ${hours} ${hours === 1 ? 'hour' : 'hours'}`
-}
+const hoursText = (minutes: number) => (minutes < 45 ? 'Under 1 h' : `~${Math.round(minutes / 30) / 2} h`)
 
 /**
- * How the sewing is going: this week day by day, and what it has added up to.
+ * How the sewing is going, kept plain: this week's letters, ringed on the days you sewed, then what it has added up to.
  * Sewing happens when there's time, so there's no streak to lose. Everything comes from steps marked done.
  */
 export function SewingDashboard({ activity, projects }: { activity: StepDone[]; projects: ProjectSummary[] }) {
@@ -40,42 +32,41 @@ export function SewingDashboard({ activity, projects }: { activity: StepDone[]; 
   const stepsDone = projects.reduce((n, p) => n + Math.min(p.project.completedUntil, p.totalSteps), 0)
   const minutes = projects.reduce((n, p) => n + Math.min(p.project.completedUntil, p.totalSteps) * minutesPerStep(p.garment.estimatedTime, p.totalSteps), 0)
 
+  // A total of nothing only discourages, so "finished" waits for the first one
   const totals = [
-    { label: 'Garments finished', value: String(finished) },
     { label: 'Steps done', value: String(stepsDone) },
     { label: 'Time sewn', value: hoursText(minutes) },
+    ...(finished > 0 ? [{ label: 'Finished', value: String(finished) }] : []),
   ]
 
   return (
     <Panel label="This week" meta={stepsThisWeek > 0 ? `${stepsThisWeek} ${stepsThisWeek === 1 ? 'step' : 'steps'}` : undefined} bodyClassName="gap-4 px-4 pb-4">
-      <ul className="grid grid-cols-7 gap-1">
+      {/* The day's own letter is ringed when you sewed that day */}
+      <ul className="flex justify-between">
         {week.map((d) => (
-          <li key={d.key} className="flex flex-col items-center gap-1">
-            <span aria-hidden className={cn('text-2xs', d.today ? 'font-medium text-foreground' : 'text-muted-foreground')}>{d.letter}</span>
+          <li key={d.key}>
             <span
               aria-hidden
               className={cn(
-                'aspect-square w-full rounded-xs border',
-                d.count > 0 ? cn(RAMP[level(d.count)], 'border-transparent') : 'bg-transparent',
-                d.today && 'border-foreground',
+                'flex size-8 items-center justify-center rounded-full text-xs',
+                d.count > 0 ? 'text-foreground ring-1 ring-foreground/60' : 'text-muted-foreground',
+                d.today && 'font-medium text-foreground',
               )}
-            />
+            >
+              {d.letter}
+            </span>
             <span className="sr-only">{d.name}{d.today ? ', today' : ''}: {d.count} {d.count === 1 ? 'step' : 'steps'}</span>
           </li>
         ))}
       </ul>
-      {stepsThisWeek === 0 && <p className="text-sm text-muted-foreground">Nothing marked done yet this week.</p>}
-      <div className="flex flex-col gap-2 border-t pt-4">
-        <p className="eyebrow text-muted-foreground">So far</p>
-        <dl className="flex flex-col gap-2">
-          {totals.map((t) => (
-            <div key={t.label} className="flex items-baseline justify-between gap-4 text-sm">
-              <dt className="text-muted-foreground">{t.label}</dt>
-              <dd className="text-right tabular-nums">{t.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
+      <dl className="flex flex-col gap-2">
+        {totals.map((t) => (
+          <div key={t.label} className="flex items-baseline justify-between gap-4 rounded-(--control-radius) border bg-card px-3 py-2.5">
+            <dt className="text-sm text-muted-foreground">{t.label}</dt>
+            <dd className="text-sm font-medium tabular-nums">{t.value}</dd>
+          </div>
+        ))}
+      </dl>
     </Panel>
   )
 }

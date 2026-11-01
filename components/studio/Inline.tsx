@@ -12,9 +12,9 @@ import { arrowStep } from '@/lib/studio/arrow-step'
  * read, show a soft fill on hover, and turn white with the focus outline while
  * you type. Placeholders say what goes there.
  */
-// -mx-1 + px-1: the text lines up with the text around it; the soft fill appears only on hover and while typing
+// -mx-2 + px-2: room for the rounded ends, and the text lines up with the text around it; the soft fill appears only on hover and while typing
 const base =
-  '-mx-1 w-full min-w-0 rounded-md bg-transparent px-1 py-0.5 outline-none transition-colors placeholder:text-muted-foreground hover:bg-foreground/5 focus-visible:bg-card'
+  '-mx-2 w-full min-w-0 bg-transparent px-2 py-0.5 outline-none transition-colors placeholder:text-muted-foreground hover:bg-foreground/5 focus-visible:bg-card'
 
 export function InlineText({
   value,

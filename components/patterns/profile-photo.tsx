@@ -87,7 +87,7 @@ function PhotoFramer({ photo, frame, onChange }: { photo: ImageBitmap; frame: Ph
 }
 
 /**
- * The photo row at the top of Profile. Pressing the button opens a place to drop a photo, not the file browser;
+ * The picture at the top of Profile, round and as wide as its container (on a tablet, where that's the whole page, it stops at 24rem). Pressing the button opens a place to drop a photo, not the file browser;
  * a photo dragged from Finder or Photos can land anywhere on the page. Children sit between the picture and its button.
  */
 export function ProfilePhoto({ children }: { children?: React.ReactNode }) {
@@ -194,9 +194,9 @@ export function ProfilePhoto({ children }: { children?: React.ReactNode }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label={avatar ? 'Change profile picture' : 'Add a profile picture'}
-        className={cn('group/photo relative shrink-0 rounded-full', dragging && !open && 'outline-2 outline-offset-4 outline-foreground')}
+        className={cn('group/photo relative mx-auto w-full max-w-sm shrink-0 rounded-full', dragging && !open && 'outline-2 outline-offset-4 outline-foreground')}
       >
-        <UserAvatar className="size-20" />
+        <UserAvatar className="aspect-square size-auto w-full [&_svg]:stroke-1 [&_svg]:text-muted-foreground" />
         <span
           aria-hidden
           className={cn(
@@ -204,11 +204,11 @@ export function ProfilePhoto({ children }: { children?: React.ReactNode }) {
             dragging && !open && 'opacity-100',
           )}
         >
-          <IconCamera className="size-6" />
+          <IconCamera className="size-8" />
         </span>
       </button>
       {children}
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
         <IconCamera data-icon="inline-start" />
         {avatar ? 'Change photo' : 'Add photo'}
       </Button>

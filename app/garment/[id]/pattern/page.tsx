@@ -216,7 +216,7 @@ export default function PatternPage({ params }: { params: Promise<{ id: string }
         </header>
 
         <Panel label="Pieces" meta={layouts.length}>
-          <div className="tiles tiles-compact">
+          <div className="tiles">
             {layouts.map((l) => (
               <Inset key={l.piece.id} className="flex flex-col gap-3 p-3">
                 <div className="flex h-32 items-center justify-center rounded-(--image-radius) bg-muted p-3">

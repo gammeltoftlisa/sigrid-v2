@@ -1,8 +1,8 @@
 import type { FabricQuery } from './types'
 
 /**
- * Store departments for browsing without a garment in mind: fabric, and everything else you sew with.
- * Supplies match whole words, so "needle" doesn't find needlecord. Each one was checked against the
+ * What a supply search looks for, for the "what you'll need" list on a pattern (the store's own categories
+ * are in lib/shop/taxonomy.ts). Supplies match whole words, so "needle" doesn't find needlecord. Each one was checked against the
  * shops: a department they don't stock doesn't belong here.
  */
 export type DepartmentGroup = 'Fabric' | 'Lining and interfacing' | 'Thread and needles' | 'Closures' | 'Elastic and trims' | 'Tools'

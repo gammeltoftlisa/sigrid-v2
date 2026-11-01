@@ -5,8 +5,8 @@ import { useSyncExternalStore } from 'react'
 /** The profile picture, saved on this device only. */
 const KEY = 'sigrid_avatar'
 const EVENT = 'sigrid-avatar'
-/** Saved as a small square: enough for every place it shows, small enough for local storage */
-const SIZE = 256
+/** Saved as a square: sharp at the full width of Profile's side panel, small enough for local storage */
+const SIZE = 768
 const MAX_UPLOAD = 30 * 1024 * 1024
 
 function read(): string | null {

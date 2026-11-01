@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 
-import { cleanSearch, getDepartment, supplyFor } from '@/lib/fabric/catalog'
+import { cleanSearch, supplyFor } from '@/lib/fabric/catalog'
 import { getFabricNeed } from '@/lib/fabric/needs'
 import { cacheControlFor, searchAllSources } from '@/lib/fabric/sources'
 import type { FabricListing, FabricSearchResponse, SourceStatus } from '@/lib/fabric/types'
@@ -17,17 +17,14 @@ const slug = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/)
 const paramsSchema = z.object({
   garment: slug.optional(),
   choice: slug.optional(),
-  department: slug.optional(),
   q: z.string().max(200).optional(),
 })
 
 /**
- * Searches every shop, for fabric or supplies.
- *   ?garment=lace-waist-skirt                      every recommended fabric for a garment, with `matches`
+ * Asks every shop live, for what one pattern needs. The store itself is /api/shop.
+ *   ?garment=lace-waist-skirt                 every recommended fabric for a garment, with `matches`
  *   ?garment=lace-waist-skirt&choice=viscose  just one of them
- *   ?department=linen                              a store department
- *   ?q=washed linen                                the store's search box
- *   (nothing)                                      browse the latest fabric in every shop
+ *   ?q=invisible zip                          one of its supplies
  */
 export async function GET(request: NextRequest) {
   const limited = rateLimit(`fabrics:${clientIp(request.headers)}`, LIMIT, WINDOW_MS)
@@ -66,8 +63,6 @@ function search(params: z.infer<typeof paramsSchema>): Promise<FabricSearchRespo
     const picked = need.choices.find((c) => c.id === params.choice)
     return searchRecommended(picked ? [picked] : need.choices)
   }
-  const department = getDepartment(params.department)
-  if (department) return searchAllSources({ q: department.query, match: department.match, limit: 8, kind: department.kind, exclude: department.exclude })
   const q = cleanSearch(params.q)
   if (q.length >= 2) {
     const supply = supplyFor(q)
@@ -75,7 +70,7 @@ function search(params: z.infer<typeof paramsSchema>): Promise<FabricSearchRespo
     const words = q.toLowerCase().split(' ').filter((w) => w.length > 2)
     return searchAllSources({ q, match: words.length ? words : [q.toLowerCase()], limit: 8, kind: 'fabric' })
   }
-  return searchAllSources(null)
+  return Promise.resolve({ listings: [], sources: [] })
 }
 
 /**

@@ -153,6 +153,11 @@
   --heading-tracking: -0.025em;
   --h1-size: clamp(2.75rem, 6.2vw, 5.75rem);
   --control-radius: 14px;
+  /* Fields and dropdowns. CSS caps a radius at half the height, so anything one line tall is a full pill
+     and taller boxes (notes, open lists) keep the same curve without cutting into their text. */
+  --field-radius: 22px;
+  --menu-row-radius: calc(var(--field-radius) - 5px); /* follows the list's curve: its 1px edge + 4px padding */
+  --menu-row-hover: var(--app-bg);                    /* the page's beige */
   --image-radius: 16px;
 
   --celebrate: rgb(var(--tri-primary));
@@ -192,6 +197,7 @@
 /* Dark: warm obsidian, a richer aura, light text. Set by next-themes on <html data-theme>. */
 :root[data-theme="dark"] {
   --app-bg: var(--bg-dark);
+  --menu-row-hover: rgb(255 255 255 / 0.12);
   --app-panel: #1C1C1C;
   --app-elev: #2B2B2B;
   --glass-fill: rgb(255 255 255 / 0.05);
@@ -346,8 +352,9 @@
 .cutting-mat-major { stroke-width: 1.3; }
 
 /* Controls: pill buttons, soft fields */
-:root :is([data-slot="toggle-group-item"], [data-slot="input-group"], [data-slot="select-trigger"], input, textarea) {
-  border-radius: var(--control-radius);
+:root [data-slot="toggle-group-item"] { border-radius: var(--control-radius); }
+:root :is([data-slot="input-group"], [data-slot="select-trigger"], input:not([type="checkbox"], [type="radio"]), textarea) {
+  border-radius: var(--field-radius);
 }
 :root .group\/button { border-radius: 999px; }
 :root .group\/button:is(.size-6, .size-7, .size-8, .size-9, [class*="size-icon"]) { border-radius: 999px; }
@@ -395,7 +402,8 @@
 }
 :root .group\/button.bg-destructive\/10:hover { background: color-mix(in oklch, var(--destructive) 8%, transparent); }
 
-/* ─── Form fields: frosted fills, a ink focus ring ───────────────────────────── */
+/* ─── Form fields: frosted at rest, whiter on hover, solid white with a crisp ink edge in use ─────
+   No ring around a field: the edge and the fill say it's active. data-preview shows a state in Storybook. */
 :root { --field-focus-ring: rgb(var(--tri-primary) / 0.18); }
 :root :is([data-slot="input"], [data-slot="select-trigger"], [data-slot="input-group"], [data-slot="textarea"]) {
   background-color: var(--glass-fill);
@@ -405,14 +413,36 @@
   box-shadow: inset 0 1px 0 var(--sheen);
   transition: background-color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
-:root :is([data-slot="input"], [data-slot="textarea"]):focus-visible,
-:root [data-slot="select-trigger"]:is(:focus-visible, [data-popup-open]),
-:root [data-slot="input-group"]:focus-within {
+:root :is([data-slot="input"], [data-slot="select-trigger"], [data-slot="input-group"], [data-slot="textarea"]):is(:hover, [data-preview="hover"]):not(:disabled, [data-disabled], :has(:disabled), :focus-visible, :focus-within, [data-popup-open], [aria-invalid="true"], :has([aria-invalid="true"])) {
+  background-color: var(--glass-hover) !important;
+  border-color: var(--app-border-strong) !important;
+}
+:root :is([data-slot="input"], [data-slot="textarea"]):is(:focus-visible, [data-preview="focus"]),
+:root [data-slot="select-trigger"]:is(:focus-visible, [data-popup-open], [data-preview="focus"]),
+:root [data-slot="input-group"]:is(:focus-within, [data-preview="focus"]) {
   background-color: var(--app-elev) !important;
-  border-color: rgb(var(--tri-primary) / 0.7) !important;
-  box-shadow: 0 0 0 4px var(--field-focus-ring) !important;
+  border: 1px solid rgb(var(--tri-primary)) !important;
+  box-shadow: none !important;
   outline: none !important;
 }
+/* Something's wrong: a clear edge, whatever state it's in */
+:root :is([data-slot="input"], [data-slot="select-trigger"], [data-slot="input-group"], [data-slot="textarea"])[aria-invalid="true"],
+:root [data-slot="input-group"]:has([aria-invalid="true"]) {
+  border: 1px solid var(--destructive) !important;
+  box-shadow: none !important;
+}
+/* Long notes: the box grows with the text, so no drag handle in the rounded corner */
+:root [data-slot="textarea"] { min-height: 5rem; padding: 0.625rem 0.875rem; resize: none; scrollbar-width: thin; }
+/* The browser's clear button in a search field, drawn as our own icon */
+:root input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none; appearance: none;
+  width: 1rem; height: 1rem; margin-left: 0.375rem; cursor: pointer;
+  background-color: var(--muted-foreground);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+/* Saved logins and addresses: keep our look, not the browser's blue or yellow box */
+:root input:-webkit-autofill { -webkit-text-fill-color: var(--foreground); transition: background-color 99999s ease-out !important; }
 :root [data-slot="input-group"] [data-slot="input-group-control"]:focus-visible { box-shadow: none !important; }
 :root [data-slot="input-group"] [data-slot="input-group-addon"] { color: var(--muted-foreground); }
 :root :is([data-slot="input"], [data-slot="input-group-control"], [data-slot="textarea"])::placeholder { color: var(--muted-foreground); }
@@ -720,51 +750,69 @@ body { background: transparent !important; isolation: isolate; }
    .grid-12         the page grid; children span all 12 columns unless told otherwise
    .col-side        side panel: 4 columns on lg, 3 from xl (sticky; about 300px on a laptop)
    .col-main        the rest (8 / 9 columns), with its own nested 12-column grid inside
-   .tiles           product tiles, 4 per row on desktop: span 6 on phones, 4 on md, 3 from lg
-                    (inside .col-main: 3 per row on lg, 4 from xl; full width: 5 per row from xl)
-   .tiles-wide      bigger cards (projects, plans): 12 on phones, 6 from md, 4 from 2xl
-   Tiles inside .col-main use the same column width and gutter as the page, because
-   --cols follows the space they sit in, so everything lines up with the page columns. */
-:root { --grid-gutter: 1rem; --cols: 12; --tile: 6; --wide: 12; }
-@media (min-width: 768px) { :root { --grid-gutter: 1.5rem; --tile: 4; --wide: 6; } }
-@media (min-width: 1024px) { :root { --tile: 3; } }
+   .tiles           cards with images; the one rule for how many fit a row is below
+   .tiles-wide      bigger cards without images (plans): 12 on phones, 6 from md, 4 from 2xl */
+:root { --grid-gutter: 0.75rem; --cols: 12; --wide: 12; }
+@media (min-width: 768px) { :root { --wide: 6; } }
 @media (min-width: 1536px) { :root { --wide: 4; } }
 
 .grid-12,
-.tiles,
 .tiles-wide {
   display: grid;
   grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
   column-gap: var(--grid-gutter);
 }
-.grid-12 { --cols: 12; row-gap: 2rem; }
+.grid-12 { --cols: 12; row-gap: var(--grid-gutter); }
 .grid-12 > * { grid-column: 1 / -1; min-width: 0; }
-.tiles { row-gap: 2rem; }
-.tiles.tiles-compact { row-gap: 0.75rem; }
 .tiles-wide { row-gap: var(--grid-gutter); }
-.tiles > * { grid-column: span var(--tile); min-width: 0; }
 .tiles-wide > * { grid-column: span var(--wide); min-width: 0; }
 
 @media (min-width: 1024px) {
   .grid-12 > .col-side { grid-column: span 4; position: sticky; top: 0.5rem; align-self: start; }
-  .grid-12 > .col-main { grid-column: span 8; --cols: 12; --tile: 4; --wide: 6; }
+  .grid-12 > .col-main { grid-column: span 8; --cols: 12; --wide: 6; }
 }
 @media (min-width: 1280px) {
   .grid-12 > .col-side { grid-column: span 3; }
-  .grid-12 > .col-main { grid-column: span 9; --tile: 3; }
+  .grid-12 > .col-main { grid-column: span 9; }
 }
-/* Full-width product grids show 5 per row on wide screens (beside a side panel it stays 4) */
-@media (min-width: 1280px) {
-  .tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .tiles > * { grid-column: span 1; }
-  .col-main .tiles { grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); }
-  .col-main .tiles > * { grid-column: span var(--tile); }
+/* ─── Cards per row: the one rule, for every page ─────────────────────────────
+   The count follows the width of the container the cards are in, never the screen or the page.
+   So cards in the same width are the same size everywhere, and a side panel simply leaves less room.
+     under 720px    2 per row
+     720–959px      3 per row
+     960–1199px     4 per row
+     1200px and up  5 per row
+   Pages never set their own count. Cards that don't fit go to the next row, every row is
+   the same height, and a short last row leaves its spots empty rather than stretching. */
+.product-grid:has(.tiles, .tiles-row) { container: cards / inline-size; }
+.tiles {
+  --cards: 2;
+  display: grid;
+  grid-template-columns: repeat(var(--cards), minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 2rem var(--grid-gutter);
 }
+.tiles > * { min-width: 0; }
+/* The same cards on one line that scrolls sideways. On touch the next card peeks in, as there are no arrows. */
+.tiles-row {
+  --cards: 2;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc(100% / var(--cards));
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.tiles-row::-webkit-scrollbar { display: none; }
+.tiles-row > * { min-width: 0; scroll-snap-align: start; }
+@media (pointer: coarse) { .tiles-row { grid-auto-columns: calc(100% / (var(--cards) + 0.2)); } }
+@container cards (min-width: 720px) { .tiles, .tiles-row { --cards: 3; } }
+@container cards (min-width: 960px) { .tiles, .tiles-row { --cards: 4; } }
+@container cards (min-width: 1200px) { .tiles, .tiles-row { --cards: 5; } }
 
-/* The lead tile: twice as wide and tall as its siblings, so the grid reads as a bento, not a repeat */
-.tiles > .tile-lead { grid-column: span calc(var(--tile) * 2); grid-row: span 2; }
-@media (max-width: 767px) { .tiles > .tile-lead .product-image { aspect-ratio: var(--aspect-cover); } }
-@media (min-width: 1280px) { .tiles > .tile-lead { grid-column: span 2; } .col-main .tiles > .tile-lead { grid-column: span calc(var(--tile) * 2); } }
+/* The lead tile: twice as wide and tall as its siblings */
+.tiles > .tile-lead { grid-column: span 2; grid-row: span 2; }
 
 /* Hero band: stacked display headline left, copy + actions anchored to the bottom right */
 :root .hero-title { font-size: clamp(3.5rem, 9vw, 8.5rem); line-height: 0.9; letter-spacing: -0.035em; font-weight: 340; }
@@ -774,11 +822,9 @@ body { background: transparent !important; isolation: isolate; }
 :root[data-theme="dark"] :is(.product-image, [data-slot="aspect-ratio"]) img { filter: brightness(0.9) saturate(0.95); }
 
 /* Layout: 40px between sections on phones, 48px from md; the page title sits 32px above its content */
-:root .page { row-gap: 2.5rem; padding-bottom: 4rem; }
+:root .page { row-gap: var(--grid-gutter); padding-bottom: 1.5rem; }
 /* Beside the rail: 16px + the rail's 8px inset = one 24px gutter on the left; 32px on the right */
-@media (min-width: 768px) { :root .page { row-gap: 3rem; padding-left: 1rem; padding-right: 2rem; } }
-:root .page > .page-header { margin-bottom: -0.5rem; }
-@media (min-width: 768px) { :root .page > .page-header { margin-bottom: -1rem; } }
+@media (min-width: 768px) { :root .page { padding-left: 0.75rem; padding-right: 0.75rem; } }
 
 :root .intro-art { border-radius: var(--radius); background: var(--glass-tint); }
 :root .intro-art svg { color: var(--foreground); stroke-width: 1; }
@@ -798,12 +844,9 @@ body { background: transparent !important; isolation: isolate; }
 .product-grid > .stipple { opacity: var(--atmo-opacity); }
 .product-grid-header { border-bottom: 1px dashed var(--app-border-strong); }
 /* Strokes on each product's right and bottom; the grid hangs 1px past the container to hide the outer ones */
-:root .product-grid :is(.tiles, .project-rows, .maker-rows) { gap: 0; margin: 0 -1px -1px 0; }
-/* Projects with their details: side by side when there's room for two */
-.project-rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 36rem), 1fr)); }
-.project-rows-compact { grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); }
+:root .product-grid :is(.tiles, .tiles-row, .maker-rows) { gap: 0; margin: 0 -1px -1px 0; }
 .maker-rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
-:root .product-grid :is(.tiles, .project-rows, .maker-rows) > * {
+:root .product-grid :is(.tiles, .tiles-row, .maker-rows) > * {
   padding: 0.75rem;
   border-style: dashed;
   border-color: var(--app-border-strong);
@@ -828,8 +871,34 @@ body { background: transparent !important; isolation: isolate; }
 /* ─── Settings: one container, a stroke between groups, the label beside its rows ─── */
 .settings-group { display: grid; gap: 1rem; padding: 1.25rem 1rem; border-top: 1px dashed var(--app-border); }
 @media (min-width: 768px) { .settings-group { grid-template-columns: 9rem minmax(0, 1fr); gap: 1.5rem; padding: 1.5rem; } }
-.settings-group:first-child { border-top: 0; }
+.settings-group:first-child, .stipple + .settings-group { border-top: 0; }
 .settings-group > h2 { padding-top: 0.25rem; }
+
+/* ─── Shop: the whole page fits the screen, and what doesn't fit scrolls inside its own container ─── */
+:root .page.fit-screen { height: calc(100svh - 4.5rem - max(0.75rem, env(safe-area-inset-bottom))); overflow: hidden; padding-bottom: 0; }
+@media (min-width: 768px) { :root .page.fit-screen { height: 100svh; } }
+.shop-body { --bar-height: 3.25rem; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--grid-gutter); padding-block: 0.625rem 0.75rem; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.shop-body::-webkit-scrollbar { display: none; }
+/* Floats over the products as they pass under it: nothing behind it but them */
+.shop-bar { position: sticky; top: 0; z-index: 30; flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; height: var(--bar-height); padding: 0.375rem; border-radius: 9999px; background-color: var(--glass-fill-bar) !important; -webkit-backdrop-filter: var(--glass-blur-solid); backdrop-filter: var(--glass-blur-solid); box-shadow: none !important; }
+.shop-bar .group\/button { box-shadow: none !important; }
+.shop-bar [data-slot="input-group"] { border-radius: 9999px; height: 2.5rem; }
+/* The filters stay in view while the products pass, and scroll inside themselves if they're taller than the room */
+:root .grid-12 > .shop-side { position: sticky; top: calc(var(--bar-height) + var(--grid-gutter)); align-self: start; max-height: calc(100svh - 0.625rem - var(--bar-height) - var(--grid-gutter) * 2); }
+:root h1.shop-title { --h1-size: 1.75rem; line-height: 1.1; }
+/* Categories on one line that fades out softly where there's more: swipe or scroll sideways, or use the arrows over the ends */
+.category-row { display: flex; gap: 0.5rem; overflow-x: auto; padding-block: 0.125rem; scrollbar-width: none; overscroll-behavior-x: contain; mask-image: linear-gradient(to right, transparent calc(var(--fade-left, 0rem) * 0.3), black var(--fade-left, 0rem), black calc(100% - var(--fade-right, 0rem)), transparent calc(100% - var(--fade-right, 0rem) * 0.3)); }
+:root .category-bubble { height: 3.75rem !important; padding-inline: 1.125rem !important; gap: 0.5rem; }
+:root .category-bubble[aria-current="page"] { background-color: color-mix(in srgb, var(--foreground) 9%, transparent) !important; }
+:root[data-theme="dark"] .category-bubble[aria-current="page"] { background-color: color-mix(in srgb, var(--foreground) 20%, transparent) !important; }
+/* Solid, so nothing shows through it as the row passes under */
+:root .category-arrow, :root .product-grid .group\/button.category-arrow { background-color: var(--app-elev) !important; -webkit-backdrop-filter: none; backdrop-filter: none; opacity: 1; }
+.category-row::-webkit-scrollbar { display: none; }
+/* A colour in a filter dropdown */
+.swatch-dot { flex-shrink: 0; width: 0.875rem; height: 0.875rem; border-radius: 9999px; }
+/* No stroke. White and cream would vanish on a white list, so they get a soft shadow instead. */
+.swatch-light { box-shadow: 0 1px 3px rgb(0 0 0 / 0.28); }
+.swatch-multi { background: conic-gradient(#b5262c 0 25%, #ecc73f 0 50%, #4c8a4f 0 75%, #3f77c4 0); }
 
 /* ─── Profile picture: where a photo lands, and the circle it's framed in ─── */
 .photo-drop {
@@ -858,7 +927,7 @@ body { background: transparent !important; isolation: isolate; }
   .auth-headline { font-size: var(--h1-size); line-height: 0.95; }
   .auth-photos { display: block; }
   :root .auth-photos .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  :root .auth-photos .tiles > * { grid-column: span 1; padding: 0.75rem; }
+  :root .auth-photos .tiles > * { padding: 0.75rem; }
   .auth-page { align-items: center; padding: 2rem; }
 }
 .auth-page .cl-rootBox, .auth-page .cl-cardBox { width: 100%; max-width: 26rem; }
@@ -915,7 +984,8 @@ body { background: transparent !important; isolation: isolate; }
   border-color: color-mix(in srgb, var(--app-text) 32%, transparent) !important;
 }
 :root .cl-userProfile-root .cl-profileSection__danger .cl-profileSectionPrimaryButton { color: var(--destructive) !important; border-color: color-mix(in srgb, var(--destructive) 40%, transparent) !important; }
-:root .cl-formFieldInput:not([type="checkbox"]) { background-color: var(--app-elev) !important; border-radius: var(--control-radius) !important; min-height: 2.25rem; font-size: var(--text-sm); }
+:root .cl-formFieldInput:not([type="checkbox"]) { background-color: var(--app-elev) !important; border-radius: var(--field-radius) !important; min-height: 2.25rem; font-size: var(--text-sm); padding-inline: 0.875rem !important; }
+:root .cl-formFieldInput:not([type="checkbox"]):focus { box-shadow: inset 0 0 0 1px rgb(var(--tri-primary)) !important; outline: none !important; }
 :root .cl-badge { border-radius: 9999px !important; background: transparent !important; border: 1px dashed var(--app-border-strong) !important; box-shadow: none !important; color: var(--muted-foreground) !important; font-size: var(--text-2xs); }
 
 /* ─── Manage account: Clerk's modal as one of Sigrid's dialogs. A title, two tabs on top at every width,
@@ -1006,21 +1076,26 @@ body { background: transparent !important; isolation: isolate; }
 }
 
 /* ─── Controls: one compact spec ─────────────────────────────────────────────────
-   Fields and dropdowns: 36px tall (44px on touch), 15px text, 12px side padding,
-   10px corners, 16px muted icons. Buttons: 40px, 44px large, 32px small (the chip size).
-   Chips: 32px (40px on touch). Dropdown menus open 6px below their field,
-   same width, with 4px padding, 32px items and 6px item corners. */
+   Fields and dropdowns: 36px tall (44px on touch), 32px small, 15px text, 14px side padding,
+   fully rounded, 16px muted icons. Buttons: 40px, 44px large, 32px small (the chip size).
+   Chips: 32px (40px on touch). Dropdown lists open 6px below their field at exactly its width,
+   with 4px padding and fully rounded 32px rows whose text lines up with the field's. */
 :root :is([data-slot="select-trigger"][data-size="default"], [data-slot="input-group"], [data-slot="input"]) { height: 2.25rem !important; }
 @media (pointer: coarse) {
   :root :is([data-slot="select-trigger"][data-size="default"], [data-slot="input-group"], [data-slot="input"]) { height: 2.75rem !important; }
+  :root [data-slot="select-trigger"][data-size="sm"] { height: 2.5rem !important; }
 }
 :root :is([data-slot="input"], [data-slot="input-group-control"], [data-slot="select-trigger"], [data-slot="textarea"]) {
   font-size: var(--text-sm) !important;
 }
-:root [data-slot="input"], :root [data-slot="select-trigger"] { padding-inline: 0.75rem 0.625rem !important; }
-:root [data-slot="input-group"] [data-slot="input-group-addon"] { padding-left: 0.75rem; padding-right: 0; }
+:root [data-slot="select-trigger"][data-size="sm"] { height: 2rem !important; }
+:root [data-slot="input"] { padding-inline: 0.875rem !important; }
+:root [data-slot="select-trigger"] { padding-inline: 0.875rem 0.75rem !important; }
+:root [data-slot="select-trigger"] > svg { transition: rotate 0.15s ease; }
+:root [data-slot="select-trigger"][data-popup-open] > svg { rotate: 180deg; }
+:root [data-slot="input-group"] [data-slot="input-group-addon"] { padding-left: 0.875rem; padding-right: 0; }
 :root [data-slot="input-group"] [data-slot="input-group-addon"] svg { width: 1rem; height: 1rem; }
-:root [data-slot="input-group"] [data-slot="input-group-control"] { padding-left: 0.5rem; padding-right: 0.75rem; }
+:root [data-slot="input-group"] [data-slot="input-group-control"] { padding-left: 0.5rem; padding-right: 0.875rem; }
 :root [data-slot="select-trigger"] svg { width: 1rem; height: 1rem; color: var(--muted-foreground); }
 :root [data-slot="select-trigger"] [data-slot="select-value"] { font-weight: 400; }
 
@@ -1029,14 +1104,22 @@ body { background: transparent !important; isolation: isolate; }
 @media (pointer: coarse) { :root [data-slot="toggle-group-item"][data-shape="tile"]:not([data-size-picker]) { height: 2.5rem !important; } }
 
 /* Dropdown menus */
-:root [data-slot="select-content"] { padding: 0.25rem; border-radius: 12px; }
-:root [data-slot="select-item"] {
+:root :is([data-slot="select-content"], [data-slot="dropdown-menu-content"], [data-slot="dropdown-menu-sub-content"]) { padding: 0.25rem; border-radius: var(--field-radius); scrollbar-width: thin; }
+:root :is([data-slot="select-item"], [data-slot="dropdown-menu-item"], [data-slot="dropdown-menu-checkbox-item"], [data-slot="dropdown-menu-radio-item"], [data-slot="dropdown-menu-sub-trigger"]) {
   min-height: 2rem;
-  padding: 0.375rem 2rem 0.375rem 0.625rem;
-  border-radius: 6px;
+  padding-block: 0.375rem;
+  padding-left: 0.625rem;
+  border-radius: var(--menu-row-radius);
   font-size: var(--text-sm);
 }
-:root [data-slot="select-item"]:is(:focus, [data-highlighted]) { background: color-mix(in srgb, var(--app-elev) 80%, transparent); box-shadow: inset 0 1px 0 var(--sheen); color: var(--foreground); }
+:root [data-slot="select-item"] { padding-right: 2rem; }
+:root :is([data-slot="dropdown-menu-item"], [data-slot="dropdown-menu-sub-trigger"]) { padding-right: 0.625rem; }
+/* The option you're on, in every dropdown, by mouse or keyboard: a rounded pill in the page's colour */
+:root :is([data-slot="select-item"], [data-slot="dropdown-menu-item"], [data-slot="dropdown-menu-checkbox-item"], [data-slot="dropdown-menu-radio-item"], [data-slot="dropdown-menu-sub-trigger"]):is(:focus, [data-highlighted]):not([data-variant="destructive"]) { background: var(--menu-row-hover) !important; color: var(--foreground); }
+:root [data-variant="destructive"]:is(:focus, [data-highlighted]) { background: color-mix(in srgb, var(--destructive) 10%, transparent) !important; color: var(--destructive); }
+/* The same pill for lists of choices built by hand inside a popover */
+.menu-option { border-radius: var(--menu-row-radius); transition: background-color 0.1s ease; }
+.menu-option:hover { background-color: var(--menu-row-hover); }
 :root [data-slot="select-item"][data-selected] { font-weight: 500; }
 :root [data-slot="select-label"] {
   padding: 0.625rem 0.625rem 0.25rem;
@@ -1084,7 +1167,7 @@ body { background: transparent !important; isolation: isolate; }
 @utility pb-tabbar { padding-bottom: calc(4.5rem + max(0.75rem, env(safe-area-inset-bottom))); }
 @utility pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 /* The wordmark: the needle as its S, standing on the same line as the letters. Sized from the parent font size */
-.wordmark-needle { display: inline-block; height: 0.98em; margin-right: 0.05em; vertical-align: -0.04em; }
+.wordmark-needle { display: inline-block; height: 1.06em; margin-right: 0.06em; vertical-align: -0.1em; }
 .wordmark { position: relative; display: inline-block; font-family: var(--font-heading); font-size: 1.6em; line-height: 1; letter-spacing: -0.02em; }
 /* Photo hover: ease the image up a little */
 @utility hover-zoom { transition: transform 0.5s var(--ease-out-soft); }

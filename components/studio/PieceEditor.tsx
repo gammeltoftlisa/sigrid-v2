@@ -259,7 +259,7 @@ function ShapeMenu({ blank, piece, onPick }: { blank: boolean; piece: StudioPiec
               onPick(shape)
               setOpen(false)
             }}
-            className="glass-inset-hover flex items-center gap-3 rounded-(--control-radius) px-2 py-1.5 text-left text-sm"
+            className="menu-option flex items-center gap-3 px-2.5 py-1.5 text-left text-sm"
           >
             <span aria-hidden className="block h-7 w-6 shrink-0">
               <PieceShape piece={applyShape(piece, shape, ['M'])} sizes={['M']} active="M" bare />
@@ -310,7 +310,7 @@ function CurveField({ label, value, onChange }: { label: string; value: number; 
           onChange(n !== 0 ? n : null)
         }}
         data-slot="input"
-        className="h-8 w-16 rounded-(--control-radius) px-2 text-sm tabular-nums"
+        className="h-8 w-16 text-sm tabular-nums"
       />
       cm
       <span className="text-muted-foreground" title="A plus number curves the side out, a minus number curves it in">+ out · − in</span>
@@ -368,7 +368,7 @@ function QuietPick<T extends string>({
             type="button"
             aria-pressed={o.value === value}
             onClick={() => onChange(o.value)}
-            className={cn('glass-inset-hover flex items-center gap-2 rounded-(--control-radius) px-3 py-2 text-left text-sm', o.value === value && 'step-row-active font-medium')}
+            className={cn('menu-option flex items-center gap-2 px-3 py-2 text-left text-sm', o.value === value && 'step-row-active font-medium')}
           >
             <Glyph d={o.glyph} />
             {o.text}

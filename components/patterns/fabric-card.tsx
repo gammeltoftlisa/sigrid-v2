@@ -25,6 +25,8 @@ export function FabricCard({
   inBag,
   onToggleBag,
   eager,
+  priceUnit,
+  children,
   className,
 }: {
   listing: FabricListing
@@ -36,6 +38,10 @@ export function FabricCard({
   onToggleBag: () => void
   /** Load the photo right away: for the first row, which is usually the largest paint */
   eager?: boolean
+  /** "per metre" and the like, for supplies the shop sells by length */
+  priceUnit?: string
+  /** A choice under the price, such as a zip's length */
+  children?: React.ReactNode
   className?: string
 }) {
   const tag = conditionTag[listing.condition]
@@ -88,7 +94,10 @@ export function FabricCard({
       <CardContent className="flex flex-1 flex-col">
         <div className="flex flex-col items-start gap-2 text-sm tabular-nums">
           {listing.kind === 'notion' ? (
-            <span>{formatMoney(listing.unitPrice, listing.currency)}</span>
+            <span>
+              {formatMoney(listing.unitPrice, listing.currency)}
+              {priceUnit && <span className="text-muted-foreground"> {priceUnit}</span>}
+            </span>
           ) : perMeter !== null && meters ? (
             <span>
               {formatMoney(units * listing.unitPrice, listing.currency)}
@@ -107,6 +116,7 @@ export function FabricCard({
           )}
           {meters && covers === false && <StatusBadge status="warning">Too short for {size}</StatusBadge>}
         </div>
+        {children}
 
       </CardContent>
     </Card>

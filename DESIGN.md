@@ -6,7 +6,7 @@ The visual reference is the Storybook in the `sewing-app` repo (`npm run storybo
 Where things live here: tokens and the brand layer in `app/globals.css`, shadcn components in `components/ui/`, patterns in `components/patterns/`, imagery in `components/garment/`.
 The sewing guide (`components/sewing/`, `components/legacy/`) is older code; don't use `components/legacy` in new code.
 
-> **Logo: a needle bent into an S.** `NeedleMark` on its own in the rail and browser icon, `Wordmark` (the needle as the S of Sigrid) elsewhere. It takes the text colour, so it works in both themes.
+> **Logo: a polished metal needle bent into an S.** It's a photo with a transparent background and a see-through eye (`public/brand/needle.png`), so it never takes the text colour. `NeedleMark` on its own in the rail, `Wordmark` (the needle as the S of Sigrid) elsewhere. At text size and in the browser icon it uses `needle-small.png`, a sturdier cut, because the real needle's line nearly vanishes when small.
 >
 > **Brand: liquid glass, warm editorial atelier.** Built on the `liquid-glass-frontend` skill (`.claude/skills/liquid-glass-frontend`, read its `references/` before UI work).
 > Real Apple-style frosted glass over a calm page: a cutting mat as the floor, seen from low down looking towards the top right, on a stipple of tiny dots (`Atmosphere`), in black, white and beige. A characterful serif (Fraunces) does the talking, with italic accents and small mono kickers.
@@ -91,7 +91,8 @@ Glass is **one material, whatever its size**: white and see-through, a white tin
 | Token | Value | Use |
 | --- | --- | --- |
 | `rounded-(--radius)` | 22px | Panels, cards, sheets |
-| `rounded-(--control-radius)` | 14px | Fields, white rows, `Inset`, size tiles |
+| `rounded-(--field-radius)` | 22px | Fields and dropdowns: a full pill when one line tall, the same curve when taller |
+| `rounded-(--control-radius)` | 14px | White rows, `Inset`, size tiles |
 | `rounded-full` | | Every button (pills), badges, avatars, chips on photos |
 | `rounded-(--image-radius)` | 16px | Photos |
 | `rounded-pane` / `rounded-pane-lg` / `rounded-pane-inner` | 22 / 28 / 24px | The floating rail, tab bar, action bar and their inner pills |
@@ -128,7 +129,7 @@ Put the line that carries the feeling in `<em className="display-italic">` (ital
 | 8px (`gap-2`) | Related items: rows in a panel, chips, tiles in a stat grid |
 | 12px (`gap-3`) | Image → text, label → control |
 | 16px (`p-4`, `gap-4`) | Inside a component: panel padding, section title → content |
-| 24px (`gap-6`) | Between panels in a column |
+| 12px (`gap-3`, `--grid-gutter`) | Between containers on the background, in every direction |
 | 32px | Page title → content (built into `PageHeader`) |
 | 40 / 48px | Between page sections, phones / from `md` (built into `PageContainer`) |
 
@@ -138,14 +139,16 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 
 | Control | Height | Notes |
 | --- | --- | --- |
-| Fields and dropdowns | 36px (44px on touch) | 15px text, 12px side padding, 14px corners, 16px muted icons |
+| Fields and dropdowns | 36px (44px on touch), 32px small (40px on touch) | 15px text, 14px side padding, fully rounded, 16px muted icons |
 | Button | 40px | `size="lg"` (44px) for the one main action |
 | Small button and chips | 32px (40px on touch) | `size="sm"`; filter chips, removable filters, the bag |
 | Icon button | 36–44px | `size="icon-lg"` in bars, always with `aria-label` |
 
 - Chips and size tiles are frosted, ink when chosen.
 - Labels: 13px medium, 8px above the field. Every field has a visible label; placeholders are examples.
-- While you type, a field turns solid with a ink edge and a soft ink ring.
+- Fields have three looks: frosted at rest, whiter with a darker stitch on hover, solid white with a crisp 1px ink edge while typing or open. **Never a ring around a field.** A problem is a 1px solid red edge plus text under the field.
+- A dropdown is full width unless a row of controls needs a set size (`w-40`), and its open list is always exactly as wide as the field, including popover dropdowns (`w-(--anchor-width)`). Long options wrap and are never cut off. Lists scroll after about 8 rows, stopping mid-row so you can see there is more.
+- Inside a list: 4px padding, 32px rows, and the row you're on is a fully rounded pill in the page's beige (`--menu-row-hover`), by mouse or keyboard. The chosen row has a check and medium text. The list's text lines up with the field's. Hand-built choices in a popover use `.menu-option` for the same pill.
 - The slider is a 2px ink track with small glass handles; it can always be typed into as well.
 - Touch targets are at least 44×44px on phones.
 
@@ -156,8 +159,8 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 - **Navigation**: from `md`, a floating glass icon rail (`AppSidebar`); on phones, a floating glass tab bar (`AppTabBar`). Pages leave room with `pb-tabbar`. The phone's main action goes in an `ActionBar` above the tab bar.
 - **12-column grid**: one grid, one gutter (16px on phones, 24px from `md`). Never one-off `grid-cols-[…]`.
   - `grid-12` is the page grid. `col-side` (4 columns on `lg`, 3 from `xl`, sticky 8px from the top like the rail) and `col-main` (the rest) make the two-column workspace.
-  - `tiles` is the product grid: 2 per row on phones, 3 on tablets, 4 on laptops; 5 when full width from `xl`, 4 beside a side panel. Use `tiles-compact` for tighter rows (project cards).
-  - `tiles-wide` is for bigger cards: 1, then 2, then 3 per row.
+  - `tiles` is every grid of cards with images, and there is one rule for how many fit a row. The count follows the width of the container, never the screen or the page: **under 720px 2, 720–959px 3, 960–1199px 4, 1200px and up 5.** Pages never set their own count. Cards that don't fit go to the next row, every row is the same height, and a short last row leaves its spots empty.
+  - `tiles-wide` is for bigger cards without images, such as plans: 1, then 2, then 3 per row.
 - **Top line**: `PageHeader` (or `TopBar`) shows back, breadcrumbs and quick actions as plain text on the page, no container.
 - **Side sheets**: `PanelSheet` (full width on phones, 448px from `sm`).
 - **Show only what's needed.** Fewer panels, fewer words, one main action.
@@ -174,25 +177,31 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 | Choose one of 6+ | `Select` |
 | A setting / an agreement | `Switch` / `Checkbox` |
 | Filter by category | `CategoryTabs` |
-| Filter the fabric store | `FabricFilterGroups` + `ActiveFilters` |
-| Buying fabric for a garment | `GarmentThumb` before the garment field, metres in the panel meta, `FabricChoices` chips (its recommended fabrics, all or one) |
+| The way into the store | `ShopHome`: **never filters on the way in.** Under the bar and the category bubbles, each category is its own row: its name, a "Show all" button with the count, and up to 12 products in a `ProductGrid` that scrolls sideways (`.tiles-row`, the same cards per row as `tiles`), ending in another "Show all". You reach the filter panel by going into a category or searching. |
+| Chosen filters | `FilterTags`, above the products on the right: a removable tag per chosen filter (colours with their dot), plus "Clear all" when there are two or more. Colour dots have no stroke; white and cream get a soft shadow so they still show on white. |
+| The store, inside a category or a search | `ShopBrowse` in a `ShopLayout`: the page fits the screen and the products scroll inside their container, never the page. No "Shop" title. A bar at the top holds search and the bag, and is the only thing that always stays, with the filter panel staying in view beside the products. Under the bar, category bubbles with icons (`category-icons.ts`) that drill down (the one you're in softly tinted, never a black fill), with breadcrumbs above them as the way back up, and scroll away with the products. They stay on one line in `CategoryRow`, fading out softly at an edge where there's more: swipe, or use the arrows floating over the ends. The bar is fully rounded and floats over the products with nothing filled behind it (`lib/shop/taxonomy.ts`), and a side panel on the page grid (`col-side`: 4 of 12 columns, 3 from `xl`) where every filter is a dropdown (`FilterDropdown`, `PriceDropdown`), which come from the head category. Categories are never in a dropdown. |
+| What a pattern needs | A row in the garment page's Overview opens `WhatYouNeedDialog`: every thing with its picture from `supplyIcon()` |
+| What the store carries | `curate()` in `lib/shop/curate.ts`: a quota per subcategory, one of each kind of thing, about 150 in all |
+| Buying for a garment | `PatternFabric` in a `ShopLayout`: `GarmentThumb` and the garment's name, then dropdowns for what you need, size, recommended fabric and filters |
 | Group things | `Panel` (solid; `glass` when it holds controls), rows in `PanelRow`, plain white blocks in `Inset` |
 | Label–value details | `DetailList` |
 | Any products, on a page or in a section | One `ProductGrid` around a `tiles` grid, with a stroke between products |
 | One large product photo | `ProductFrame` around `GarmentImage` |
 | A garment in a grid | `GarmentCard` in a `ProductGrid` |
-| A fabric in a grid | `FabricCard` in a `ProductGrid` |
+| A product in the store | `ShopCard` (`FabricCard` plus its choice of size or colour) in a `ProductGrid` |
+| A fabric for a pattern | `FabricCard` in a `ProductGrid` |
 | Featured product at the start of a grid | `GarmentCard lead description={…}` |
 | Light / dark / system | `useTheme()` from `next-themes`; the switch lives in Profile |
-| The project to pick up on Home | `HomeDashboard` |
+| What's in progress on Home | `HomeDashboard`: one project fills the container, several become equal `ProjectCard`s |
 | The user's picture and setting it | `UserAvatar`, `ProfilePhoto` (drop, paste or choose, then frame) |
-| Started projects | `ProjectGrid` (cards: `ProjectCard`, data: `projectCardData()`) |
+| Started projects | `ProjectGrid` (cards: `ProjectCard`, data: `projectCardData()`): `tiles` decides how many fit a row. Only the photo, name, next step, progress and one button |
 | A pattern maker | `MakerCard`; their page starts with `ProfileHeader` |
 | A label on a photo | `PhotoLabel` |
 | A small white label | `Pill` |
 | Pick a size | `SizePicker`, or `SizeSheet` for a project |
-| This week and totals on Home | `SewingDashboard` |
-| A settings page | `SettingsList` > `SettingsGroup` > `SettingsRow` |
+| This week and totals on Home | `SewingDashboard`: kept plain. The day's letter is ringed when you sewed that day, and each total sits in its own small container, one under the other |
+| A settings page | One `SettingsList` per kind of thing (`solid` when it only reads or links onward) > `SettingsGroup` > `SettingsRow`. Profile: About you, Selling (makers only), Settings and Your data, About Sigrid. Containers rather than tabs while a page fits in a short scroll |
+| What kind of user someone is | `useAccountType()`: sewer or pattern maker, on the Clerk account. Decides what shows, never what someone may do or pay for |
 | Side panel | `PanelSheet` |
 | The fabric bag | `FabricBagButton` + `FabricBagSheet` |
 | State (saved, failed, needs a look, info) | `StatusMessage`; `StatusBadge` for short labels |

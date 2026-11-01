@@ -19,7 +19,7 @@ import { easiestPatterns } from '@/lib/data'
 import { useBag } from '@/lib/fabric/bag'
 import { listProjects } from '@/lib/project-summary'
 
-const HEADER = 'pt-8 md:pt-12'
+const HEADER = 'pt-3'
 
 /** Someone with nothing on the table yet: one way forward, and a few easy patterns to make it concrete. */
 function FirstVisit() {
@@ -86,9 +86,9 @@ export default function HomePage() {
         <>
           <PageHeader title="Your sewing" className={HEADER} />
           <div className="grid-12">
-            <div className={cn('flex flex-col gap-6', hasSide && 'col-main')}>
+            <div className={cn('flex flex-col gap-3', hasSide && 'col-main')}>
               {active.length > 0 ? (
-                <HomeDashboard projects={active} activity={activity} />
+                <HomeDashboard projects={active} />
               ) : (
                 <Empty className="border">
                   <EmptyHeader>
@@ -102,9 +102,11 @@ export default function HomePage() {
                   </EmptyContent>
                 </Empty>
               )}
+              {/* In this column so its cards are the same size as the ones in progress */}
+              {finished.length > 0 && <ProjectGrid label="Finished" projects={finished} count />}
             </div>
             {hasSide && (
-              <div className="col-side flex flex-col gap-6">
+              <div className="col-side flex flex-col gap-3">
                 {/* Numbers with nothing in them only discourage, so they wait for the first finished step */}
                 {activity.length > 0 && <SewingDashboard activity={activity} projects={projects} />}
                 {bag.length > 0 && (
@@ -119,7 +121,6 @@ export default function HomePage() {
               </div>
             )}
           </div>
-          {finished.length > 0 && <ProjectGrid label="Finished" projects={finished} count />}
         </>
       )}
     </PageContainer>
