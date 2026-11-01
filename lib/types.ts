@@ -95,6 +95,8 @@ export interface GuidePiece {
   outline?: PieceOutline
   /** Cut from interfacing instead of the main fabric */
   material?: 'fabric' | 'interfacing'
+  /** How many the pattern asks for */
+  quantity?: number
   grainLine?: 'vertical' | 'horizontal'
   seamAllowance?: number
 }

@@ -17,7 +17,7 @@ export function CreatorAvatar({
   if (size === 'xl') {
     return (
       <Avatar className={cn('size-20 md:size-24', className)}>
-        <AvatarFallback className="bg-card text-3xl font-medium md:text-4xl">{creator.name[0]}</AvatarFallback>
+        <AvatarFallback className="title-xl bg-card">{creator.name[0]}</AvatarFallback>
       </Avatar>
     )
   }

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 
-import { cleanSearch, getDepartment } from '@/lib/fabric/catalog'
+import { cleanSearch, getDepartment, supplyFor } from '@/lib/fabric/catalog'
 import { getFabricNeed } from '@/lib/fabric/needs'
 import { cacheControlFor, searchAllSources } from '@/lib/fabric/sources'
 import type { FabricListing, FabricSearchResponse, SourceStatus } from '@/lib/fabric/types'
@@ -22,7 +22,7 @@ const paramsSchema = z.object({
 })
 
 /**
- * Searches every fabric source.
+ * Searches every shop, for fabric or supplies.
  *   ?garment=lace-waist-skirt                      every recommended fabric for a garment, with `matches`
  *   ?garment=lace-waist-skirt&choice=viscose  just one of them
  *   ?department=linen                              a store department
@@ -67,9 +67,11 @@ function search(params: z.infer<typeof paramsSchema>): Promise<FabricSearchRespo
     return searchRecommended(picked ? [picked] : need.choices)
   }
   const department = getDepartment(params.department)
-  if (department) return searchAllSources({ q: department.query, match: department.match, limit: 8, kind: department.kind })
+  if (department) return searchAllSources({ q: department.query, match: department.match, limit: 8, kind: department.kind, exclude: department.exclude })
   const q = cleanSearch(params.q)
   if (q.length >= 2) {
+    const supply = supplyFor(q)
+    if (supply) return searchAllSources({ q, match: supply.match, limit: 8, kind: 'notion', exclude: supply.exclude })
     const words = q.toLowerCase().split(' ').filter((w) => w.length > 2)
     return searchAllSources({ q, match: words.length ? words : [q.toLowerCase()], limit: 8, kind: 'fabric' })
   }

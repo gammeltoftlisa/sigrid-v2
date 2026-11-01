@@ -2,39 +2,28 @@
 
 import { useMemo } from 'react'
 import { IconYarn, IconScissors } from '@tabler/icons-react'
-import { buildScene } from '@/lib/guide-scene'
-import type { Assembly } from '@/lib/assembly'
-import type { GuidePiece, StepAction, StepAnnotation, FabricSide, UserMeasurements } from '@/lib/types'
+import { buildStepScene } from '@/lib/guide-animation/scenes'
+import type { GuidePiece, SewingStep2D, UserMeasurements } from '@/lib/types'
 import GuideScene from './GuideScene'
 
 interface Props {
-  piece: GuidePiece | null
-  action: StepAction
-  annotation?: StepAnnotation
-  fabricSide?: FabricSide
+  /** All the guide's steps: a scene shows what earlier steps left on the cloth */
+  steps: SewingStep2D[]
+  index: number
+  pieces: GuidePiece[]
   measurements: UserMeasurements
-  /** Shown when the step has no pattern piece to draw */
-  title?: string
-  /**
-   * For steps about pieces that are (being) sewn together: the set already joined and the pieces
-   * joining it now, by id ("<id>#2" is a piece's second cut).
-   */
-  assembly?: Assembly | null
-  /** Every piece of the pattern, to look the assembly's pieces up in */
-  pieces?: GuidePiece[]
 }
 
 /**
- * The step's picture. A step with pattern pieces plays out like an instruction video
- * (`GuideScene`): what's on the table at this point, and the step being done to it. A step
- * without one (getting ready) shows an illustration.
+ * The step's picture. The rules in lib/guide-animation/rules.ts decide what it shows, from the step
+ * alone. A step with nothing to show (getting ready) has an illustration.
  */
-export default function PatternCanvas({ piece, action, annotation, fabricSide, measurements, title, assembly, pieces }: Props) {
-  const all = pieces ?? (piece ? [piece] : [])
-  // The guide rebuilds the assembly and pieces on every render: compare them by content
-  const key = JSON.stringify([action, annotation, fabricSide, piece?.id, title, assembly, all.map((p) => p.id), measurements])
+export default function PatternCanvas({ steps, index, pieces, measurements }: Props) {
+  const step = steps[index]
+  // The guide rebuilds these on every render: compare them by content
+  const key = JSON.stringify([steps, index, pieces.map((p) => [p.id, p.outline, p.quantity]), measurements])
   const scene = useMemo(
-    () => (piece || assembly ? buildScene({ action, annotation, fabricSide, pieceId: piece?.id, title: title ?? '' }, assembly ?? null, all, measurements) : null),
+    () => buildStepScene(steps, index, pieces, measurements),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [key],
   )
@@ -42,10 +31,10 @@ export default function PatternCanvas({ piece, action, annotation, fabricSide, m
   if (!scene) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-muted rounded-3xl">
-        {action === 'prepare' ? <IconYarn size={56} className="text-muted-foreground" stroke={1.5} /> : <IconScissors size={56} className="text-muted-foreground" stroke={1.5} />}
-        <p className="text-[0.9375rem] text-muted-foreground font-medium text-center px-6">{title ?? 'Get ready'}</p>
+        {step?.action === 'prepare' ? <IconYarn size={56} className="text-muted-foreground" stroke={1.5} /> : <IconScissors size={56} className="text-muted-foreground" stroke={1.5} />}
+        <p className="text-sm text-muted-foreground font-medium text-center px-6">{step?.title ?? 'Get ready'}</p>
       </div>
     )
   }
-  return <GuideScene scene={scene} label={title ? `${title}, shown on the pattern pieces` : 'The step, shown on the pattern pieces'} />
+  return <GuideScene scene={scene} label={step?.title ? `${step.title}, shown on the pattern pieces` : 'The step, shown on the pattern pieces'} />
 }

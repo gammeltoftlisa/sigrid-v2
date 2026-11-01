@@ -4,42 +4,53 @@ import Link from 'next/link'
 import { useClerk, useUser } from '@clerk/nextjs'
 
 import { Button } from '@/components/ui/button'
-import { Panel, PanelRow } from '@/components/patterns/panel'
+import { SettingsGroup, SettingsRow } from '@/components/patterns/settings'
 import { usePurchases } from '@/hooks/use-purchases'
 import { getCatalogItem } from '@/lib/data'
 import { paymentsEnabled } from '@/lib/payments'
 import { flushSewing } from '@/lib/sewing-sync'
 
-/** Log in, or manage the account. The account screens themselves are Clerk's. */
-export function AccountPanel() {
+/** Who this is, for the top of Profile: the name and email. */
+export function AccountIdentity() {
   const { isLoaded, isSignedIn, user } = useUser()
+  // The proxy only lets logged-in people here, so this is just the moment before Clerk has loaded
+  if (!isLoaded || !isSignedIn) return <p className="text-sm text-muted-foreground">Checking…</p>
+  const email = user.primaryEmailAddress?.emailAddress
+  return (
+    <div className="flex w-full min-w-0 flex-col gap-1">
+      <p className="title-md truncate">{user.fullName || 'Logged in'}</p>
+      <p className="truncate text-sm text-muted-foreground" title={email}>{email}</p>
+    </div>
+  )
+}
+
+/** Manage the account and log out. The account screens themselves are Clerk's (see lib/clerk-appearance). */
+export function AccountSettings() {
+  const { isLoaded, isSignedIn } = useUser()
   const { openUserProfile, signOut } = useClerk()
   const purchases = usePurchases()
 
-  if (!isLoaded) return <Panel glass label="Account"><p className="px-1 text-sm text-muted-foreground">Checking…</p></Panel>
-
-  if (!isSignedIn) {
-    return (
-      <Panel glass label="Account">
-        <p className="px-1 pb-2 text-sm text-muted-foreground">Log in to keep your projects and progress on all your devices. Browsing needs no account.</p>
-        <div className="flex flex-wrap gap-2">
-          <Button nativeButton={false} render={<Link href="/sign-in?redirect_url=/profile" />}>Log in</Button>
-          <Button variant="outline" nativeButton={false} render={<Link href="/sign-up?redirect_url=/profile" />}>Create account</Button>
-        </div>
-      </Panel>
-    )
-  }
+  if (!isLoaded || !isSignedIn) return null
 
   return (
-    <Panel glass label="Account">
-      <p className="truncate px-1 pb-2 text-sm">{user.primaryEmailAddress?.emailAddress}</p>
-      {paymentsEnabled && purchases.garmentIds.map((id) => (
-        <PanelRow key={id} href={`/garment/${id}`} title={getCatalogItem(id)?.name ?? id} detail="Your pattern" />
-      ))}
-      <div className="flex flex-wrap gap-2">
+    <SettingsGroup label="Account">
+      <SettingsRow title="Login and security" description="Your email, password and devices.">
         <Button variant="outline" onClick={() => openUserProfile()}>Manage account</Button>
-        <Button variant="ghost" onClick={async () => { await flushSewing(); await signOut({ redirectUrl: '/profile' }) }}>Log out</Button>
-      </div>
-    </Panel>
+      </SettingsRow>
+      {paymentsEnabled && purchases.garmentIds.length > 0 && (
+        <SettingsRow
+          title="Your patterns"
+          description={purchases.garmentIds.map((id, i) => (
+            <span key={id}>
+              {i > 0 && ', '}
+              <Link href={`/garment/${id}`} className="underline underline-offset-4">{getCatalogItem(id)?.name ?? id}</Link>
+            </span>
+          ))}
+        />
+      )}
+      <SettingsRow title="Log out" description="Your sewing stays on your account.">
+        <Button variant="outline" onClick={async () => { await flushSewing(); await signOut({ redirectUrl: '/sign-in' }) }}>Log out</Button>
+      </SettingsRow>
+    </SettingsGroup>
   )
 }

@@ -2,18 +2,21 @@
 
 import Link from 'next/link'
 import { IconNeedleThread } from '@tabler/icons-react'
+import { cn } from 'cn'
 
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { GarmentCard } from '@/components/patterns/garment-card'
 import { HomeDashboard } from '@/components/patterns/home-dashboard'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
+import { Panel, PanelRow } from '@/components/patterns/panel'
 import { ProductGrid } from '@/components/patterns/product-grid'
 import { ProjectGrid } from '@/components/patterns/project-grid'
 import { SewingDashboard } from '@/components/patterns/sewing-dashboard'
 import { useMounted } from '@/hooks/use-mounted'
 import { loadActivity } from '@/lib/activity'
 import { easiestPatterns } from '@/lib/data'
+import { useBag } from '@/lib/fabric/bag'
 import { listProjects } from '@/lib/project-summary'
 
 const HEADER = 'pt-8 md:pt-12'
@@ -59,6 +62,7 @@ function FirstVisit() {
 export default function HomePage() {
   // Projects are saved in this browser, so they're only known after mount
   const mounted = useMounted()
+  const bag = useBag()
 
   if (!mounted) {
     return (
@@ -72,6 +76,7 @@ export default function HomePage() {
   const activity = loadActivity()
   const active = projects.filter((p) => !p.finished)
   const finished = projects.filter((p) => p.finished)
+  const hasSide = activity.length > 0 || bag.length > 0
 
   return (
     <PageContainer>
@@ -80,23 +85,40 @@ export default function HomePage() {
       ) : (
         <>
           <PageHeader title="Your sewing" className={HEADER} />
-          {active.length > 0 ? (
-            <HomeDashboard projects={active} />
-          ) : (
-            <Empty className="border">
-              <EmptyHeader>
-                <EmptyTitle>Everything’s finished</EmptyTitle>
-                <EmptyDescription>Well done. Ready for the next one?</EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <Button size="lg" nativeButton={false} render={<Link href="/explore" />}>
-                  Find your next pattern
-                </Button>
-              </EmptyContent>
-            </Empty>
-          )}
-          {/* Charts with nothing in them only discourage, so they wait for the first finished step */}
-          {activity.length > 0 && <SewingDashboard activity={activity} projects={projects} />}
+          <div className="grid-12">
+            <div className={cn('flex flex-col gap-6', hasSide && 'col-main')}>
+              {active.length > 0 ? (
+                <HomeDashboard projects={active} activity={activity} />
+              ) : (
+                <Empty className="border">
+                  <EmptyHeader>
+                    <EmptyTitle>Everything’s finished</EmptyTitle>
+                    <EmptyDescription>Well done. Ready for the next one?</EmptyDescription>
+                  </EmptyHeader>
+                  <EmptyContent>
+                    <Button size="lg" nativeButton={false} render={<Link href="/explore" />}>
+                      Find your next pattern
+                    </Button>
+                  </EmptyContent>
+                </Empty>
+              )}
+            </div>
+            {hasSide && (
+              <div className="col-side flex flex-col gap-6">
+                {/* Numbers with nothing in them only discourage, so they wait for the first finished step */}
+                {activity.length > 0 && <SewingDashboard activity={activity} projects={projects} />}
+                {bag.length > 0 && (
+                  <Panel label="Fabric bag">
+                    <PanelRow
+                      href="/fabric"
+                      title={`${bag.length} ${bag.length === 1 ? 'fabric' : 'fabrics'} to buy`}
+                      detail="Waiting for you to check out at the shop"
+                    />
+                  </Panel>
+                )}
+              </div>
+            )}
+          </div>
           {finished.length > 0 && <ProjectGrid label="Finished" projects={finished} count />}
         </>
       )}

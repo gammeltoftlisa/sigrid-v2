@@ -10,7 +10,7 @@ const clerkHost = clerkKey ? Buffer.from(clerkKey, "base64").toString().replace(
 const clerk = clerkHost ? `https://${clerkHost}` : "";
 // Clerk's bot checks on login and sign-up
 const turnstile = "https://challenges.cloudflare.com";
-const clerkProtect = "https://cdn.protect.clerk.com";
+const clerkProtect = "https://cdn.protect.clerk.com https://specter.protect.clerk.com";
 // It tests the connection on several ports of a per-site address
 const clerkProtectProbe = "https://*.protect.clerk.com:*";
 

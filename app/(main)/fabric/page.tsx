@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { IconAdjustmentsHorizontal, IconSearch, IconX, IconZoomQuestion } from '@tabler/icons-react'
+import { IconAdjustmentsHorizontal, IconSearch, IconShirt, IconX, IconZoomQuestion } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -18,17 +18,19 @@ import { KeepHeight } from '@/components/patterns/keep-height'
 import { ActiveFilters, FabricFilterGroups, FabricFilterPills } from '@/components/patterns/fabric-filters'
 import { FabricChoices, GarmentThumb } from '@/components/patterns/fabric-choices'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
-import { Panel } from '@/components/patterns/panel'
+import { Panel, PanelRow, StepDot } from '@/components/patterns/panel'
+import { SupplyRows } from '@/components/patterns/supply-rows'
 import { ProductGrid } from '@/components/patterns/product-grid'
 import { StatusMessage } from '@/components/patterns/status-message'
 import { useMounted } from '@/hooks/use-mounted'
 import { getGarmentById } from '@/lib/data'
 import { isPublishedId } from '@/lib/published'
 import { addToBag, removeFromBag, useBag } from '@/lib/fabric/bag'
-import { cleanSearch, departments, getDepartment } from '@/lib/fabric/catalog'
+import { cleanSearch, departmentGroups, departments, getDepartment, supplyFor } from '@/lib/fabric/catalog'
 import { activeFilterCount, noFilters, passes, type FabricFilters } from '@/lib/fabric/filters'
 import { marketplaces } from '@/lib/fabric/marketplaces'
 import { getFabricNeed, metersFor } from '@/lib/fabric/needs'
+import { findSupply, suppliesFor } from '@/lib/fabric/supplies'
 import { approxEur, costFor, coversLength, formatMeters, pricePerMeter, unitsFor } from '@/lib/fabric/pricing'
 import type { FabricListing, FabricSearchResponse } from '@/lib/fabric/types'
 import { loadProject } from '@/lib/projects'
@@ -44,6 +46,8 @@ type Load = { state: 'loading' } | Result
 interface Params {
   garment?: string
   choice?: string
+  /** One of the pattern's other supplies, instead of its fabric */
+  supply?: string
   department?: string
   q?: string
 }
@@ -65,7 +69,8 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   const garment = params.garment && (!isPublishedId(params.garment) || mounted) ? getGarmentById(params.garment) : null
   const need = garment ? getFabricNeed(garment.id) : null
   // A recommended fabric to narrow to, or null for all of them
-  const choice = need?.choices.find((c) => c.id === params.choice) ?? null
+  const supply = garment ? findSupply(garment.id, params.supply) : null
+  const choice = supply ? null : (need?.choices.find((c) => c.id === params.choice) ?? null)
   const department = garment ? undefined : getDepartment(params.department)
   const search = garment || department ? '' : cleanSearch(params.q)
 
@@ -82,11 +87,15 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
         : sizes.includes('M')
           ? 'M'
           : sizes[0]
-  const meters = need && size ? metersFor(need, size) : undefined
+  const fabricMeters = need && size ? metersFor(need, size) : undefined
+  // A supply is bought by the item, whatever the size
+  const meters = supply ? undefined : fabricMeters
 
   // What to ask the API for
   // A garment asks for all its recommended fabrics at once; picking one filters on the page
-  const apiQuery = garment
+  const apiQuery = supply?.search
+    ? `q=${encodeURIComponent(supply.search)}`
+    : garment
     ? garment.published
       ? `q=${encodeURIComponent(need!.choices[0].query)}`
       : `garment=${garment.id}`
@@ -134,7 +143,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   // A new category or search is usually a different fibre, so the fibre filter starts over
   const clearFibres = () => setFilters((f) => ({ ...f, fibres: [] }))
 
-  const isNotions = department?.kind === 'notion'
+  const isNotions = !!supply || department?.kind === 'notion' || (!!search && !!supplyFor(search))
   const all = load.state === 'done' ? load.data.listings : []
   const activeFilters = isNotions ? { ...filters, conditions: [], fibres: [], price: null } : filters
   const matches = load.state === 'done' ? load.data.matches : undefined
@@ -204,19 +213,19 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   return (
     <PageContainer>
       <PageHeader
-        breadcrumbs={garment ? [{ label: garment.name, href: `/garment/${garment.id}` }, { label: 'Fabric' }] : undefined}
+        breadcrumbs={garment ? [{ label: garment.name, href: `/garment/${garment.id}` }, { label: supply ? supply.name : 'Fabric' }] : undefined}
         barActions={<FabricBagButton count={bag.length} onClick={() => setBagOpen(true)} />}
-        title="Find fabric"
-        description="From independent shops and secondhand sellers. You buy from the shop; some shops may pay Sigrid a commission, which never changes your price."
+        title={supply ? supply.name : garment ? 'Find fabric' : 'Shop'}
+        description="Fabric and everything else you sew with, from independent shops and secondhand sellers. You buy from the shop; some shops may pay Sigrid a commission, which never changes your price."
       />
 
       <div className="grid-12">
         <div className="col-side flex flex-col gap-6">
-          {garment && need && size && meters ? (
+          {garment && need && size && fabricMeters ? (
             <Panel
               glass
               label="For this pattern"
-              meta={<span aria-label={`You need ${formatMeters(meters)}`}>Need {formatMeters(meters)}</span>}
+              meta={<span aria-label={`You need ${formatMeters(fabricMeters)}`}>Need {formatMeters(fabricMeters)}</span>}
               action={clearAction}
             >
               {/* You came from this pattern, and everything on the right is what it needs */}
@@ -224,7 +233,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
                 <GarmentThumb id={garment.id} name={garment.name} photoSrc={garment.photo} />
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <Link href={`/garment/${garment.id}`} className="title-sm underline-offset-4 hover:underline">{garment.name}</Link>
-                  <p className="text-xs text-muted-foreground">Only fabric that suits it</p>
+                  <p className="text-xs text-muted-foreground">Only what it needs</p>
                 </div>
                 <Button variant="ghost" size="icon" aria-label="Show all fabric" title="Show all fabric" nativeButton={false} render={<Link href="/fabric" />}>
                   <IconX />
@@ -246,13 +255,24 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
                   </SelectContent>
                 </Select>
               </div>
-              <FabricChoices
-                choices={need.choices}
-                value={choice?.id ?? null}
-                counts={choiceCounts}
-                onValueChange={(id) => router.replace(hrefFor({ garment: garment.id, choice: id ?? undefined }), { scroll: false })}
-              />
+              {!supply && (
+                <FabricChoices
+                  choices={need.choices}
+                  value={choice?.id ?? null}
+                  counts={choiceCounts}
+                  onValueChange={(id) => router.replace(hrefFor({ garment: garment.id, choice: id ?? undefined }), { scroll: false })}
+                />
+              )}
               {filtersInPanel}
+              <p className="eyebrow px-1 pt-2 text-muted-foreground">What you’ll need</p>
+              <PanelRow
+                href={hrefFor({ garment: garment.id })}
+                state={supply ? 'upcoming' : 'active'}
+                leading={<StepDot state={supply ? 'upcoming' : 'active'}><IconShirt className="size-3.5" /></StepDot>}
+                title="Fabric"
+                detail={formatMeters(fabricMeters)}
+              />
+              <SupplyRows garmentId={garment.id} supplies={[...suppliesFor(garment.id).special, ...suppliesFor(garment.id).basics]} current={supply?.id} />
             </Panel>
           ) : (
             <StorePanel
@@ -356,7 +376,9 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
                   <EmptyDescription>
                     {filterCount > 0
                       ? 'Remove a filter to see more.'
-                      : choice
+                      : supply
+                        ? `No shop has ${supply.name.toLowerCase()} right now. Try a local haberdashery.`
+                        : choice
                         ? `No shop has ${choice.name.toLowerCase()} right now. Try all recommended fabrics.`
                         : 'Try another word or category.'}
                   </EmptyDescription>
@@ -454,8 +476,8 @@ function StorePanel({
             </InputGroupAddon>
             <InputGroupInput
               type="search"
-              aria-label="Search fabric"
-              placeholder="Washed linen, rib jersey…"
+              aria-label="Search the shops"
+              placeholder="Washed linen, elastic, needles…"
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
@@ -467,7 +489,7 @@ function StorePanel({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All fabric</SelectItem>
-            {(['Fabric', 'Notions'] as const).map((group) => (
+            {departmentGroups.map((group) => (
               <SelectGroup key={group}>
                 <SelectLabel>{group}</SelectLabel>
                 {departments

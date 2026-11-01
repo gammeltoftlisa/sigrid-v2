@@ -165,11 +165,15 @@ export async function searchShopify(shop: ShopifyShop, query: FabricQuery, deadl
   const products = parseEach(data.resources?.results?.products ?? [], suggestProduct, 'fabric.shopify.search', shop.id)
 
   const terms = query.match.map((t) => t.toLowerCase())
+  // Supplies match whole words: otherwise "needle" finds needlecord and "cord" finds corduroy
+  const wholeWord = (hay: string, term: string) => new RegExp(`(^|[^a-z])${term.replace(/[^a-z0-9 -]/g, '')}s?($|[^a-z])`).test(hay)
+  const excluded = (query.exclude ?? []).map((t) => t.toLowerCase())
   const matching = products
     .filter((p) => p.available)
     .filter((p) => (query.kind === 'notion' ? !NOT_APPAREL.test(p.title) : !NOT_YARDAGE.test(p.title) && !NOT_APPAREL.test(p.title)))
     .filter((p) => {
       const hay = `${p.title} ${p.type ?? ''} ${(p.tags ?? []).join(' ')}`.toLowerCase()
+      if (query.kind === 'notion') return !excluded.some((t) => p.title.toLowerCase().includes(t)) && terms.some((t) => wholeWord(hay, t))
       return terms.some((t) => hay.includes(t))
     })
     .slice(0, query.limit)

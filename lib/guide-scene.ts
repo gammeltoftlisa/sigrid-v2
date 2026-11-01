@@ -1,5 +1,5 @@
 /**
- * The guide's instruction-video scenes: a step played out on a cutting mat in soft 3D, with the
+ * The guide's instruction-video scenes: a step played out flat on the net, seen from above, with the
  * real pattern pieces in one plain fabric. Built for any guide from the step alone: its kind
  * (cut, mark, fold, press, pin, sew), its pieces and how they join. The table shows what the
  * sewer really has in front of them: what was sewn earlier stays together, anything not part of
@@ -10,14 +10,14 @@
  */
 import { boxOf, layout, lineX, type Placed } from './assembly-layout'
 import { isSecondCut, type Assembly } from './assembly'
-import { outlineCommands, outlineSize as outlineSizeOf, type OutlineCmd, type PieceOutline } from './piece-outline'
+import { outlineCommands, type OutlineCmd, type PieceOutline } from './piece-outline'
 import type { GuidePiece, PieceEdge, SewingStep2D, UserMeasurements } from './types'
 
 /** The animation rules, settled in the Saratoga assembly lab */
 export const RULES = {
   /** Overall pace (×) and the pause between moves, ms */
   speed: 1,
-  pause: 250,
+  pause: 480,
   /** Pieces come in from this share of the scene away, lifted this many px */
   approach: 35,
   lift: 60,
@@ -25,8 +25,7 @@ export const RULES = {
   flip: true,
   /** Curved edges bend while the piece comes in (not once it's arrived) */
   bendWhileComing: true,
-  /** Table tilt (°) and how much closer the camera goes on a tool */
-  tilt: 30,
+  /** How much closer the camera goes on a tool */
   zoom: 1.4,
   /** Pins per seam, stitch length (mm) */
   pins: 5,
@@ -34,9 +33,9 @@ export const RULES = {
   /** Sewing with the machine or by hand */
   needle: 'machine' as 'machine' | 'hand',
   /** How fast the tools travel, cm a second: steady and calm, whatever the length of the seam */
-  sewSpeed: 12,
+  sewSpeed: 17,
   cutSpeed: 30,
-  chalkSpeed: 12,
+  chalkSpeed: 34,
   /** The tool's own motion is calm, however fast it travels: the needle goes up and down this
    * many times a second, the scissors snip this many times a second, the iron takes this long
    * for one glide out and back (ms), steam puffs this many times a second */
@@ -45,13 +44,13 @@ export const RULES = {
   pressTime: 3200,
   steamRate: 0.5,
   /** Folding the fabric before cutting a piece on the fold, ms */
-  foldTime: 1600,
+  foldTime: 2600,
+  /** Turning a piece over, ms */
+  turnTime: 2500,
   /** Pins go in one at a time, this many ms apart */
   pinEvery: 480,
   /** Cutting follows the scissors less closely than sewing, so they don't race across the screen */
   cutZoom: 1.12,
-  /** Pieces sewn earlier fade back while the new ones move */
-  dimEarlier: true,
   /** The finished frame holds this long before the scene plays again, ms */
   hold: 1400,
 }
@@ -73,12 +72,35 @@ export interface ScenePiece {
   side: 'right' | 'wrong'
   /** Paper is the printed pattern laid on the fabric to cut around */
   style: 'fabric' | 'interfacing' | 'paper'
+  /** Where its name sits, cm from its left (the middle unless given) */
+  labelX?: number
+  /** Joined to its other half along the fold: throws no shadow across the join */
+  flush?: boolean
   /** The fabric a piece is cut from: the piece's shape, cut out of it once `holed` */
   hole?: OutlineCmd[]
   /** Not on the table yet: it comes in during the scene */
   enters: boolean
   /** Shows its letter (interfacing ironed onto a piece doesn't) */
   labelled: boolean
+}
+
+/** A fold along a line on a piece. `hinge` is in the piece's own cm; `t` runs 0 (flat) to 1 (folded). */
+export interface Band {
+  id: string
+  edge: string
+  hinge: Pt[]
+  /** A point on the side the cloth comes from, in the piece's own cm: the raw edge */
+  toward: Pt
+  S: number
+  t: number
+  /** The fold lies on the side facing us (the cloth is wrong side up); otherwise it's underneath */
+  over: boolean
+  /** It runs along the line instead of happening all at once */
+  sweep?: boolean
+  /** It only takes in a stretch of the cloth, not everything past the line */
+  bounded?: boolean
+  /** Folds the whole piece about its centre line (cm from the left) */
+  centre?: number
 }
 
 export interface PieceState {
@@ -91,7 +113,8 @@ export interface PieceState {
   lift: number
   rot: { axis: 'x' | 'y'; deg: number; o: Pt } | null
   side: 'right' | 'wrong'
-  fold: { y: number; part: 'above' | 'below'; deg: number } | null
+  /** Edges folded over, in the order they were folded */
+  bands?: Band[]
   op: number
   hem: number
   style: 'fabric' | 'interfacing' | 'paper'
@@ -99,7 +122,8 @@ export interface PieceState {
   moving: boolean
   holed: boolean
 }
-export interface Line { id: string; kind: 'stitch' | 'seam' | 'chalk' | 'cut' | 'fold'; pts: Pt[]; p: number; z: number; op: number; on: string }
+export type LineKind = 'stitch' | 'top' | 'baste' | 'tack' | 'zigzag' | 'overlock' | 'blind' | 'satin' | 'seam' | 'seam-edge' | 'crease' | 'slit' | 'chalk' | 'cut' | 'fold' | 'button'
+export interface Line { id: string; kind: LineKind; pts: Pt[]; p: number; z: number; op: number; on: string }
 export interface Pin { line: string; u: number; x: number; y: number; ang: number; drop: number; out: number; z: number; on: string }
 export interface Tool { on: string; kind: 'machine' | 'hand' | 'iron' | 'scissors' | 'chalk'; x: number; y: number; ang: number; z: number; phase: number }
 export interface SceneState {
@@ -112,7 +136,11 @@ export interface SceneState {
   frameMax: number
   work: Box4
 }
-interface Beat {
+export interface Beat {
+  /** What it's called on the timeline */
+  name?: string
+  /** Where the camera looks while it plays, instead of `cam` */
+  camAt?: (t: number) => Pt
   base: number
   apply: (st: SceneState, t: number) => void
   focus?: string[]
@@ -155,7 +183,9 @@ function bez(x1: number, y1: number, x2: number, y2: number) {
 }
 /** Pieces settle softly; tools move evenly in and out */
 const move = bez(0.22, 1, 0.36, 1)
-const inOut = bez(0.45, 0, 0.55, 1)
+export const inOut = bez(0.45, 0, 0.55, 1)
+/** Folds and turns: an even ease with no rush in the middle */
+export const gentle = (t: number) => t * t * (3 - 2 * t)
 
 export function sampleCmds(cmds: OutlineCmd[], dx = 0, dy = 0): Pt[] {
   const pts: Pt[] = []
@@ -219,7 +249,7 @@ const centreOf = (pts: Pt[]): Pt => {
 }
 
 // ---------- beats ----------
-function approach(key: string, { dx = 0, dy = -1, bend = 0, liftK = 1, base = 950 }: { dx?: number; dy?: number; bend?: number; liftK?: number; base?: number }): Beat {
+export function approach(key: string, { dx = 0, dy = -1, bend = 0, liftK = 1, base = 950 }: { dx?: number; dy?: number; bend?: number; liftK?: number; base?: number }): Beat {
   return {
     base,
     focus: [key],
@@ -237,20 +267,17 @@ function approach(key: string, { dx = 0, dy = -1, bend = 0, liftK = 1, base = 95
     },
   }
 }
-function flip(key: string, origin: Pt, from: number, to: number, base = 1200): Beat {
+export function flip(key: string, origin: Pt, from: number, to: number, base = RULES.turnTime): Beat {
   return {
     base,
     focus: [key],
     apply: (st, t) => {
       const p = st.p[key]
-      p.rot = { axis: 'y', deg: lerp(from, to, inOut(t)), o: origin }
+      p.rot = { axis: 'y', deg: lerp(from, to, gentle(t)), o: origin }
       p.lift = Math.sin(Math.PI * t) * RULES.lift * 0.25
       p.moving = t < 1
     },
   }
-}
-function fold(key: string, hinge: number, part: 'above' | 'below'): Beat {
-  return { base: 1200, focus: [key], apply: (st, t) => { const p = st.p[key]; p.fold = { y: hinge, part, deg: (part === 'below' ? 180 : -180) * inOut(t) }; p.moving = t < 1 } }
 }
 /** Pin length, cm */
 const PIN = 3.4
@@ -293,7 +320,7 @@ function pinPose(q: { x: number; y: number; ang: number }, polys: Pt[][]) {
 }
 const polyOf = (p: Placed) => sampleCmds(outlineCommands(p.o, lineX(p)), p.x, p.y)
 
-function pins(id: string, pts: Pt[], on: string, top = on, polys: Pt[][] = []): Beat {
+export function pins(id: string, pts: Pt[], on: string, top = on, polys: Pt[][] = []): Beat {
   const n = RULES.pins
   const poses = Array.from({ length: n }, (_, i) => {
     const u = (i + 0.5) / n
@@ -312,16 +339,22 @@ function pins(id: string, pts: Pt[], on: string, top = on, polys: Pt[][] = []): 
     },
   }
 }
-function sew(id: string, pts: Pt[], on: string, top = on): Beat {
+export function sew(id: string, ptsIn: Pt[], on: string, top = on): Beat {
+  // The machine stands over the seam from the front: a seam running down the screen is sewn
+  // upwards, or its head would cover the fresh stitches
+  const dy = ptsIn[ptsIn.length - 1][1] - ptsIn[0][1]
+  const dx = ptsIn[ptsIn.length - 1][0] - ptsIn[0][0]
+  const rev = dy > 0 && Math.abs(dy) > Math.abs(dx)
+  const pts = rev ? [...ptsIn].reverse() : ptsIn
   return {
     base: travel(pts, RULES.sewSpeed, 2200, 16000),
     cam: 'tool',
     pts,
     apply: (st, t) => {
       const p = inOut(t)
-      const z = st.p[top].z + 0.7 + (st.p[top].fold ? 1 : 0)
+      const z = st.p[top].z + 0.7
       st.lines.push({ id, kind: 'stitch', pts, p, z, op: 1, on })
-      for (const pin of st.pins) if (pin.line === id) pin.out = clamp((p - pin.u + 0.04) / 0.07)
+      for (const pin of st.pins) if (pin.line === id) pin.out = clamp((p - (rev ? 1 - pin.u : pin.u) + 0.04) / 0.07)
       if (t < 1) {
         const q = at(pts, p)
         // a calm up and down, not one per stitch
@@ -330,22 +363,24 @@ function sew(id: string, pts: Pt[], on: string, top = on): Beat {
     },
   }
 }
-function press(pts: Pt[], on: string, during?: (st: SceneState, t: number) => void): Beat {
+/** The iron, once along the whole line */
+export function press(pts: Pt[], on: string, during?: (st: SceneState, t: number) => void): Beat {
+  const base = travel(pts, 17, 1800, 9000)
   return {
-    base: RULES.pressTime,
-    // an iron is bigger than most pieces: no zooming in on it
-    cam: 'wide',
+    name: 'Press',
+    base,
+    cam: 'tool',
+    zoom: 1,
     pts,
     apply: (st, t) => {
-      const u = t < 0.5 ? inOut(t * 2) : inOut(2 - t * 2)
-      const q = at(pts, u)
+      const q = at(pts, gentle(t))
       const z = st.p[on].z + 2
-      if (t < 1) st.tool = { on, kind: 'iron', x: q.x, y: q.y, ang: at(pts, 0).ang, z: z + 2 * (1 - Math.sin(Math.PI * clamp(t * 1.2))), phase: ((t * RULES.pressTime) / 1000) * RULES.steamRate }
+      if (t < 1) st.tool = { on, kind: 'iron', x: q.x, y: q.y, ang: at(pts, 0).ang, z, phase: ((t * base) / 1000) * RULES.steamRate }
       during?.(st, t)
     },
   }
 }
-function trace(id: string, kind: 'cut' | 'chalk', pts: Pt[], on: string): Beat {
+export function trace(id: string, kind: 'cut' | 'chalk', pts: Pt[], on: string): Beat {
   return {
     base: kind === 'cut' ? travel(pts, RULES.cutSpeed, 3000, 24000) : travel(pts, RULES.chalkSpeed, 1400, 8000),
     cam: 'tool',
@@ -363,7 +398,7 @@ function trace(id: string, kind: 'cut' | 'chalk', pts: Pt[], on: string): Beat {
     },
   }
 }
-const wide = (): Beat => ({ base: 800, cam: 'wide', apply: () => {} })
+export const wide = (): Beat => ({ base: 800, cam: 'wide', apply: () => {} })
 
 // ---------- seams, from where pieces meet ----------
 const scoopOf = (p: Pick<Placed, 'o' | 'h'>) => {
@@ -382,7 +417,7 @@ function necklineOf(p: Placed, inset = 0): Pt[] {
 }
 /** Along an edge of a piece's box, `inset` cm inside it */
 function edgeOf(p: Placed, edge: PieceEdge, inset: number): Pt[] {
-  const pad = Math.min(p.w, p.h) * 0.08
+  const pad = Math.min(p.w, p.h) * 0.015
   const widthAt = (k: number) => {
     // the outline's half width at k cm down, for slanted sides
     const ls = p.o.lines
@@ -407,7 +442,7 @@ function seamOf(contact: Placed, to: Placed, group: Placed[], inset: number): Pt
   const via = contact.join?.via ?? 'side'
   if (via === 'side') {
     const top = contact.y + (contact.o.onFold ? scoopOf(contact) : 0)
-    return [[contact.x - inset, top + 0.4], [contact.x - inset, contact.y + Math.min(contact.h, to.h) * (contact.o.onFold ? 0.7 : 0.92)]]
+    return [[contact.x - inset, top + 0.4], [contact.x - inset, contact.y + Math.min(contact.h, to.h) * 0.985]]
   }
   if (via === 'top') return necklineOf(to, inset)
   const g = boxOf(group)
@@ -477,12 +512,12 @@ export function buildScene(step: Pick<SewingStep2D, 'action' | 'annotation' | 'f
       if (action !== 'press') beats.push(pins('seam', seam, to.id, contact.id, [polyOf(contact), polyOf(to)]))
       if (action !== 'pin') {
         beats.push(sew('seam', seam, to.id, contact.id), {
-          base: 1200,
+          base: RULES.turnTime,
           focus: [contact.id],
           cam: 'wide',
           apply: (st, t) => {
             const p = st.p[contact.id]
-            p.rot = { axis: 'y', deg: lerp(-180, 0, inOut(t)), o: [0, contact.h / 2] }
+            p.rot = { axis: 'y', deg: lerp(-180, 0, gentle(t)), o: [0, contact.h / 2] }
             p.lift = Math.sin(Math.PI * t) * RULES.lift * 0.25
             p.moving = t < 1
             const l = st.lines.find((l) => l.id === 'seam')
@@ -536,96 +571,12 @@ export function buildScene(step: Pick<SewingStep2D, 'action' | 'annotation' | 'f
       if (action === 'pin') beats.push(pins('seam', seam, lastTo.id, last.id, [polyOf(last), polyOf(lastTo)]))
       else if (action === 'press') beats.push(press(seam, lastTo.id))
       else beats.push(sew('seam', seam, lastTo.id, last.id))
-    } else if (action === 'cut' && laid.length === 1) {
-      // The whole fabric, with the pattern laid in its corner so the rest stays whole for the
-      // next pieces. A piece cut on the fold goes against the fold of folded fabric. Cut around,
-      // the piece lifts out (and unfolds) and is put aside, leaving its shape in the fabric.
-      const half = target.piece.outline?.onFold ? { ...target.piece.outline, onFold: true, mirror: false } : null
-      const o = half ?? target.o
-      const w = half ? outlineSizeOf(half).width : target.w
-      const lx = half ? 0 : lineX(target)
-      const m = half ? 0 : 2
-      const fw = half ? Math.max(70, w + 14) : Math.max(140, w + 24)
-      const fh = target.h + Math.max(24, target.h * 0.55)
-      const x0 = 0
-      const y0 = 0
-      const cutKey = target.id
-      const shape = outlineCommands(o, lx).map(([k, ...v]) => [k, ...v.map((n, i) => n + (i % 2 === 0 ? m : 2))] as OutlineCmd)
-      const piece: ScenePiece = { key: cutKey, o, label: target.piece.label, x: x0 + m, y: y0 + 2, w, h: target.h, lineX: lx, layer: 1, side, style: 'fabric', enters: true, labelled: true }
-      const cloth = (key: string, x: number, layer: number, hole: OutlineCmd[]): ScenePiece => ({ key, o: { lines: [{ down: 0, width: fw }, { down: fh, width: fw }] }, label: '', x, y: y0, w: fw, h: fh, lineX: fw / 2, layer, side: 'right', style: 'fabric', hole, enters: false, labelled: false })
-      // The top layer of folded fabric: it starts opened out to the left and folds over along
-      // the fold; its hole is the cut seen from the other side
-      const mirrored = shape.map(([k, ...v]) => [k, ...v.map((n, i) => (i % 2 === 0 ? fw - n : n))] as OutlineCmd)
-      scenePieces.splice(0, scenePieces.length,
-        cloth('_fabric', x0, 0, shape),
-        piece,
-        ...(half ? [cloth('_flap', x0 - fw, 1.8, mirrored), { ...piece, key: '_open', layer: 2.4 }] : []),
-        { ...piece, key: '_paper', layer: 3, style: 'paper', enters: true, labelled: false },
-      )
-      frame[0] = x0 - (half ? fw + 4 : 4)
-      frame[1] = y0 - 4
-      frame[2] = x0 + fw + 4
-      frame[3] = y0 + fh + 4
-      if (half) seams.push({ id: 'fold', kind: 'fold', pts: [[x0 + 0.3, y0 + 0.6], [x0 + 0.3, y0 + fh - 0.6]], p: 1, z: 0, op: 1, on: '_fabric' })
-      const edge = sampleCmds(outlineCommands(o, lx), piece.x, piece.y)
-      if (half) {
-        beats.push({
-          base: RULES.foldTime,
-          focus: ['_flap'],
-          cam: 'wide',
-          apply: (st, t) => {
-            const p = st.p._flap
-            p.rot = { axis: 'y', deg: 180 * inOut(t), o: [fw, fh / 2] }
-            p.lift = Math.sin(Math.PI * t) * RULES.lift * 0.2
-            p.moving = t < 1
-          },
-        })
-      }
-      beats.push(approach('_paper', { dy: -0.6 }), trace('cut', 'cut', half ? edge.filter((q) => q[0] > x0 + 0.2) : edge, '_paper'), {
-        base: 1300,
-        focus: [cutKey, '_open'],
-        cam: 'wide',
-        apply: (st, t) => {
-          const e = inOut(t)
-          st.p._paper.lift = 90 * e
-          st.p._paper.op = 1 - e
-          const l = st.lines.find((l) => l.id === 'cut')
-          if (l) l.op = 1 - e
-          st.p._fabric.holed = true
-          if (half) st.p._flap.holed = true
-          for (const k of [cutKey, ...(half ? ['_open'] : [])]) {
-            const p = st.p[k]
-            p.op = 1
-            p.lift = RULES.lift * 0.5 * e
-            p.moving = t < 1
-          }
-          // cut on the fold: the second layer opens out along the fold
-          if (half) st.p._open.rot = { axis: 'y', deg: -180 * clamp((t - 0.25) / 0.75), o: [0, target.h / 2] }
-        },
-      }, {
-        base: 900,
-        cam: 'wide',
-        apply: (st, t) => {
-          const e = inOut(t)
-          for (const k of [cutKey, ...(half ? ['_open'] : [])]) {
-            const p = st.p[k]
-            p.lift = RULES.lift * (0.5 + 1.5 * e)
-            p.op = 1 - e
-            p.moving = t < 1
-          }
-        },
-      })
     } else if (action === 'cut') beats.push(trace('cut', 'cut', sampleCmds(outlineCommands(target.o, lineX(target)), target.x, target.y), target.id))
     else if (action === 'mark') {
       const y = target.y + target.h * 0.55
       const hw = Math.min(9, target.w * 0.3)
       const cx = target.x + lineX(target) + (target.o.onFold ? hw * 1.2 : 0)
       beats.push(trace('mark', 'chalk', [[cx - hw, y], [cx + hw, y]], target.id))
-    } else if (action === 'fold' && (edge === 'top' || edge === 'bottom')) {
-      const amount = clamp(step.annotation?.amount ?? 2.5, 0.5, target.h * 0.25)
-      const hinge = edge === 'bottom' ? target.h - amount : amount
-      beats.push(fold(target.id, hinge, edge === 'bottom' ? 'below' : 'above'))
-      beats.push(press(edgeOf(target, edge, amount * 0.6), target.id))
     } else if (action === 'press' || action === 'fold') beats.push(press(edgeOf(target, edge, Math.min(2, target.h * 0.15)), target.id))
     else if (action === 'pin') beats.push(pins('pin', edgeOf(target, edge, 1.3), target.id, target.id, [polyOf(target)]))
     else if (action === 'sew' || action === 'attach') {
@@ -652,7 +603,7 @@ export function stateAt(scene: Scene, time: number): SceneState {
   const [x0, y0, x1, y1] = scene.frame
   const p: Record<string, PieceState> = {}
   for (const sp of scene.pieces) {
-    p[sp.key] = { key: sp.key, x: sp.x, y: sp.y, ox: 0, oy: 0, z: 1 + sp.layer * 1.6, lift: 0, rot: null, side: sp.side, fold: null, op: sp.enters ? 0 : 1, hem: 0, style: sp.style, tint: 0, moving: false, holed: false }
+    p[sp.key] = { key: sp.key, x: sp.x, y: sp.y, ox: 0, oy: 0, z: 1 + sp.layer * 1.6, lift: 0, rot: null, side: sp.side, op: sp.enters ? 0 : 1, hem: 0, style: sp.style, tint: 0, moving: false, holed: false }
   }
   const st: SceneState = { p, lines: scene.seams.map((l) => ({ ...l, z: (p[l.on]?.z ?? 1) + 0.6 })), pins: [], tool: null, cam: { fx: (x0 + x1) / 2, fy: (y0 + y1) / 2, z: 1 }, focus: null, frameMax: Math.max(x1 - x0, y1 - y0), work: scene.frame }
   for (let i = 0; i < scene.beats.length; i++) {
@@ -671,6 +622,10 @@ export function stateAt(scene: Scene, time: number): SceneState {
     else if (b.cam === 'pts' && b.pts) {
       const [cx, cy] = centreOf(b.pts)
       st.cam = { fx: lerp(camStart.fx, cx, k), fy: lerp(camStart.fy, cy, k), z: lerp(camStart.z, zIn, k) }
+    } else if (b.camAt) {
+      const [cx, cy] = b.camAt(t)
+      const kk = inOut(clamp((t * scene.durs[i]) / 800))
+      st.cam = { fx: lerp(camStart.fx, cx, kk), fy: lerp(camStart.fy, cy, kk), z: lerp(camStart.z, zIn, kk) }
     } else if (b.cam === 'tool') {
       // set by the beat just applied
       const tool = st.tool as Tool | null

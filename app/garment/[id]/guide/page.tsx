@@ -29,7 +29,6 @@ import { formatMeters } from '@/lib/fabric/pricing'
 import { readRaw, writeRaw } from '@/lib/local-store'
 import StepInstruction from '@/components/sewing/StepInstruction'
 import { groupIntoJourneys } from '@/lib/journeys'
-import { assemblyAt } from '@/lib/assembly'
 import { progressStateOf } from '@/components/legacy/progress'
 import { ease } from '@/components/patterns/reveal'
 
@@ -226,9 +225,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
   const step  = steps[viewStep]
   const viewJourney = journeys.find((j) => j.stepIndices.includes(viewStep))
-  const piece = step.pieceId ? (guide.pieces.find((p) => p.id === step.pieceId) ?? null) : null
-  // Steps that join pieces show them together, with what earlier steps already joined
-  const assembly = assemblyAt(guide.steps, viewStep)
 
   return (
     <main className="guide-page">
@@ -271,6 +267,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
       <CompletionDialog garment={garment} open={doneOpen} onClose={() => setDoneOpen(false)} />
 
+      <h1 className="sr-only">{garment.name}: sewing guide</h1>
       <div className="guide-body px-4 pb-3 md:pr-8 md:pb-6 md:pl-4">
         {size && <GuideSidePanel
           keepSections={guide.keepSections}
@@ -287,7 +284,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
         />}
 
         {/* The scene and its instructions (on phones: a fixed-height strip above the steps) */}
-        <div className="order-1 flex h-[32vh] shrink-0 flex-col gap-(--grid-gutter) md:order-none md:col-span-8 md:h-auto md:min-h-0 xl:col-span-9">
+        <div className="order-1 guide-canvas-pane flex shrink-0 flex-col gap-(--grid-gutter) md:order-none md:col-span-8 md:h-auto md:min-h-0 xl:col-span-9">
           <ProductFrame className="flex min-h-0 flex-1 flex-col p-2 md:p-3">
             <div className="relative min-h-0 flex-1 overflow-hidden rounded-(--image-radius)">
               {allDone ? (
@@ -315,16 +312,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
                   transition={{ duration: 0.32, ease }}
                   className="w-full h-full"
                 >
-                  <PatternCanvas
-                    piece={piece}
-                    assembly={assembly}
-                    pieces={guide.pieces}
-                    action={step.action}
-                    annotation={step.annotation}
-                    fabricSide={step.fabricSide}
-                    measurements={measurements}
-                    title={step.title}
-                  />
+                  <PatternCanvas steps={guide.steps} index={viewStep} pieces={guide.pieces} measurements={measurements} />
                 </motion.div>
               </AnimatePresence>
               )}

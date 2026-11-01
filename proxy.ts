@@ -1,8 +1,22 @@
-import { clerkMiddleware } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-// Makes the login session available to the app. Browsing stays open to everyone: anything private
-// checks the login itself on the server (see app/api/checkout and app/api/purchases).
-export default clerkMiddleware()
+// Sigrid needs an account. Open to everyone: the address itself (it sends you on), logging in, the legal
+// pages people must be able to read before they agree to them, and Stripe's webhook, which proves itself with a signature.
+const isPublic = createRouteMatcher(['/', '/sign-in(.*)', '/sign-up(.*)', '/legal(.*)', '/api/webhooks(.*)'])
+const isApi = createRouteMatcher(['/api(.*)', '/trpc(.*)'])
+
+export default clerkMiddleware(
+  async (auth, req) => {
+    if (isPublic(req)) return
+    if (isApi(req)) {
+      const { userId } = await auth()
+      if (!userId) return Response.json({ error: 'Log in first' }, { status: 401 })
+      return
+    }
+    await auth.protect()
+  },
+  { signInUrl: '/sign-in', signUpUrl: '/sign-up' },
+)
 
 export const config = {
   matcher: [

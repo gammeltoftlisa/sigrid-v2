@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { legalPages } from '@/components/patterns/legal-page'
 import { business } from '@/lib/legal'
 
-/** Quiet footer on every app screen: legal links and who runs Sigrid. */
+/** Under the legal pages: the way between them, and who runs Sigrid. Everywhere else they're reached from Profile. */
 export function LegalFooter() {
   return (
     <footer className="flex flex-col gap-2 px-4 pt-4 pb-6 text-xs text-muted-foreground sm:px-6 md:pr-8 md:pl-4">

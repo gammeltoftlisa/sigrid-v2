@@ -7,7 +7,7 @@ export const metadata = { title: 'Privacy policy · Sigrid' }
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy policy" intro="What we collect, why, and what you can do about it. In short: very little, and most of it never leaves your device.">
+    <LegalPage title="Privacy policy" intro="What we collect, why, and what you can do about it. In short: only what Sigrid needs to work.">
       <LegalSection title="Who is responsible">
         <p>
           {business.name} (organisation number {business.orgNumber}), {business.address}, is the data controller for Sigrid.
@@ -17,8 +17,8 @@ export default function PrivacyPage() {
 
       <LegalSection title="What stays on your device">
         <p>
-          Your projects, chosen size, progress through each guide, the dates you mark steps done (for streaks), your fabric bag and your profile picture
-          are saved in your browser’s local storage. If you’re not logged in, they are not sent to us, and clearing your browser data removes them. Your fabric bag and profile picture always stay on your device.
+          Your projects, chosen size, progress through each guide, the dates you mark steps done (for your sewing week), your fabric bag and your profile picture
+          are saved in your browser’s local storage. Your fabric bag and profile picture always stay on your device, and clearing your browser data removes them. The rest is saved on your account too, as described below.
         </p>
       </LegalSection>
 
@@ -34,11 +34,11 @@ export default function PrivacyPage() {
             Only the search words are sent, never anything about you.
           </li>
           <li>
-            <strong>Your account.</strong> If you create an account, Clerk Inc. stores your email address, your login details and your sign-in
+            <strong>Your account.</strong> You need an account to use Sigrid. Clerk Inc. stores your email address, your login details and your sign-in
             sessions for us. Legal basis: running the account you asked for (GDPR art. 6.1 b). You can delete your account in Profile.
           </li>
           <li>
-            <strong>Your sewing, if you’re logged in.</strong> Your projects, chosen size, progress and the dates you mark steps done are saved to your
+            <strong>Your sewing.</strong> Your projects, chosen size, progress and the dates you mark steps done are saved to your
             account so they follow you across devices. They are stored in a database in Frankfurt, Germany, run for us by Neon. Logging out removes them
             from that browser, not from your account. You can delete them with Delete my data in Profile. Legal basis: running the account you asked
             for (GDPR art. 6.1 b).

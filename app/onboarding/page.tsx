@@ -53,7 +53,7 @@ export default function OnboardingPage() {
   const IntroIcon = isIntro ? intro[step].icon : null
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-md flex-col px-6 pt-4 pb-8">
+    <main className="mx-auto flex min-h-svh w-full max-w-md flex-col px-6 pt-4 pb-8">
       <div className="flex h-12 items-center justify-between">
         {step > 0 ? (
           <Button variant="ghost" size="icon-lg" aria-label="Back" className="-ml-2" onClick={back}>
@@ -79,21 +79,20 @@ export default function OnboardingPage() {
         )}
 
         {step === ACCOUNT && (
-          // Beta: no account and no personal data. Only what's needed: agreeing to the terms.
+          // Only what's needed: agreeing to the terms.
           <div className="flex flex-1 flex-col gap-6 pt-6">
             <div className="flex flex-col gap-2">
               <h1>Before you <em className="display-italic">start</em></h1>
               <p className="text-base text-muted-foreground">
-                During the beta there’s no account. Your projects and progress are saved on this device only, and we don’t collect your
-                name or email.
+                Your projects and progress are saved on your account, so they follow you to all your devices.
               </p>
             </div>
             <ul className="flex flex-col gap-2 text-sm">
               <li className="rounded-(--control-radius) bg-glass p-3">
-                <Link href="/legal/terms" className="underline underline-offset-4">Terms</Link>: how you may use patterns, and that fabric is bought from the shops.
+                <Link href="/legal/terms" target="_blank" rel="noopener" className="underline underline-offset-4">Terms</Link>: how you may use patterns, and that fabric is bought from the shops.
               </li>
               <li className="rounded-(--control-radius) bg-glass p-3">
-                <Link href="/legal/privacy" className="underline underline-offset-4">Privacy policy</Link>: what we store and your rights.
+                <Link href="/legal/privacy" target="_blank" rel="noopener" className="underline underline-offset-4">Privacy policy</Link>: what we store and your rights.
               </li>
             </ul>
             <div className="mt-auto flex flex-col gap-3">
@@ -138,6 +137,6 @@ export default function OnboardingPage() {
           )}
         </div>
       )}
-    </div>
+    </main>
   )
 }

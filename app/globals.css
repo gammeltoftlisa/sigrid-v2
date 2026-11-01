@@ -821,10 +821,48 @@ body { background: transparent !important; isolation: isolate; }
 .solid-panel { border-color: var(--app-border-strong); }
 .solid-panel .bg-card:not(.border) { box-shadow: inset 0 0 0 1px var(--app-border); }
 
-/* ─── Login: Clerk's screens in the same glass (app/(main)/sign-in, sign-up) ─── */
-.auth-page { display: flex; justify-content: center; padding: 3rem 1rem; }
-/* Clerk's headings aren't page titles: keep the site-wide h1 size out of its screens */
-:root [class*="cl-"] h1 { font-size: var(--text-xl); line-height: var(--text-xl--line-height); font-weight: 400; letter-spacing: -0.015em; }
+/* Screen-height panes: the garment photo beside its details, the guide's picture above its steps on phones */
+@media (min-width: 768px) { .garment-photo-pane { height: calc(100svh - 5rem); } }
+@media (max-width: 767.98px) { .guide-canvas-pane { height: 32vh; } }
+
+/* ─── Settings: one container, a stroke between groups, the label beside its rows ─── */
+.settings-group { display: grid; gap: 1rem; padding: 1.25rem 1rem; border-top: 1px dashed var(--app-border); }
+@media (min-width: 768px) { .settings-group { grid-template-columns: 9rem minmax(0, 1fr); gap: 1.5rem; padding: 1.5rem; } }
+.settings-group:first-child { border-top: 0; }
+.settings-group > h2 { padding-top: 0.25rem; }
+
+/* ─── Profile picture: where a photo lands, and the circle it's framed in ─── */
+.photo-drop {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+  min-height: 18rem; padding: 1.5rem; text-align: center;
+  border: 1px dashed var(--app-border-strong); border-radius: var(--control-radius);
+  transition: border-color 0.2s var(--ease-out-soft), background-color 0.2s var(--ease-out-soft);
+}
+.photo-drop[data-dragging] { border-color: var(--foreground); background-color: rgb(var(--tri-primary) / 0.05); }
+.photo-framer { position: relative; aspect-ratio: 1; width: 100%; max-width: 18rem; margin-inline: auto; overflow: hidden; border-radius: var(--control-radius); }
+.photo-framer::after { content: ""; position: absolute; inset: 0; border-radius: 9999px; box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.45); pointer-events: none; }
+
+/* ─── Login and sign-up: what Sigrid is on one side, Clerk's form in the same glass on the other (app/(auth)) ─── */
+.auth-shell { display: grid; min-height: 100svh; }
+.auth-story { display: flex; flex-direction: column; gap: 1.5rem; padding: 1.5rem 1rem 0; }
+.auth-headline {
+  font-family: var(--font-heading); font-weight: var(--heading-weight); letter-spacing: var(--heading-tracking);
+  font-size: clamp(2.25rem, 3.4vw, 3.5rem); line-height: 1; text-wrap: balance;
+}
+.auth-photos { display: none; }
+.auth-form { display: flex; flex-direction: column; min-width: 0; }
+.auth-page { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 1.5rem 1rem 2rem; }
+@media (min-width: 1024px) {
+  .auth-shell { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .auth-story { justify-content: space-between; gap: 2rem; padding: 2rem 0 2rem 2rem; min-height: 100svh; }
+  .auth-headline { font-size: var(--h1-size); line-height: 0.95; }
+  .auth-photos { display: block; }
+  :root .auth-photos .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  :root .auth-photos .tiles > * { grid-column: span 1; padding: 0.75rem; }
+  .auth-page { align-items: center; padding: 2rem; }
+}
+.auth-page .cl-rootBox, .auth-page .cl-cardBox { width: 100%; max-width: 26rem; }
+.auth-page .cl-rootBox { display: flex; justify-content: center; }
 .auth-page .cl-cardBox {
   background-color: var(--glass-fill);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -833,8 +871,113 @@ body { background: transparent !important; isolation: isolate; }
   border-radius: var(--radius);
   box-shadow: var(--glass-edge);
 }
-.auth-page :is(.cl-card, .cl-footer) { background: transparent; box-shadow: none; }
-.auth-page .cl-headerTitle { font-family: var(--font-heading); font-weight: 400; letter-spacing: -0.015em; font-size: var(--text-xl); line-height: var(--text-xl--line-height); }
+.auth-page :is(.cl-card, .cl-footer) { background: transparent !important; box-shadow: none !important; border: 0; }
+.auth-page .cl-card { padding: 1.5rem !important; gap: 1.5rem; }
+.auth-page .cl-header { text-align: left; align-items: flex-start; gap: 0.25rem; }
+:root .auth-page .cl-headerTitle { font-family: var(--font-heading); font-weight: 400; letter-spacing: -0.015em; font-size: var(--text-3xl); line-height: var(--text-3xl--line-height); text-align: left; }
+.auth-page .cl-headerSubtitle { font-size: var(--text-sm); color: var(--muted-foreground); text-align: left; }
+:root .auth-page .cl-socialButtonsBlockButton {
+  min-height: 2.75rem; border-radius: 9999px !important;
+  background-color: var(--glass-fill) !important; border: 1px dashed var(--app-border-strong) !important; box-shadow: var(--glass-edge) !important;
+}
+:root .auth-page .cl-socialButtonsBlockButton:hover { background-color: var(--glass-hover) !important; border-color: color-mix(in srgb, var(--app-text) 32%, transparent) !important; }
+.auth-page .cl-socialButtonsBlockButtonText { font-size: var(--text-sm); font-weight: 500; color: var(--foreground); }
+.auth-page .cl-dividerLine { height: 0; background: none !important; border-top: 1px dashed var(--app-border-strong); }
+.auth-page .cl-dividerText { font-size: var(--text-xs); color: var(--muted-foreground); }
+.auth-page .cl-formFieldLabel { font-size: var(--text-xs); font-weight: 500; }
+:root .auth-page .cl-formFieldInput:not([type="checkbox"]) { min-height: 2.75rem; }
+:root .auth-page .cl-formButtonPrimary { min-height: 2.75rem; }
+.auth-page .cl-footer { border-top: 1px dashed var(--app-border) !important; }
+.auth-page .cl-footerActionText { font-size: var(--text-sm); color: var(--muted-foreground); }
+.auth-page .cl-footerActionLink { font-size: var(--text-sm); font-weight: 500; color: var(--foreground); text-decoration: underline; text-underline-offset: 4px; }
+
+/* ─── Clerk's buttons and fields, everywhere it shows: the same black stitched pill and frosted pill ─── */
+:root .cl-formButtonPrimary {
+  background: var(--cta-fill) !important;
+  color: var(--cta-ink) !important;
+  border: 1px dashed color-mix(in srgb, var(--cta-ink) 18%, transparent) !important;
+  border-radius: 9999px !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 8px 20px -14px rgb(0 0 0 / 0.35) !important;
+  min-height: 2.5rem; font-size: var(--text-sm); font-weight: 500; text-transform: none;
+}
+:root .cl-formButtonPrimary:hover { background: var(--cta-hover) !important; }
+:root :is(.cl-formButtonReset, .cl-profileSectionPrimaryButton, .cl-userProfile-root .cl-menuButton.cl-button) {
+  background-color: var(--glass-fill) !important;
+  border: 1px dashed var(--app-border) !important;
+  border-radius: 9999px !important;
+  box-shadow: var(--glass-edge) !important;
+  color: var(--foreground) !important;
+  min-height: 2.5rem; width: fit-content; padding-inline: 1rem !important;
+  font-size: var(--text-sm); font-weight: 500;
+}
+:root :is(.cl-formButtonReset, .cl-profileSectionPrimaryButton, .cl-userProfile-root .cl-menuButton.cl-button):hover {
+  background-color: var(--glass-hover) !important;
+  border-color: color-mix(in srgb, var(--app-text) 32%, transparent) !important;
+}
+:root .cl-userProfile-root .cl-profileSection__danger .cl-profileSectionPrimaryButton { color: var(--destructive) !important; border-color: color-mix(in srgb, var(--destructive) 40%, transparent) !important; }
+:root .cl-formFieldInput:not([type="checkbox"]) { background-color: var(--app-elev) !important; border-radius: var(--control-radius) !important; min-height: 2.25rem; font-size: var(--text-sm); }
+:root .cl-badge { border-radius: 9999px !important; background: transparent !important; border: 1px dashed var(--app-border-strong) !important; box-shadow: none !important; color: var(--muted-foreground) !important; font-size: var(--text-2xs); }
+
+/* ─── Manage account: Clerk's modal as one of Sigrid's dialogs. A title, two tabs on top at every width,
+   then the same label-beside-rows as Profile. Its side menu and phone menu are replaced by the tabs. ─── */
+:root .cl-modalBackdrop {
+  background: color-mix(in srgb, var(--app-bg) 30%, rgb(0 0 0 / 0.25)) !important;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+:root .cl-modalContent { width: min(44rem, calc(100vw - 2rem)); max-width: none; height: auto; max-height: calc(100dvh - 2rem); margin: auto !important; }
+:root .cl-userProfile-root { width: 100%; max-width: none; }
+:root .cl-userProfile-root .cl-cardBox {
+  display: flex; flex-direction: column; position: relative; overflow: hidden;
+  width: 100%; max-width: none; height: auto; min-height: min(34rem, calc(100dvh - 2rem)); max-height: calc(100dvh - 2rem);
+  background-color: var(--glass-fill-solid) !important;
+  -webkit-backdrop-filter: var(--glass-blur-solid);
+  backdrop-filter: var(--glass-blur-solid);
+  border: 1px dashed var(--app-border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--glass-edge), 0 20px 55px -20px rgb(0 0 0 / 0.3) !important;
+}
+:root .cl-userProfile-root :is(.cl-scrollBox, .cl-pageScrollBox, .cl-profilePageContent, .cl-page, .cl-footer) { background: transparent !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important; }
+:root .cl-userProfile-root .cl-scrollBox { flex: 1 1 auto; min-height: 0; width: 100%; }
+:root .cl-userProfile-root .cl-pageScrollBox { padding: 0 !important; width: 100%; }
+:root .cl-userProfile-root .cl-profilePageContent { padding: 0 !important; }
+:root .cl-userProfile-root .cl-navbarMobileMenuRow,
+:root .cl-userProfile-root .cl-navbar .cl-footerItem,
+:root .cl-userProfile-root .cl-navbarButtonIcon,
+:root .cl-userProfile-root .cl-activeDeviceIcon,
+:root .cl-userProfile-root .cl-navbar > div:not(:has(h1, .cl-navbarButtons)),
+:root .cl-userProfile-root .cl-profilePage > .cl-header,
+/* The photo is set on Profile, and with names switched off in Clerk nothing else is in this section */
+:root .cl-userProfile-root .cl-profileSection__profile { display: none !important; }
+:root .cl-userProfile-root .cl-footer { display: flex !important; flex-shrink: 0; justify-content: center; padding: 0.75rem 1rem; border-top: 1px dashed var(--app-border) !important; }
+
+:root .cl-userProfile-root .cl-navbar {
+  display: flex !important; flex-direction: column; flex: none !important; gap: 1rem; position: static !important;
+  width: 100% !important; max-width: none !important; height: auto !important; margin: 0 !important; transform: none !important; visibility: visible !important;
+  padding: 1.5rem 1.5rem 1rem !important; background: transparent !important; border: 0 !important; border-bottom: 1px dashed var(--app-border) !important; box-shadow: none !important;
+}
+:root .cl-userProfile-root .cl-navbar > div:has(h1) { flex: none; height: auto; min-height: 0; gap: 1rem; padding: 0 !important; }
+:root .cl-userProfile-root .cl-navbar > div > div:has(> h1) { padding-inline: 0 !important; padding-right: 2.5rem !important; }
+:root .cl-userProfile-root .cl-navbar h1 { font-family: var(--font-heading); font-size: var(--text-xl); line-height: var(--text-xl--line-height); font-weight: 400; letter-spacing: -0.015em; }
+:root .cl-userProfile-root .cl-navbar p { font-size: var(--text-sm); color: var(--muted-foreground); }
+:root .cl-userProfile-root .cl-navbarButtons { display: flex; flex-direction: row; gap: 0.25rem; width: fit-content; }
+:root .cl-userProfile-root .cl-navbarButton {
+  width: auto; min-height: 2.25rem; padding-inline: 1rem !important; border-radius: 9999px !important; background: transparent !important; box-shadow: none !important; opacity: 1;
+  color: var(--muted-foreground) !important; font-size: var(--text-sm); font-weight: 500;
+}
+:root .cl-userProfile-root .cl-navbarButton:hover { color: var(--foreground) !important; background: var(--glass-hover) !important; }
+:root .cl-userProfile-root .cl-navbarButton.cl-active { color: var(--foreground) !important; background: var(--app-elev) !important; box-shadow: var(--glass-edge), 0 1px 4px rgb(0 0 0 / 0.08) !important; }
+:root .cl-userProfile-root .cl-navbarButtonText { color: inherit; font: inherit; }
+
+:root .cl-userProfile-root .cl-profilePage { gap: 0 !important; padding: 0 !important; }
+:root .cl-userProfile-root .cl-profileSection { padding: 1.25rem 1.5rem !important; border-top: 1px dashed var(--app-border) !important; }
+:root .cl-userProfile-root .cl-profileSection:nth-child(2), :root .cl-userProfile-root .cl-profileSection__profile + .cl-profileSection { border-top: 0 !important; }
+:root .cl-userProfile-root .cl-profileSectionTitleText {
+  font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted-foreground);
+}
+:root .cl-userProfile-root .cl-actionCard { background: var(--glass-inset) !important; border: 1px dashed var(--app-border-strong) !important; border-radius: var(--control-radius) !important; box-shadow: none !important; }
+:root .cl-userProfile-root .cl-actionCard .cl-headerTitle { font-family: var(--font-heading); font-weight: 400; font-size: var(--text-lg, 1.1875rem); }
+:root .cl-modalCloseButton { top: 1rem !important; right: 1rem !important; z-index: 1; border-radius: 9999px !important; }
 
 /* ─── Motion ──────────────────────────────────────────────────────────────────
    Only in response to what you do: hover, press, opening things. Pages and their content are simply
@@ -940,10 +1083,9 @@ body { background: transparent !important; isolation: isolate; }
 @utility bottom-above-tabbar { bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 4.25rem); }
 @utility pb-tabbar { padding-bottom: calc(4.5rem + max(0.75rem, env(safe-area-inset-bottom))); }
 @utility pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
-/* The wordmark and the rail's logomark: sized from the parent font size */
+/* The wordmark: the needle as its S, standing on the same line as the letters. Sized from the parent font size */
+.wordmark-needle { display: inline-block; height: 0.98em; margin-right: 0.05em; vertical-align: -0.04em; }
 .wordmark { position: relative; display: inline-block; font-family: var(--font-heading); font-size: 1.6em; line-height: 1; letter-spacing: -0.02em; }
-.wordmark-dot { position: absolute; top: 0.12em; left: 50%; width: 0.2em; height: 0.2em; transform: translateX(-50%); border-radius: 9999px; background: var(--celebrate); }
-.logomark-dot { position: absolute; top: -0.125rem; right: -0.375rem; width: 0.375rem; height: 0.375rem; border-radius: 9999px; background: var(--foreground); }
 /* Photo hover: ease the image up a little */
 @utility hover-zoom { transition: transform 0.5s var(--ease-out-soft); }
 .group\/tile:hover .hover-zoom, .group\/maker:hover .hover-zoom { transform: scale(1.04); }
@@ -1106,24 +1248,81 @@ body { background: transparent !important; isolation: isolate; }
 .guide-step:hover { background-color: var(--glass-hover); }
 .guide-step[aria-current] { background-color: var(--glass-hover); border-color: color-mix(in srgb, var(--app-text) 45%, transparent); }
 
-/* Guide scenes: a step played out on a cutting mat in soft 3D (components/sewing/GuideScene).
-   One plain fabric for every guide: greige, the right side a shade darker than the wrong side. */
-.guide-scene {
-  --gs-mat: #B9B2A4; --gs-mat-line: rgba(255,255,255,.42); --gs-mat-line-2: rgba(255,255,255,.2);
-  --gs-right: #CBC3B6; --gs-wrong: #E8E3DA; --gs-edge: #8E8577; --gs-thread: #4E321C; --gs-interf: #FBF8F2; --gs-chalk: #fff;
-  background: var(--gs-mat);
-}
-:root[data-theme="dark"] .guide-scene { --gs-mat: #2B2723; --gs-mat-line: rgba(255,255,255,.09); --gs-mat-line-2: rgba(255,255,255,.045); }
-.gs-stage { perspective: 1700px; perspective-origin: 50% 20%; }
-.gs-cam, .gs-table { position: absolute; inset: 0; transform-style: preserve-3d; }
-.gs-table { transform-origin: 50% 50%; }
-.gs-mat {
-  position: absolute; left: -60%; top: -60%; width: 220%; height: 220%; transform: translateZ(0); background-color: var(--gs-mat);
-  background-image: linear-gradient(var(--gs-mat-line) 1px, transparent 1px), linear-gradient(90deg, var(--gs-mat-line) 1px, transparent 1px), linear-gradient(var(--gs-mat-line-2) 1px, transparent 1px), linear-gradient(90deg, var(--gs-mat-line-2) 1px, transparent 1px);
-}
-.gs-pc, .gs-strip, .gs-lns { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
-.gs-face { position: absolute; left: 0; top: 0; overflow: visible; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.gs-back { transform: rotateY(180deg); }
-.gs-sh, .gs-tool, .gs-pin, .gs-ln { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; transform-origin: 0 0; }
-/* the drawings sit exactly on their point (an inline svg would sit on a text baseline, off the point it turns around) */
-.gs-sh > svg, .gs-tool > svg, .gs-pin > svg, .gs-face > svg, .gs-lns > svg { display: block; }
+/* Guide scenes: a step played out flat on the net, one plain fabric for every guide (lib/guide-animation) */
+.gs-stage { position: absolute; inset: 0; }
+:root { --scene-shadow: 33 26 18; --scene-rim: transparent; --scene-cord: #181512; --scene-thread: #2B251F; --scene-pool: rgb(255 255 255 / .5); --net-minor: rgb(33 28 22 / .085); --net-major: rgb(33 28 22 / .16); }
+:root[data-theme="dark"] { --scene-shadow: 0 0 0; --scene-rim: rgb(240 236 225 / .34); --scene-cord: #8C8479; --scene-thread: #CFC8BA; --scene-pool: rgb(255 255 255 / .4); --net-minor: rgb(196 186 168 / .09); --net-major: rgb(196 186 168 / .17); }
+/* ─── The flat scene ─── */
+.fv-gl { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.fv { display: block; overflow: hidden; --f-right: #CDC6BA; --f-wrong: #CDC6BA; --f-interf: #CDC6BA; --edge: rgb(46 38 28 / .34); --edge-paper: #6E5A47; --thread: #1E1914; }
+.fv-minor, .fv-major { fill: none; vector-effect: non-scaling-stroke; }
+.fv-minor { stroke: var(--net-minor); stroke-width: .8; } .fv-major { stroke: var(--net-major); stroke-width: 1.1; }
+.fv-shadow.far { fill: rgb(var(--scene-shadow) / .13); } .fv-shadow.near { fill: rgb(var(--scene-shadow) / .2); }
+.fv-contact { fill: rgb(var(--scene-shadow) / .3); }
+.fv-turnshadow { fill: rgb(var(--scene-shadow) / .34); }
+.fv-patch { stroke-width: .6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.fv-patch-edge { stroke: rgb(46 38 28 / .34); stroke-width: .9; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.fv-face.right { fill: var(--f-right); } .fv-face.wrong { fill: var(--f-wrong); }
+.fv-face.interfacing { fill: var(--f-interf); fill-opacity: .9; } .fv-face.paper { fill: #FFFDF8; fill-opacity: .93; }
+.fv-shade { fill: #1E1914; }
+.fv-edge { stroke: var(--edge); stroke-width: .9; vector-effect: non-scaling-stroke; }
+.fv-edge.interfacing { stroke-dasharray: 1.5 3; stroke-linecap: round; }
+.fv-edge.paper { stroke: var(--edge-paper); stroke-dasharray: 7 4; }
+.fv-grain { fill: none; stroke: var(--edge-paper); stroke-width: 1.1; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+.fv-papertext { font-family: var(--font-mono); fill: var(--edge-paper); }
+.fv-label { font-family: var(--font-mono); font-weight: 500; fill: #1E1914; }
+.fv-label-bg { fill: rgb(255 255 255 / .62); stroke: rgb(30 25 20 / .22); stroke-width: 1; stroke-dasharray: 2.5 2; }
+.fv-line { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+.fv-line.stitch { stroke: rgb(30 25 20 / .72); stroke-width: .8; stroke-dasharray: 2.2 1.5; stroke-linecap: butt; }
+.fv-line.top { stroke: rgb(30 25 20 / .78); stroke-width: .95; stroke-dasharray: 3.2 1.6; stroke-linecap: butt; }
+.fv-line.baste { stroke: rgb(30 25 20 / .55); stroke-width: .8; stroke-dasharray: 7 5; stroke-linecap: butt; }
+.fv-line.tack { stroke: rgb(30 25 20 / .72); stroke-width: .8; }
+.fv-line.zigzag, .fv-line.blind { stroke: rgb(30 25 20 / .66); stroke-width: .6; stroke-linecap: butt; }
+.fv-line.overlock { stroke: rgb(30 25 20 / .6); stroke-width: .55; stroke-linecap: butt; }
+.fv-line.overlock-edge { stroke: rgb(30 25 20 / .28); stroke-width: .6; }
+.fv-line.satin { stroke: rgb(30 25 20 / .78); stroke-width: .55; }
+.fv-line.seam { stroke: rgb(40 32 22 / .32); stroke-width: .8; }
+.fv-line.seam-edge { stroke: rgb(46 38 28 / .28); stroke-width: .8; }
+.fv-line.fold { stroke: rgb(46 38 28 / .6); stroke-width: 1.2; stroke-dasharray: 7 5; }
+.fv-foldtext { font-family: var(--font-mono); fill: rgb(46 38 28 / .7); }
+.fv-line.chalk { stroke: #FFFDF8; stroke-width: 1.6; }
+.fv-line.cut { stroke: #1E1914; stroke-width: 1.3; stroke-linecap: butt; }
+.fv-pin .sh, .fv-pin .un, .fv-pin .hi { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.fv-pin .sh { stroke: #666B71; stroke-width: 1.5; } .fv-pin .hi { stroke: #E6E8EA; stroke-width: .5; }
+.fv-pin .un { stroke: #5C6066; stroke-width: 1; stroke-dasharray: 1 3; opacity: .4; }
+.fv-pin .hd { fill: url(#tg-ball); } .fv-pin .gl { fill: rgb(255 255 255 / .8); }
+.fv-pinsh path { fill: none; stroke: rgb(30 22 14 / .2); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.fv-pinsh circle { fill: rgb(30 22 14 / .2); }
+
+/* Tools: objects lit from the top left in Sigrid's ink, bone and steel, with its dashed stitching */
+.t-steel { fill: url(#tg-steel); stroke: rgb(30 25 20 / .3); stroke-width: .7; vector-effect: non-scaling-stroke; }
+.t-steel2 { fill: url(#tg-steel2); } .t-screw { fill: url(#tg-screw); stroke: rgb(30 25 20 / .3); stroke-width: .5; vector-effect: non-scaling-stroke; }
+.t-blade { fill: url(#tg-blade); stroke: rgb(30 25 20 / .34); stroke-width: .7; vector-effect: non-scaling-stroke; }
+.t-bevel { fill: url(#tg-bevel); } .t-seam { fill: none; stroke: rgb(30 25 20 / .22); stroke-width: .6; vector-effect: non-scaling-stroke; }
+.t-sole { fill: url(#tg-sole); stroke: rgb(30 25 20 / .4); stroke-width: .8; vector-effect: non-scaling-stroke; }
+.t-ink { fill: url(#tg-ink); stroke: var(--scene-rim); stroke-width: .8; vector-effect: non-scaling-stroke; }
+.t-ink2 { fill: url(#tg-ink2); } .t-handle { fill: url(#tg-handle); stroke: rgb(0 0 0 / .5); stroke-width: .7; vector-effect: non-scaling-stroke; }
+.t-recess { fill: url(#tg-recess); } .t-sheen { fill: rgb(255 255 255 / .09); }
+.t-gleam { fill: none; stroke: rgb(255 255 255 / .3); stroke-width: .12; stroke-linecap: round; }
+.t-stitch { fill: none; stroke: rgb(248 245 238 / .46); stroke-width: .8; stroke-dasharray: 3.2 2.6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.t-stitch-d { fill: none; stroke: rgb(33 28 22 / .26); stroke-width: .8; stroke-dasharray: 3.2 2.6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.t-body { fill: url(#tg-body); stroke: rgb(30 25 20 / .34); stroke-width: .8; vector-effect: non-scaling-stroke; }
+.t-under { fill: url(#tg-under); } .t-bed { fill: url(#tg-bed); stroke: rgb(30 25 20 / .3); stroke-width: .8; vector-effect: non-scaling-stroke; }
+.t-bone { fill: url(#tg-bone); stroke: rgb(30 25 20 / .28); stroke-width: .8; vector-effect: non-scaling-stroke; } .t-bone2 { fill: url(#tg-bone2); }
+.t-lcd { fill: url(#tg-lcd); stroke: rgb(0 0 0 / .5); stroke-width: .6; vector-effect: non-scaling-stroke; }
+.t-lcd-line { fill: none; stroke: #EFEADE; stroke-width: 1.1; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
+.t-hl { fill: rgb(255 255 255 / .62); } .t-screen { fill: #EFEADE; } .t-spool { fill: url(#tg-spool); stroke: var(--scene-rim); stroke-width: .7; vector-effect: non-scaling-stroke; }
+.t-wrap { fill: none; stroke: rgb(255 255 255 / .16); stroke-width: .1; } .t-thread { fill: #2B251F; }
+.t-ring { fill: none; stroke: rgb(255 255 255 / .16); stroke-width: .12; }
+.t-rib { fill: none; stroke: rgb(255 255 255 / .2); } .t-slot { fill: none; stroke: #3A352E; stroke-width: .14; stroke-linecap: round; }
+.t-ink-s { fill: none; stroke: #181512; stroke-linecap: round; } .t-steel-s { fill: none; stroke: #868C92; }
+.t-thread-s { fill: none; stroke: var(--scene-thread); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.t-cord { fill: none; stroke: var(--scene-cord); stroke-width: .46; stroke-linecap: round; }
+.t-cord-w { fill: none; stroke: rgb(255 255 255 / .34); stroke-width: .9; stroke-dasharray: 1.5 2.4; vector-effect: non-scaling-stroke; }
+.t-steam { fill: url(#tg-steam); } .t-dust { fill: #fff; } .t-light { fill: var(--scene-pool); }
+.fv-sil * { fill: rgb(var(--scene-shadow) / .22); stroke: none; }
+.fv-sil.near * { fill: rgb(var(--scene-shadow) / .36); }
+.fv-sil .t-cord { fill: none; stroke: rgb(var(--scene-shadow) / .24); }
+.fv-sil.near .t-cord { stroke: rgb(var(--scene-shadow) / .3); }
+.fv-sil .t-steel-s { fill: none; stroke: rgb(var(--scene-shadow) / .2); }
+.fv-sil :is(.t-thread-s, .t-rib, .t-ring, .t-stitch, .t-stitch-d, .t-gleam, .t-slot, .t-seam, .t-wrap, .t-cord-w, .t-lcd-line, .t-sheen, .t-steam, .t-hl, .t-light, .t-dust, .t-screen, .t-recess) { display: none; }

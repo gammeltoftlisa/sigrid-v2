@@ -3,7 +3,7 @@
 import { use, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { IconArrowRight, IconListCheck, IconPrinter, IconScissors, IconShirt } from '@tabler/icons-react'
+import { IconArrowRight, IconListCheck, IconPrinter, IconShirt } from '@tabler/icons-react'
 
 import { ActionBar } from '@/components/patterns/action-bar'
 import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
@@ -17,7 +17,8 @@ import { garmentPhoto } from '@/lib/garment-photos'
 import SizeSheet from '@/components/garment/SizeSheet'
 import { useMounted } from '@/hooks/use-mounted'
 import { usePurchases } from '@/hooks/use-purchases'
-import { TOOLS } from '@/components/sewing/tools'
+import { SupplyRows } from '@/components/patterns/supply-rows'
+import { suppliesFor } from '@/lib/fabric/supplies'
 import { catalogGarments, creators, getCatalogItem, getGarmentById, getGuideOutline } from '@/lib/data'
 import { BuyDialog } from '@/components/garment/BuyDialog'
 import { paymentsEnabled } from '@/lib/payments'
@@ -37,8 +38,8 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const creator = garment.isCreator && garment.creatorId ? creators.find((c) => c.id === garment.creatorId) : null
   // Stable per id: a published pattern's outline is rebuilt from storage on every call
   const guide = useMemo(() => getGuideOutline(id), [id])
-  const tools = useMemo(() => (guide ? [...new Set(guide.steps.flatMap((s) => (s.tool ? [s.tool] : [])))] : []), [guide])
   const totalSteps = guide?.steps.length ?? 0
+  const supplies = suppliesFor(id)
 
   // Project state lives in the browser, so read it after mount
   const mounted = useMounted()
@@ -77,10 +78,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const [buyOpen, setBuyOpen] = useState(false)
   const needsPaying = paymentsEnabled && !!getCatalogItem(id) && !purchases.garmentIds.includes(id)
 
-  const buy = () => {
-    if (purchases.isSignedIn) setBuyOpen(true)
-    else router.push(`/sign-in?redirect_url=${encodeURIComponent(`/garment/${id}`)}`)
-  }
+  const buy = () => setBuyOpen(true)
 
   const goToPayment = async () => {
     setPaying(true)
@@ -183,7 +181,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
 
       <div className="md:grid md:grid-cols-12 md:gap-x-(--grid-gutter) md:pr-8 md:pl-4">
         {/* Garment image: a rounded card like the listing tiles. Top of the page on phones; from md it fills the left half top to bottom */}
-        <div className="md:sticky md:top-4 md:col-span-6 md:h-[calc(100svh-5rem)] md:self-start">
+        <div className="md:sticky md:top-4 md:col-span-6 garment-photo-pane md:self-start">
           <ProductFrame className="mx-4 mt-4 sm:mx-6 md:m-0 md:h-full">
           <GarmentImage
             name={garment.name}
@@ -221,7 +219,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
             <Panel
               glass
               footer={<div className="hidden md:block">{cta}</div>}
-              label={finished ? 'Finished' : project ? 'Your project' : 'What you need'}
+              label={finished ? 'Finished' : project ? 'Your project' : 'Overview'}
               meta={project ? `${done} / ${totalSteps}` : undefined}
               progress={project && totalSteps ? (done / totalSteps) * 100 : undefined}
             >
@@ -232,13 +230,6 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
                 title={fabricNames}
                 detail={`${formatMeters(fabricMeters)}${fabricSize ? ` for ${sizeLabel(fabricSize)}` : ''} · Find fabric`}
               />
-              {tools.length > 0 && (
-                <PanelRow
-                  leading={<StepDot state="upcoming"><IconScissors className="size-3.5" /></StepDot>}
-                  title="Tools"
-                  detail={tools.map((t) => TOOLS[t].label.toLowerCase()).join(', ').replace(/^./, (c) => c.toUpperCase())}
-                />
-              )}
               {guide && guide.pieces > 0 && (
                 <PanelRow
                   leading={<StepDot state="upcoming"><IconPrinter className="size-3.5" /></StepDot>}
@@ -261,6 +252,12 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
               {!project && stepsRow}
             </Panel>
 
+            {/* Everything else to have ready; each row opens it in the shop. Only for reading, so it's solid */}
+            <Panel label="What you’ll need" meta={`${supplies.special.length + supplies.basics.length} things`}>
+              <SupplyRows garmentId={id} supplies={supplies.special} />
+              <SupplyRows garmentId={id} supplies={supplies.basics} />
+              {!supplies.complete && <p className="px-1 pt-1 text-xs text-muted-foreground">The full list comes with the guide.</p>}
+            </Panel>
           </div>
 
           {/* Phones: action stays reachable, just above the tab bar */}

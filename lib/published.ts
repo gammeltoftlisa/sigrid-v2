@@ -51,6 +51,16 @@ export function findPublishedGuide(garmentId: string): GarmentGuide | null {
 }
 
 /** The pattern's fabric as a fabric need, so the product page and the fabric shop can use it */
+/** A published pattern's "also needed" lines, as the maker wrote them. Each opens a search in the shop. */
+export function findPublishedSupplies(garmentId: string) {
+  const p = find(garmentId)
+  if (!p) return null
+  return p.notions
+    .map((n) => n.trim())
+    .filter(Boolean)
+    .map((name, i) => ({ id: `notion-${i}`, name, search: name }))
+}
+
 export function findPublishedNeed(garmentId: string): FabricNeed | null {
   const p = find(garmentId)
   if (!p) return null
