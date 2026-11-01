@@ -22,6 +22,11 @@ import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
 import { ProductFrame } from '@/components/patterns/product-grid'
 import { GarmentImage } from '@/components/garment/GarmentImage'
 import CompletionDialog from '@/components/sewing/CompletionDialog'
+import BeforeYouStart from '@/components/sewing/BeforeYouStart'
+import { TOOLS } from '@/components/sewing/tools'
+import { getFabricNeed, metersFor } from '@/lib/fabric/needs'
+import { formatMeters } from '@/lib/fabric/pricing'
+import { readRaw, writeRaw } from '@/lib/local-store'
 import StepInstruction from '@/components/sewing/StepInstruction'
 import { groupIntoJourneys } from '@/lib/journeys'
 import { assemblyAt } from '@/lib/assembly'
@@ -61,6 +66,9 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [runId, setRunId] = useState(0)
   // Re-read when progress made on another device arrives
   const sewingVersion = useSewingVersion()
+  // The first time a guide opens, before step 1
+  const readyKey = `sigrid_ready_${id}`
+  const [beforeOpen, setBeforeOpen] = useState(false)
 
   useEffect(() => {
     const project = loadProject(id)
@@ -77,7 +85,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     setMeasurements(standardSizes[project.size])
     setCompletedUntil(resumeAt)
     setViewStep(Math.min(resumeAt, last))
-  }, [id, guide, guideState, router, sewingVersion])
+    if (resumeAt === 0 && !readRaw(readyKey)) setBeforeOpen(true)
+  }, [id, guide, guideState, router, sewingVersion, readyKey])
 
   // Remember progress so leaving and coming back resumes where you were
   useEffect(() => {
@@ -179,7 +188,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     // A second press during the pause would be the same step again
     if (doneTimer.current) return
     setDoneAnim(true)
-    // Remember when each step was done, for streaks and the Projects dashboard
+    // Remember when each step was done, for streaks and the dashboard on Home
     logStepDone({ garmentId: id, step: completedUntil, action: steps[completedUntil].action })
     doneTimer.current = setTimeout(() => {
       doneTimer.current = null
@@ -245,6 +254,20 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
         onConfirm={changeSize}
         progress={size ? { size, done: Math.min(completedUntil, steps.length), total: steps.length } : undefined}
       />
+
+      {size && (
+        <BeforeYouStart
+          open={beforeOpen}
+          printHref={`/garment/${id}/pattern?print=true&size=${size}`}
+          fabricHref={`/fabric?garment=${id}`}
+          fabricDetail={`${formatMeters(metersFor(getFabricNeed(id), size))} for ${sizeLabel(size)}`}
+          tools={[...new Set(steps.flatMap((s) => (s.tool ? [TOOLS[s.tool].label.toLowerCase()] : [])))].join(', ').replace(/^./, (c) => c.toUpperCase())}
+          onReady={() => {
+            writeRaw(readyKey, '1')
+            setBeforeOpen(false)
+          }}
+        />
+      )}
 
       <CompletionDialog garment={garment} open={doneOpen} onClose={() => setDoneOpen(false)} />
 

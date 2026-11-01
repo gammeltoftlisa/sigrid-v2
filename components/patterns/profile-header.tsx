@@ -1,7 +1,9 @@
 import { cn } from 'cn'
 
+import { Stipple } from './product-grid'
+
 /**
- * A person's header as one glass panel: large avatar, name (the page's h1) with an optional
+ * A person's header as one solid panel: large avatar, name (the page's h1) with an optional
  * label pill, a subtitle and a short bio, small stat pills, and one action on the right.
  * Stacks on phones, where the action becomes full width.
  */
@@ -25,7 +27,8 @@ export function ProfileHeader({
   className?: string
 }) {
   return (
-    <section className={cn('glass-panel flex flex-col gap-4 rounded-(--radius) p-4 md:flex-row md:items-center md:gap-6 md:p-6', className)}>
+    <section className={cn('product-grid solid-panel flex flex-col gap-4 rounded-(--radius) p-4 md:flex-row md:items-center md:gap-6 md:p-6', className)}>
+      <Stipple />
       {avatar}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">

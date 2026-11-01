@@ -169,7 +169,7 @@ export function StudioPatternPage({
           <TodoBar pattern={pattern} onOpen={(what) => (what === 'sizes' ? onOpenSizes() : what === 'pieces' ? onOpenPieces() : onOpenGuide())} />
 
           {/* One container, like the garment page: rows scroll inside, the main button stays at its bottom */}
-          <Panel className="md:min-h-0" bodyClassName="md:overflow-y-auto" footer={<div className="hidden md:block">{cta}</div>} label="Overview">
+          <Panel glass className="md:min-h-0" bodyClassName="md:overflow-y-auto" footer={<div className="hidden md:block">{cta}</div>} label="Overview">
             <OpenRow
               onOpen={onOpenGuide}
               action={pattern.steps.length ? 'Edit guide' : 'Write guide'}

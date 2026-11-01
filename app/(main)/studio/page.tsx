@@ -75,7 +75,7 @@ export default function StudioPage() {
       <PageHeader
         title="Pattern studio"
         description="Write the sewing guide for your pattern: its pieces, sections and steps, exactly as sewers will follow them."
-        breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Pattern studio' }]}
+        breadcrumbs={[{ label: 'Profile', href: '/profile' }, { label: 'Pattern studio' }]}
         action={patterns.length > 0 ? newButton : undefined}
       />
 
@@ -91,7 +91,7 @@ export default function StudioPage() {
           <EmptyContent>{newButton}</EmptyContent>
         </Empty>
       ) : (
-        <Panel label="Your patterns" meta={patterns.length || undefined}>
+        <Panel glass label="Your patterns" meta={patterns.length || undefined}>
           {patterns.map((p) => {
             const toFill = WIZARD.filter((w) => w.id !== 'publish')
             const done = toFill.filter((w) => isDone(w.id, p)).length

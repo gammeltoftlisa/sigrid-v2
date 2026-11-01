@@ -2,12 +2,16 @@ import Link from 'next/link'
 import { IconCheck, IconChevronRight, IconExternalLink } from '@tabler/icons-react'
 import { cn } from 'cn'
 
+import { Stipple } from './product-grid'
+
 /**
  * The workspace language of the sewing guide, for every screen:
  * a framed panel with a small-caps header, an optional taupe count and a hairline
  * progress line, then rows; an optional action footer like the guide's "Mark done" bar.
+ * Solid by default, for things you read. Pass `glass` only when it holds things you act on.
  */
 export function Panel({
+  glass = false,
   label,
   meta,
   progress,
@@ -17,6 +21,8 @@ export function Panel({
   className,
   bodyClassName,
 }: {
+  /** It holds controls: fields, buttons, a list of choices */
+  glass?: boolean
   /** Small-caps panel label, e.g. "Your project" */
   label: string
   /** Right side of the header, e.g. "5 / 17" */
@@ -32,7 +38,8 @@ export function Panel({
   bodyClassName?: string
 }) {
   return (
-    <section className={cn('glass-panel flex flex-col overflow-hidden rounded-(--radius) border', className)}>
+    <section className={cn(glass ? 'glass-panel' : 'product-grid solid-panel', 'flex flex-col overflow-hidden rounded-(--radius) border', className)}>
+      {!glass && <Stipple />}
       <header className="flex flex-col gap-2 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between gap-3">
           <h2 className="eyebrow !font-medium text-muted-foreground">{label}</h2>

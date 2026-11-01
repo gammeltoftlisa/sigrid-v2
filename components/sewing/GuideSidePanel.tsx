@@ -226,6 +226,7 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
 
   return (
     <Panel
+      glass
       label="Steps"
       meta={`${completedUntil} / ${steps.length}`}
       progress={(completedUntil / steps.length) * 100}

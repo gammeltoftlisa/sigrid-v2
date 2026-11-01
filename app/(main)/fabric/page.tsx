@@ -22,7 +22,7 @@ import { Panel } from '@/components/patterns/panel'
 import { ProductGrid } from '@/components/patterns/product-grid'
 import { StatusMessage } from '@/components/patterns/status-message'
 import { useMounted } from '@/hooks/use-mounted'
-import { garments, getGarmentById } from '@/lib/data'
+import { catalogGarments, getGarmentById } from '@/lib/data'
 import { isPublishedId, listPublishedGarments } from '@/lib/published'
 import { addToBag, removeFromBag, useBag } from '@/lib/fabric/bag'
 import { cleanSearch, departments, getDepartment } from '@/lib/fabric/catalog'
@@ -36,7 +36,7 @@ import { loadProject } from '@/lib/projects'
 import { loadSavedSize, sizeLabel } from '@/lib/sizes'
 import type { StandardSize } from '@/lib/types'
 
-const modes = ['All fabric', 'For a garment'] as const
+const modes = ['All fabric', 'For a pattern'] as const
 type Mode = (typeof modes)[number]
 
 type Sort = 'match' | 'price'
@@ -64,10 +64,10 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   const [bagOpen, setBagOpen] = useState(false)
 
   // No garment in the link: the whole store. With one: exactly what that garment needs.
-  const mode: Mode = params.garment ? 'For a garment' : 'All fabric'
+  const mode: Mode = params.garment ? 'For a pattern' : 'All fabric'
   // A pattern published from the studio lives in this browser: wait until mounted to look it up
   const garment = params.garment && (!isPublishedId(params.garment) || mounted) ? getGarmentById(params.garment) : null
-  const garmentOptions = [...garments, ...(mounted ? listPublishedGarments() : [])]
+  const garmentOptions = [...catalogGarments, ...(mounted ? listPublishedGarments() : [])]
   const need = garment ? getFabricNeed(garment.id) : null
   // A recommended fabric to narrow to, or null for all of them
   const choice = need?.choices.find((c) => c.id === params.choice) ?? null
@@ -180,7 +180,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
 
   const setMode = (m: Mode) => {
     if (m === 'All fabric') return router.replace('/fabric', { scroll: false })
-    const started = listProjects().find((p) => !p.finished)?.garment ?? garments[0]
+    const started = listProjects().find((p) => !p.finished)?.garment ?? catalogGarments[0]
     router.replace(hrefFor({ garment: started.id }), { scroll: false })
   }
 
@@ -215,8 +215,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
   return (
     <PageContainer>
       <PageHeader
-        breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Find fabric' }]}
-        barActions={<FabricBagButton count={bag.length} onClick={() => setBagOpen(true)} />}
+                barActions={<FabricBagButton count={bag.length} onClick={() => setBagOpen(true)} />}
         title="Find fabric"
         description="From independent shops and secondhand sellers. You buy from the shop; some shops may pay Sigrid a commission, which never changes your price."
       />
@@ -227,6 +226,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
         <div className="col-side flex flex-col gap-6">
           {garment && need && size && meters ? (
             <Panel
+              glass
               label="What you’re making"
               meta={<span aria-label={`You need ${formatMeters(meters)}`}>Need {formatMeters(meters)}</span>}
               action={clearAction}
@@ -238,7 +238,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
                   value={garment.id}
                   onValueChange={(v) => router.replace(hrefFor({ garment: v as string }), { scroll: false })}
                 >
-                  <SelectTrigger aria-label="Garment" className="min-w-0 flex-1 bg-background">
+                  <SelectTrigger aria-label="Pattern" className="min-w-0 flex-1 bg-background">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -457,7 +457,7 @@ function StorePanel({
   const categoryItems = [{ value: 'all', label: 'All fabric' }, ...departments.map((d) => ({ value: d.id, label: d.name }))]
 
   return (
-    <Panel label="Browse" action={action}>
+    <Panel glass label="Browse" action={action}>
         <form
           role="search"
           onSubmit={(e) => {

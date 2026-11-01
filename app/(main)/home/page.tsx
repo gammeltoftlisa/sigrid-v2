@@ -1,70 +1,107 @@
 'use client'
 
-import { useState } from 'react'
-import { CategoryTabs } from '@/components/patterns/category-tabs'
+import Link from 'next/link'
+import { IconNeedleThread } from '@tabler/icons-react'
+
+import { Button } from '@/components/ui/button'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Skeleton } from '@/components/ui/skeleton'
 import { GarmentCard } from '@/components/patterns/garment-card'
 import { HomeDashboard } from '@/components/patterns/home-dashboard'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
-import { PageSection } from '@/components/patterns/page-section'
 import { ProductGrid } from '@/components/patterns/product-grid'
-import { KeepHeight } from '@/components/patterns/keep-height'
+import { ProjectGrid } from '@/components/patterns/project-grid'
+import { SewingDashboard } from '@/components/patterns/sewing-dashboard'
 import { useMounted } from '@/hooks/use-mounted'
-import { garments } from '@/lib/data'
+import { loadActivity } from '@/lib/activity'
+import { easiestPatterns } from '@/lib/data'
 import { listProjects } from '@/lib/project-summary'
-import type { GarmentCategory } from '@/lib/types'
 
-const categories = ['All', 'Tops', 'Bottoms', 'Dresses', 'Outerwear'] as const satisfies readonly (GarmentCategory | 'All')[]
+const HEADER = 'pt-8 md:pt-12 [--h1-size:clamp(2.25rem,4vw,3.5rem)]'
 
+/** Someone with nothing on the table yet: one way forward, and a few easy patterns to make it concrete. */
+function FirstVisit() {
+  return (
+    <>
+      <PageHeader title="Start sewing" className={HEADER} />
+      <Empty className="border">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <IconNeedleThread />
+          </EmptyMedia>
+          <EmptyTitle>Nothing on your table yet</EmptyTitle>
+          <EmptyDescription>Pick a pattern you like. Your progress is saved after every step.</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button size="lg" nativeButton={false} render={<Link href="/explore" />}>
+            Find your first pattern
+          </Button>
+        </EmptyContent>
+      </Empty>
+      <ProductGrid label="Good places to start">
+        <div className="tile-grid tiles">
+          {easiestPatterns(3).map((g) => (
+            <GarmentCard
+              key={g.id}
+              href={`/garment/${g.id}`}
+              name={g.name}
+              difficulty={g.difficulty}
+              time={g.estimatedTime}
+              price={g.price}
+            />
+          ))}
+        </div>
+      </ProductGrid>
+    </>
+  )
+}
+
+/** Home is what you're sewing and how it's going. Finding something new is what Explore is for. */
 export default function HomePage() {
-  const [category, setCategory] = useState<(typeof categories)[number]>('All')
-  // Projects live in localStorage
+  // Projects are saved in this browser, so they're only known after mount
   const mounted = useMounted()
-  const projects = mounted ? listProjects() : []
-  const inProgress = projects.filter((p) => !p.finished)
-  const current = inProgress[0] ?? null
 
-  const tabs = categories.filter((c) => c === 'All' || garments.some((g) => g.category === c))
-  const filtered = category === 'All' ? garments : garments.filter((g) => g.category === category)
-  const started = new Set(projects.map((p) => p.garment.id))
-  // Feature the first garment you haven't started yet
-  const leadId = filtered.find((g) => !started.has(g.id))?.id
+  if (!mounted) {
+    return (
+      <PageContainer>
+        <PageHeader title="Your sewing" className={HEADER} />
+        <Skeleton className="h-96 rounded-(--radius)" />
+      </PageContainer>
+    )
+  }
+
+  const projects = listProjects()
+  const activity = loadActivity()
+  const active = projects.filter((p) => !p.finished)
+  const finished = projects.filter((p) => p.finished)
 
   return (
     <PageContainer>
-      {current ? (
-        <PageHeader title="Your sewing" className="pt-8 md:pt-12" />
+      {projects.length === 0 ? (
+        <FirstVisit />
       ) : (
-        <PageHeader title="Start sewing" description="Choose a garment. Every pattern comes in your size, with each step explained." className="pt-8 md:pt-12" />
-      )}
-
-      {current && <HomeDashboard projects={inProgress} />}
-
-      <PageSection id="garments" title={current ? 'Start something new' : undefined}>
-        <CategoryTabs label="Filter by category" options={tabs} value={category} onValueChange={setCategory} />
-        <KeepHeight>
-          {filtered.length > 0 ? (
-            <ProductGrid>
-            <div key={category} className="tile-grid tiles">
-              {filtered.map((g) => (
-                <GarmentCard
-                  key={g.id}
-                  lead={category === 'All' && g.id === leadId}
-                  tag={started.has(g.id) ? 'In progress' : undefined}
-                  description={g.description}
-                  href={`/garment/${g.id}`}
-                  name={g.name}
-                  difficulty={g.difficulty}
-                  time={g.estimatedTime}
-                  price={g.price}
-                />
-              ))}
-            </div>
-            </ProductGrid>
+        <>
+          <PageHeader title="Your sewing" className={HEADER} />
+          {active.length > 0 ? (
+            <HomeDashboard projects={active} />
           ) : (
-            <p className="py-8 text-sm text-muted-foreground">No {category.toLowerCase()} yet. More patterns are on the way.</p>
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyTitle>Everything’s finished</EmptyTitle>
+                <EmptyDescription>Well done. Ready for the next one?</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button size="lg" nativeButton={false} render={<Link href="/explore" />}>
+                  Find your next pattern
+                </Button>
+              </EmptyContent>
+            </Empty>
           )}
-        </KeepHeight>
-      </PageSection>
+          {/* Charts with nothing in them only discourage, so they wait for the first finished step */}
+          {activity.length > 0 && <SewingDashboard activity={activity} projects={projects} />}
+          {finished.length > 0 && <ProjectGrid label="Finished" projects={finished} count />}
+        </>
+      )}
     </PageContainer>
   )
 }

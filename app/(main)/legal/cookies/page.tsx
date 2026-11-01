@@ -10,6 +10,8 @@ const storage = [
   { key: 'sigrid_sync_owner', what: 'Which account the sewing saved in this browser belongs to', kept: 'Until you log out' },
   { key: 'sigrid_activity', what: 'The days you marked steps done, for your streak', kept: 'Until you clear it' },
   { key: 'sigrid_fabric_bag', what: 'Fabrics you added to your bag', kept: 'Until you clear it' },
+  { key: 'sigrid_welcomed', what: 'That you’ve seen the welcome screens, so they don’t show again', kept: 'Until you clear it' },
+  { key: 'sigrid_ready_…', what: 'That you’ve seen “Before you start” for a pattern', kept: 'Until you clear it' },
   { key: 'sigrid_flow_enter', what: 'Plays the opening animation of the sewing guide once', kept: 'Until you close the tab' },
 ]
 

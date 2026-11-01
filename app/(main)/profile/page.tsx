@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { IconBell, IconRuler2, IconSparkles, IconTrash } from '@tabler/icons-react'
+import { IconRuler2, IconTrash } from '@tabler/icons-react'
 import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
 
@@ -18,7 +18,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
 import { CategoryTabs } from '@/components/patterns/category-tabs'
 import { AccountPanel } from '@/components/patterns/account-panel'
@@ -35,8 +34,6 @@ const appearances = ['System', 'Light', 'Dark'] as const
 
 export default function ProfilePage() {
   const { theme, setTheme } = useTheme()
-  // Off until the user switches it on: reminders need opt-in consent
-  const [notifications, setNotifications] = useState(false)
   const [picked, setPicked] = useState<StandardSize | null>(null)
   const mounted = useMounted()
   const size = picked ?? (mounted ? loadSavedSize() : null)
@@ -94,29 +91,29 @@ export default function ProfilePage() {
 
   return (
     <PageContainer>
-      <PageHeader breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Profile' }]} title="Profile" />
+      <PageHeader title="Profile" className="pt-8 md:pt-12" />
 
       <div className="grid-12">
         <div className="col-side flex flex-col gap-6">
-        <Panel label="Profile picture">
+        <AccountPanel />
+        <Panel glass label="Profile picture">
           <ProfilePhoto />
         </Panel>
-        <AccountPanel />
-        <Panel label="Your data" footer={deleteButton}>
+        <Panel glass label="Your data" footer={deleteButton}>
           <p className="px-1 text-sm text-muted-foreground">
-            Your projects, progress, size and photo are saved on this device only, even when you’re logged in. To delete your account, use Manage account.{' '}
+            Logged in, your projects, progress and size are saved on your account. Logged out, they stay on this device. Your photo and fabric bag always stay on this device. To delete your account, use Manage account.{' '}
             <Link href="/legal/privacy" className="text-foreground underline underline-offset-4">Privacy policy</Link>
           </p>
         </Panel>
         </div>
 
         <div className="col-main flex flex-col gap-6">
-          <Panel label="My size" meta={size ? sizeLabel(size) : 'Not set'}>
+          <Panel glass label="My size" meta={size ? sizeLabel(size) : 'Not set'}>
             <p className="px-1 pb-2 text-sm text-muted-foreground">New patterns start in this size.</p>
             <SizePicker sizes={allSizes} value={size} onValueChange={selectSize} label="My usual size" />
           </Panel>
 
-          <Panel label="Appearance">
+          <Panel glass label="Appearance">
             <p className="px-1 pb-2 text-sm text-muted-foreground">Light, dark, or the same as your device.</p>
             {mounted && (
               <CategoryTabs
@@ -127,27 +124,7 @@ export default function ProfilePage() {
               />
             )}
           </Panel>
-
-          <Panel label="Settings">
-            <PanelRow
-              leading={
-                <StepDot state="upcoming">
-                  <IconBell className="size-3.5" />
-                </StepDot>
-              }
-              title={<label htmlFor="notifications">Reminders</label>}
-              trailing={<Switch id="notifications" checked={notifications} onCheckedChange={setNotifications} />}
-            />
-            <PanelRow
-              href="/payment"
-              leading={
-                <StepDot state="upcoming">
-                  <IconSparkles className="size-3.5" />
-                </StepDot>
-              }
-              title="Pricing"
-              meta="Free in beta"
-            />
+          <Panel glass label="For makers">
             <PanelRow
               href="/studio"
               leading={
@@ -156,7 +133,7 @@ export default function ProfilePage() {
                 </StepDot>
               }
               title="Pattern studio"
-              detail="For pattern makers: write and sell your own patterns"
+              detail="Write the sewing guide for your own pattern"
             />
           </Panel>
 
