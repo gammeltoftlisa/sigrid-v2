@@ -1,3 +1,4 @@
+import { writeRaw } from './local-store'
 import type { StandardSize } from './types'
 
 export const allSizes: StandardSize[] = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL']
@@ -27,7 +28,5 @@ export function loadSavedSize(): StandardSize | null {
 }
 
 export function saveSize(size: StandardSize) {
-  try {
-    localStorage.setItem(STORAGE_KEY, size)
-  } catch {}
+  writeRaw(STORAGE_KEY, size)
 }

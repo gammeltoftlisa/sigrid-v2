@@ -7,6 +7,7 @@ import { MotionProvider } from '@/components/motion-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Atmosphere } from '@/components/patterns/atmosphere'
 import { clerkAppearance, clerkLocalization } from '@/lib/clerk-appearance'
+import { StorageAlerts } from '@/components/storage-alerts'
 import './globals.css'
 
 // Display: an expressive serif with optical sizing and the WONK/SOFT axes for italic accents.
@@ -44,6 +45,7 @@ export default function RootLayout({
                 <Atmosphere />
                 {children}
                 <Toaster position="bottom-center" />
+                <StorageAlerts />
               </TooltipProvider>
             </MotionProvider>
           </ThemeProvider>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, use, useEffect, useMemo } from 'react'
+import { useState, use, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
@@ -78,7 +78,17 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     if (size) saveProject(id, { size, completedUntil })
   }, [id, size, completedUntil])
 
+  // The short pause while a step is being marked done
+  const doneTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => {
+    if (doneTimer.current) clearTimeout(doneTimer.current)
+  }, [])
+
   const changeSize = (next: StandardSize) => {
+    // A step finishing now belongs to the old size; it mustn't land on the new start
+    if (doneTimer.current) clearTimeout(doneTimer.current)
+    doneTimer.current = null
+    setDoneAnim(false)
     saveProject(id, { size: next, completedUntil: 0 })
     setSize(next)
     setMeasurements(standardSizes[next])
@@ -132,10 +142,13 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   // Mark current step done and advance
   const advance = () => {
     if (allDone) { setDoneOpen(true); return }
+    // A second press during the pause would be the same step again
+    if (doneTimer.current) return
     setDoneAnim(true)
     // Remember when each step was done, for streaks and the Projects dashboard
     logStepDone({ garmentId: id, step: completedUntil, action: steps[completedUntil].action })
-    setTimeout(() => {
+    doneTimer.current = setTimeout(() => {
+      doneTimer.current = null
       setDoneAnim(false)
       if (isLast) {
         // Last step: everything is done — celebrate over the guide

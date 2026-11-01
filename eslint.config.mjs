@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Skills and their example files aren't part of the app
+    ".claude/**",
   ]),
 ]);
 
