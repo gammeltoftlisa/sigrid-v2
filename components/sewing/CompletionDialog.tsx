@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { IconX, IconCamera, IconShare, IconStar, IconStarFilled } from '@tabler/icons-react'
+import { IconX, IconCamera, IconStar, IconStarFilled } from '@tabler/icons-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { GarmentImage } from '@/components/garment/GarmentImage'
@@ -155,9 +155,8 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
               <Button size="lg" className="w-full" nativeButton={false} render={<Link href="/explore" />}>
                 Start your next project
               </Button>
-              <Button size="lg" variant="outline" className="w-full">
-                <IconShare data-icon="inline-start" />
-                Share your creation
+              <Button size="lg" variant="outline" className="w-full" nativeButton={false} render={<Link href="/home" />}>
+                See it on Home
               </Button>
             </div>
           </motion.div>

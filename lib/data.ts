@@ -1,6 +1,7 @@
 import { guideOutlines } from './guide-outline.generated'
 import { findPublishedGarment, findPublishedGuide } from './published'
 import type {
+  Difficulty,
   Garment,
   Creator,
   Pattern,
@@ -184,18 +185,13 @@ export const standardSizes: Record<StandardSize, UserMeasurements> = {
 }
 
 /** A base garment, or a creator pattern shown as a garment of its own */
-export const getGarmentById = (id: string): Garment => {
-  const published = findPublishedGarment(id)
-  if (published) return published
-  const garment = garments.find((g) => g.id === id)
-  if (garment) return garment
-  const pattern = creatorPatterns.find((p) => p.garmentId === id)
-  if (!pattern) return garments[0]
+/** A maker's pattern as a garment, on the closest built-in garment's sizes */
+function creatorGarment(pattern: Pattern): Garment {
   const base = garments.find((g) => g.category === pattern.category) ?? garments[0]
   const creator = creators.find((c) => c.id === pattern.creatorId)
   return {
     ...base,
-    id,
+    id: pattern.garmentId,
     name: pattern.name,
     difficulty: pattern.difficulty,
     price: pattern.price,
@@ -206,6 +202,18 @@ export const getGarmentById = (id: string): Garment => {
     description: `${pattern.description} A pattern by ${creator?.name ?? 'an independent maker'}.`,
   }
 }
+
+/** Every pattern Sigrid has, Sigrid's own and the makers', as garments */
+export const catalogGarments: Garment[] = [...garments, ...creatorPatterns.map(creatorGarment)]
+
+/** The easiest patterns to begin with */
+export function easiestPatterns(count: number): Garment[] {
+  const order: Difficulty[] = ['Beginner', 'Intermediate', 'Advanced']
+  return [...catalogGarments].sort((a, b) => order.indexOf(a.difficulty) - order.indexOf(b.difficulty)).slice(0, count)
+}
+
+export const getGarmentById = (id: string): Garment =>
+  findPublishedGarment(id) ?? catalogGarments.find((g) => g.id === id) ?? garments[0]
 
 /**
  * What Sigrid sells, looked up by garment id. Unlike getGarmentById this has no fallback, and a pattern

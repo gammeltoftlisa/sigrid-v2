@@ -259,3 +259,7 @@ Sigrid sounds like a calm, experienced friend at the sewing table. Every sentenc
 - [ ] Progress only changes on an explicit action
 - [ ] Copy is calm, specific and plain
 - [ ] The honesty check: does it have a signature moment and varied composition, or does it look like a template?
+
+## Site structure
+
+Each main page answers one question. **Home:** what am I sewing and how is it going (no browsing). **Explore:** what could I sew next (every pattern and maker). **Find fabric:** what do I sew it with. **Profile:** my account and settings. A *pattern* is what you find and buy, a *project* is what you're sewing. Main pages have no breadcrumbs, because the menu shows where you are; deeper pages do.

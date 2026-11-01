@@ -75,7 +75,7 @@ export default function StudioPage() {
       <PageHeader
         title="Pattern studio"
         description="Write the sewing guide for your pattern: its pieces, sections and steps, exactly as sewers will follow them."
-        breadcrumbs={[{ label: 'Home', href: '/home' }, { label: 'Pattern studio' }]}
+        breadcrumbs={[{ label: 'Profile', href: '/profile' }, { label: 'Pattern studio' }]}
         action={patterns.length > 0 ? newButton : undefined}
       />
 

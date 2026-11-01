@@ -801,10 +801,12 @@ body { background: transparent !important; isolation: isolate; }
 .product-grid > .stipple { opacity: var(--atmo-opacity); }
 .product-grid-header { border-bottom: 1px dashed var(--app-border-strong); }
 /* Strokes on each product's right and bottom; the grid hangs 1px past the container to hide the outer ones */
-:root .product-grid :is(.tiles, .project-rows) { gap: 0; margin: 0 -1px -1px 0; }
+:root .product-grid :is(.tiles, .project-rows, .maker-rows) { gap: 0; margin: 0 -1px -1px 0; }
 /* Projects with their details: side by side when there's room for two */
 .project-rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 36rem), 1fr)); }
-:root .product-grid :is(.tiles, .project-rows) > * {
+.project-rows-compact { grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); }
+.maker-rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+:root .product-grid :is(.tiles, .project-rows, .maker-rows) > * {
   padding: 0.75rem;
   border-style: dashed;
   border-color: var(--app-border-strong);

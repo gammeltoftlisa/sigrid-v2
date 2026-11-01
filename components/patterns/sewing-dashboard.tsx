@@ -76,7 +76,7 @@ export function SewingDashboard({ activity, projects }: { activity: StepDone[]; 
 
   return (
     <div className="flex flex-col gap-6">
-      <Panel label="Your sewing">
+      <Panel label="Your progress">
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           <StatTile label="Current streak" value={streak} unit={streak === 1 ? 'day' : 'days'} hero />
           <StatTile label="Longest streak" value={longest} unit={longest === 1 ? 'day' : 'days'} />

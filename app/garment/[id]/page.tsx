@@ -3,7 +3,7 @@
 import { use, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { IconArrowRight, IconCheck, IconListCheck, IconPlus, IconPrinter, IconScissors, IconShirt } from '@tabler/icons-react'
+import { IconArrowRight, IconListCheck, IconPrinter, IconScissors, IconShirt } from '@tabler/icons-react'
 
 import { ActionBar } from '@/components/patterns/action-bar'
 import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
@@ -11,13 +11,14 @@ import { Panel, PanelRow, StepDot } from '@/components/patterns/panel'
 import { Button } from '@/components/ui/button'
 import { CreatorAvatar } from '@/components/patterns/creator-avatar'
 import { GarmentImage } from '@/components/garment/GarmentImage'
-import { ProductFrame } from '@/components/patterns/product-grid'
+import { ProductFrame, ProductGrid } from '@/components/patterns/product-grid'
+import { GarmentCard } from '@/components/patterns/garment-card'
 import { garmentPhoto } from '@/lib/garment-photos'
 import SizeSheet from '@/components/garment/SizeSheet'
 import { useMounted } from '@/hooks/use-mounted'
 import { usePurchases } from '@/hooks/use-purchases'
 import { TOOLS } from '@/components/sewing/tools'
-import { creators, getCatalogItem, getGarmentById, getGuideOutline } from '@/lib/data'
+import { catalogGarments, creators, getCatalogItem, getGarmentById, getGuideOutline } from '@/lib/data'
 import { BuyDialog } from '@/components/garment/BuyDialog'
 import { paymentsEnabled } from '@/lib/payments'
 import { getFabricNeed, metersFor } from '@/lib/fabric/needs'
@@ -34,7 +35,6 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   const garment = getGarmentById(id)
   const fabricNeed = getFabricNeed(id)
   const creator = garment.isCreator && garment.creatorId ? creators.find((c) => c.id === garment.creatorId) : null
-  const [following, setFollowing] = useState(false)
   // Stable per id: a published pattern's outline is rebuilt from storage on every call
   const guide = useMemo(() => getGuideOutline(id), [id])
   const tools = useMemo(() => (guide ? [...new Set(guide.steps.flatMap((s) => (s.tool ? [s.tool] : [])))] : []), [guide])
@@ -143,6 +143,16 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
         : paymentsEnabled && getCatalogItem(id)
           ? 'Start sewing'
           : `Start sewing · €${garment.price}`
+  const stepsRow = totalSteps > 0 && (
+    <PanelRow
+                  leading={<StepDot state={project ? 'active' : 'upcoming'}><IconListCheck className="size-3.5" /></StepDot>}
+                  title={project ? (finished ? 'Every step done' : `Next: ${guide!.steps[done]?.title ?? ''}`) : `${totalSteps} steps`}
+                  detail={project ? sizeLabel(project.size) : 'Stop after any step, your progress is saved.'}
+                />
+  )
+  // Somewhere to go next: the same maker's other patterns, else something at the same level
+  const fromMaker = creator ? catalogGarments.filter((g) => g.creatorId === creator.id && g.id !== id) : []
+  const more = (fromMaker.length > 0 ? fromMaker : catalogGarments.filter((g) => g.difficulty === garment.difficulty && g.id !== id)).slice(0, 4)
   const sizeRange = `${garment.sizes[0]}–${garment.sizes[garment.sizes.length - 1]}`
 
   const printHref = `/garment/${id}/pattern?print=true${project ? `&size=${project.size}` : ''}`
@@ -157,23 +167,22 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   )
 
   return (
-    <main className="min-h-svh md:flex md:h-svh md:flex-col md:overflow-hidden">
-      {/* Breadcrumbs: always visible; on md+ the page itself never scrolls, only the details panel does */}
+    <main className="min-h-svh">
+      
       <div className="shrink-0 px-4 md:pr-8 md:pl-4">
       <div className="top-bar flex h-14 items-center gap-2">
         <PageBreadcrumbs
           items={[
-            { label: 'Home', href: '/home' },
-            ...(garment.isCreator || garment.published ? [{ label: 'Explore', href: '/explore' }] : []),
+            { label: 'Explore', href: '/explore' },
             { label: garment.name },
           ]}
         />
       </div>
       </div>
 
-      <div className="md:grid md:min-h-0 md:flex-1 md:grid-cols-12 md:gap-x-(--grid-gutter) md:pr-8 md:pl-4">
+      <div className="md:grid md:grid-cols-12 md:gap-x-(--grid-gutter) md:pr-8 md:pl-4">
         {/* Garment image: a rounded card like the listing tiles. Top of the page on phones; from md it fills the left half top to bottom */}
-        <div className="md:col-span-6 md:h-full md:min-h-0 md:pb-6">
+        <div className="md:sticky md:top-4 md:col-span-6 md:h-[calc(100svh-5rem)] md:self-start">
           <ProductFrame className="mx-4 mt-4 sm:mx-6 md:m-0 md:h-full">
           <GarmentImage
             name={garment.name}
@@ -187,8 +196,8 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
           </ProductFrame>
         </div>
 
-        <div className="flex flex-col md:col-span-6 md:min-h-0 md:pb-6">
-          <div className="flex w-full flex-1 flex-col gap-6 px-4 pt-6 pb-44 sm:px-6 md:min-h-0 md:px-0 md:pt-2 md:pb-0">
+        <div className="flex flex-col md:col-span-6">
+          <div className="flex w-full flex-1 flex-col gap-6 px-4 pt-6 pb-6 sm:px-6 md:px-0 md:pt-2">
             <header className="flex flex-col gap-2">
               <div className="flex items-baseline justify-between gap-4">
                 {/* Smaller than a page hero: it shares the screen with the photo */}
@@ -198,43 +207,24 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
               <p className="text-xs text-muted-foreground">
                 {garment.difficulty} · {garment.estimatedTime} · {sizeRange}
               </p>
+              {creator && (
+                <Link href={`/creator/${creator.id}`} className="flex w-fit items-center gap-2 text-sm underline-offset-4 hover:underline">
+                  <CreatorAvatar creator={creator} />
+                  {creator.handle}
+                </Link>
+              )}
               <p className="max-w-prose text-sm text-muted-foreground">{garment.description}</p>
             </header>
 
             {/* One container: the rows scroll inside it if needed, the main button is always visible at its bottom */}
             <Panel
               glass
-              className="md:min-h-0"
-              bodyClassName="md:overflow-y-auto"
               footer={<div className="hidden md:block">{cta}</div>}
-              label={finished ? 'Finished' : project ? 'Your project' : 'Overview'}
+              label={finished ? 'Finished' : project ? 'Your project' : 'What you need'}
               meta={project ? `${done} / ${totalSteps}` : undefined}
               progress={project && totalSteps ? (done / totalSteps) * 100 : undefined}
             >
-              {totalSteps > 0 && (
-                <PanelRow
-                  leading={<StepDot state={project ? 'active' : 'upcoming'}><IconListCheck className="size-3.5" /></StepDot>}
-                  title={project ? (finished ? 'Every step done' : `Next: ${guide!.steps[done]?.title ?? ''}`) : `${totalSteps} steps`}
-                  detail={project ? sizeLabel(project.size) : 'Stop after any step, your progress is saved.'}
-                />
-              )}
-              {creator && (
-                <PanelRow
-                  leading={<CreatorAvatar creator={creator} />}
-                  title={
-                    <Link href={`/creator/${creator.id}`} className="hover:underline hover:underline-offset-4">
-                      {creator.handle}
-                    </Link>
-                  }
-                  detail="Pattern maker"
-                  trailing={
-                    <Button size="sm" variant="outline" aria-pressed={following} onClick={() => setFollowing((f) => !f)}>
-                      {following ? <IconCheck data-icon="inline-start" /> : <IconPlus data-icon="inline-start" />}
-                      {following ? 'Following' : 'Follow'}
-                    </Button>
-                  }
-                />
-              )}
+              {project && stepsRow}
               <PanelRow
                 href={`/fabric?garment=${id}`}
                 leading={<StepDot state="upcoming"><IconShirt className="size-3.5" /></StepDot>}
@@ -267,6 +257,7 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
                   }
                 />
               )}
+              {!project && stepsRow}
             </Panel>
 
           </div>
@@ -275,6 +266,18 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
           <ActionBar>{cta}</ActionBar>
         </div>
       </div>
+
+      {more.length > 0 && (
+        <div className="px-4 pt-2 pb-44 sm:px-6 md:pt-6 md:pr-8 md:pb-8 md:pl-4">
+          <ProductGrid label={fromMaker.length > 0 ? `More from ${creator!.handle}` : 'You might also like'}>
+            <div className="tiles">
+              {more.map((g) => (
+                <GarmentCard key={g.id} href={`/garment/${g.id}`} name={g.name} difficulty={g.difficulty} price={g.price} />
+              ))}
+            </div>
+          </ProductGrid>
+        </div>
+      )}
 
       <SizeSheet
         garment={garment}

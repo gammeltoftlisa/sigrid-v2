@@ -18,7 +18,7 @@ function timeLeft(minutes: number) {
 }
 
 /** One project: its photo and everything needed to pick it up, in one cell of the shared container. */
-function ProjectRow({ project, primary }: { project: ProjectSummary; primary: boolean }) {
+function ProjectRow({ project, primary }: { project: ProjectSummary; primary?: boolean }) {
   const { garment, totalSteps } = project
   const done = Math.min(project.project.completedUntil, totalSteps)
   const next = getGuideOutline(garment.id)?.steps[done]
@@ -87,15 +87,48 @@ function ProjectRow({ project, primary }: { project: ProjectSummary; primary: bo
   )
 }
 
-/** Home for someone who is sewing: every project in progress, sharing one container. */
+/** A project waiting its turn: small, with just enough to pick it up. */
+function CompactRow({ project }: { project: ProjectSummary }) {
+  const { garment, totalSteps } = project
+  const done = Math.min(project.project.completedUntil, totalSteps)
+  const next = getGuideOutline(garment.id)?.steps[done]
+  return (
+    <article className="flex items-center gap-3">
+      <Link href={`/garment/${garment.id}`} aria-label={`Open ${garment.name}`} className="block w-20 shrink-0 rounded-(--image-radius)">
+        <GarmentImage name={garment.name} photoSrc={garment.photo} sizes="80px" className="aspect-product rounded-(--image-radius)" />
+      </Link>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <h3 className="truncate font-heading text-lg">{garment.name}</h3>
+        <p className="truncate text-xs text-muted-foreground">{next ? `Next: ${next.title}` : 'Ready to start'}</p>
+        {totalSteps > 0 && (
+          <div className="flex items-center gap-2">
+            <Progress value={project.percent} aria-label={`${garment.name} progress`} className="flex-1" />
+            <span className="text-2xs text-muted-foreground tabular-nums">{done} / {totalSteps}</span>
+          </div>
+        )}
+        <Button size="sm" variant="outline" className="w-fit" nativeButton={false} render={<Link href={`/garment/${garment.id}/guide`} />}>
+          Continue
+        </Button>
+      </div>
+    </article>
+  )
+}
+
+/** Home for someone who is sewing: the most recent project up front, the others smaller, in one container. */
 export function HomeDashboard({ projects }: { projects: ProjectSummary[] }) {
+  const [current, ...others] = projects
   return (
     <ProductGrid label="In progress" meta={projects.length}>
       <div className="project-rows">
-        {projects.map((p, i) => (
-          <ProjectRow key={p.garment.id} project={p} primary={i === 0} />
-        ))}
+        <ProjectRow project={current} primary />
       </div>
+      {others.length > 0 && (
+        <div className="project-rows project-rows-compact">
+          {others.map((p) => (
+            <CompactRow key={p.garment.id} project={p} />
+          ))}
+        </div>
+      )}
     </ProductGrid>
   )
 }

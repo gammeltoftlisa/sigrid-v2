@@ -19,3 +19,29 @@ CREATE TABLE IF NOT EXISTS stripe_events (
   type        text NOT NULL,
   handled_at  timestamptz NOT NULL DEFAULT now()
 );
+
+-- What a logged-in person is sewing, so it follows them across devices (lib/sewing-db.ts)
+CREATE TABLE IF NOT EXISTS sewing_projects (
+  user_id text NOT NULL,
+  garment_id text NOT NULL,
+  size text NOT NULL,
+  completed_until integer NOT NULL CHECK (completed_until >= 0),
+  updated_at timestamptz NOT NULL,
+  PRIMARY KEY (user_id, garment_id)
+);
+
+CREATE TABLE IF NOT EXISTS sewing_steps (
+  user_id text NOT NULL,
+  garment_id text NOT NULL,
+  step integer NOT NULL CHECK (step >= 0),
+  action text NOT NULL,
+  done_at timestamptz NOT NULL,
+  PRIMARY KEY (user_id, garment_id, step)
+);
+
+CREATE TABLE IF NOT EXISTS sewing_profiles (
+  user_id text PRIMARY KEY,
+  size text,
+  size_updated_at timestamptz,
+  erased_at timestamptz
+);

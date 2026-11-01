@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { IconCompass, IconHome, IconNeedleThread, IconShoppingBag, IconUser, type Icon } from '@tabler/icons-react'
+import { IconCompass, IconHome, IconShoppingBag, IconUser, type Icon } from '@tabler/icons-react'
 import { motion } from 'motion/react'
 import { cn } from 'cn'
 
@@ -15,7 +15,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 const items: { href: string; label: string; /** Tab bar label, when the name is too long for a phone */ short?: string; icon: Icon }[] = [
   { href: '/home', label: 'Home', icon: IconHome },
   { href: '/explore', label: 'Explore', icon: IconCompass },
-  { href: '/projects', label: 'Projects', icon: IconNeedleThread },
   { href: '/fabric', label: 'Find fabric', short: 'Fabric', icon: IconShoppingBag },
   { href: '/profile', label: 'Profile', icon: IconUser },
 ]

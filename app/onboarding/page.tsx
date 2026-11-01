@@ -9,6 +9,7 @@ import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { SizePicker } from '@/components/patterns/size-picker'
 import { Wordmark } from '@/components/patterns/wordmark'
+import { writeRaw } from '@/lib/local-store'
 import { allSizes, saveSize } from '@/lib/sizes'
 import type { StandardSize } from '@/lib/types'
 
@@ -42,7 +43,10 @@ export default function OnboardingPage() {
   const back = () => setStep((s) => Math.max(s - 1, 0))
   const finish = () => {
     if (size) saveSize(size)
-    router.push('/home')
+    // So the site's address goes straight to Home next time
+    writeRaw('sigrid_welcomed', '1')
+    // Nothing to show on Home yet: the first thing to do is find a pattern
+    router.push('/explore')
   }
 
   const isIntro = step < ACCOUNT

@@ -1,4 +1,4 @@
-import { garments, getGuideOutline } from './data'
+import { catalogGarments, getGuideOutline } from './data'
 import { listPublishedGarments } from './published'
 import { loadProject, type ProjectState } from './projects'
 import { sizeLabel } from './sizes'
@@ -19,9 +19,9 @@ export function minutesPerStep(estimate: string, steps: number) {
   return steps ? (hours * 60) / steps : 0
 }
 
-/** Every project the user has started on this device, in-progress first. Browser only. */
+/** Every project the user has started, in-progress first and the most recently touched first. Browser only. */
 export function listProjects(): ProjectSummary[] {
-  return [...garments, ...listPublishedGarments()]
+  return [...catalogGarments, ...listPublishedGarments()]
     .flatMap((garment) => {
       const project = loadProject(garment.id)
       if (!project) return []
@@ -30,7 +30,7 @@ export function listProjects(): ProjectSummary[] {
       const finished = totalSteps > 0 && done >= totalSteps
       return [{ garment, project, totalSteps, finished, percent: totalSteps ? Math.round((done / totalSteps) * 100) : 0 }]
     })
-    .sort((a, b) => Number(a.finished) - Number(b.finished))
+    .sort((a, b) => Number(a.finished) - Number(b.finished) || (b.project.updatedAt ?? '').localeCompare(a.project.updatedAt ?? ''))
 }
 
 /** What a project card shows: the garment, the next step and how far along it is */
