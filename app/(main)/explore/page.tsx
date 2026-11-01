@@ -11,7 +11,7 @@ import { CategoryTabs } from '@/components/patterns/category-tabs'
 import { GarmentCard } from '@/components/patterns/garment-card'
 import { MakerCard } from '@/components/patterns/maker-card'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
-import { Panel } from '@/components/patterns/panel'
+import { ProductGrid } from '@/components/patterns/product-grid'
 import { PageSection } from '@/components/patterns/page-section'
 import { KeepHeight } from '@/components/patterns/keep-height'
 import { creatorPatterns, creators, getPatternsByCreator } from '@/lib/data'
@@ -38,6 +38,8 @@ export default function ExplorePage() {
   const yours = (mounted ? listPublishedGarments() : []).filter(
     (g) => (category === 'All' || g.category === category) && (difficulty === 'All' || g.difficulty === difficulty) && (!query || g.name.toLowerCase().includes(query)),
   )
+  const published = mounted ? listPublishedGarments() : []
+  const tabs = categories.filter((c) => c === 'All' || [...creatorPatterns, ...published].some((g) => g.category === c))
   const filtered = creatorPatterns.filter((p) => {
     if (category !== 'All' && p.category !== category) return false
     if (difficulty !== 'All' && p.difficulty !== difficulty) return false
@@ -62,7 +64,7 @@ export default function ExplorePage() {
       <PageSection title="Patterns">
         {/* Same as Home: category tabs, then a full-width grid; search and level sit on the same row */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CategoryTabs label="Filter by category" options={categories} value={category} onValueChange={setCategory} />
+          <CategoryTabs label="Filter by category" options={tabs} value={category} onValueChange={setCategory} />
           <div className="flex w-full items-center gap-2 sm:w-auto">
             <InputGroup className="flex-1 sm:w-64 sm:flex-none">
               <InputGroupAddon>
@@ -110,6 +112,7 @@ export default function ExplorePage() {
             )}
           </Empty>
         ) : (
+          <ProductGrid>
           <div key={`${category}-${difficulty}`} className="tile-grid tiles">
             {yours.map((g) => (
               <GarmentCard
@@ -133,18 +136,18 @@ export default function ExplorePage() {
               />
             ))}
           </div>
+          </ProductGrid>
         )}
         </KeepHeight>
       </PageSection>
 
-      {/* Makers: a brown-glass panel with white cards in the same grid, like projects on Home */}
-      <Panel label="Makers" meta={creators.length}>
-        <div className="tiles !gap-y-3">
+      <ProductGrid label="Makers" meta={creators.length}>
+        <div className="tiles">
           {creators.map((c) => (
             <MakerCard key={c.id} creator={c} patterns={getPatternsByCreator(c.id)} />
           ))}
         </div>
-      </Panel>
+      </ProductGrid>
     </PageContainer>
   )
 }

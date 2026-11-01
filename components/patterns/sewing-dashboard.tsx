@@ -7,21 +7,14 @@ import { Inset } from '@/components/patterns/inset'
 import { Panel } from '@/components/patterns/panel'
 import { ACTION_LABELS } from '@/components/sewing/actions'
 import { currentStreak, dayKey, longestStreak, stepsByDay, type StepDone } from '@/lib/activity'
-import type { ProjectSummary } from '@/lib/project-summary'
+import { minutesPerStep, type ProjectSummary } from '@/lib/project-summary'
 
 /** Heatmap ramp: one hue (espresso), light → dark; empty days are plain white */
 const RAMP = ['bg-data-1', 'bg-data-2', 'bg-data-3', 'bg-data-4']
 const level = (n: number) => (n <= 0 ? -1 : n === 1 ? 0 : n <= 3 ? 1 : n <= 5 ? 2 : 3)
 const WEEKS = 16
 
-/** Average minutes per step for a garment, from its estimate ("3–4 hours") and step count */
-function minutesPerStep(estimate: string, steps: number) {
-  const nums = estimate.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [3]
-  const hours = nums.reduce((a, b) => a + b, 0) / nums.length
-  return steps ? (hours * 60) / steps : 0
-}
-
-function StatTile({ label, value, unit, hero }: { label: string; value: string | number; unit?: string; hero?: boolean }) {
+export function StatTile({ label, value, unit, hero }: { label: string; value: string | number; unit?: string; hero?: boolean }) {
   return (
     <Inset className="flex flex-col gap-1 p-4">
       <span className="text-xs text-muted-foreground">{label}</span>

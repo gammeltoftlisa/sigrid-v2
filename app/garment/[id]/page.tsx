@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useMemo, useState } from 'react'
+import { use, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { IconArrowRight, IconCheck, IconListCheck, IconPlus, IconPrinter, IconScissors, IconShirt } from '@tabler/icons-react'
@@ -10,17 +10,22 @@ import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
 import { Panel, PanelRow, StepDot } from '@/components/patterns/panel'
 import { Button } from '@/components/ui/button'
 import { CreatorAvatar } from '@/components/patterns/creator-avatar'
-import { GarmentImage } from '@/components/garment/GarmentArt'
+import { GarmentImage } from '@/components/garment/GarmentImage'
+import { ProductFrame } from '@/components/patterns/product-grid'
+import { garmentPhoto } from '@/lib/garment-photos'
 import SizeSheet from '@/components/garment/SizeSheet'
 import { useMounted } from '@/hooks/use-mounted'
+import { usePurchases } from '@/hooks/use-purchases'
 import { TOOLS } from '@/components/sewing/tools'
-import { creators, getGarmentById, getGarmentGuide } from '@/lib/data'
+import { creators, getCatalogItem, getGarmentById, getGarmentGuide } from '@/lib/data'
+import { paymentsEnabled } from '@/lib/payments'
 import { getFabricNeed, metersFor } from '@/lib/fabric/needs'
 import { formatMeters } from '@/lib/fabric/pricing'
 import { loadProject, saveProject, type ProjectState } from '@/lib/projects'
 import { loadSavedSize, sizeLabel } from '@/lib/sizes'
 import type { StandardSize } from '@/lib/types'
 import { PhotoLabel } from '@/components/patterns/photo-label'
+import { toast } from 'sonner'
 
 export default function GarmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -65,15 +70,58 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
   // Every fabric the pattern recommends: "Cotton jersey · Organic cotton jersey · Viscose jersey"
   const fabricNames = fabricNeed.choices.map((c) => c.name).join(' · ')
 
-  const onCta = () => (inProgress ? enterGuide() : setSizeSheetOpen(true))
-  const ctaLabel = inProgress ? 'Continue sewing' : finished ? 'Sew it again' : `Start sewing · €${garment.price}`
+  // Starting a project is what needs paying for. Projects already started on this device carry on.
+  const purchases = usePurchases()
+  const [paying, setPaying] = useState(false)
+  const needsPaying = paymentsEnabled && !project && !!getCatalogItem(id) && !purchases.garmentIds.includes(id)
+
+  const buy = async () => {
+    if (!purchases.isSignedIn) {
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(`/garment/${id}`)}`)
+      return
+    }
+    setPaying(true)
+    try {
+      const res = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ garmentId: id }) })
+      const { url } = (await res.json()) as { url?: string }
+      if (!res.ok || !url) throw new Error('No checkout')
+      window.location.assign(url)
+    } catch {
+      setPaying(false)
+      toast.error('Checkout couldn’t start. Nothing was charged. Please try again.')
+    }
+  }
+
+  // Back from a finished payment: the purchase is read from Stripe, then choose a size
+  const { refresh: refreshPurchases, loading: purchasesLoading } = purchases
+  useEffect(() => {
+    if (purchasesLoading || new URLSearchParams(window.location.search).get('checkout') !== 'done') return
+    router.replace(`/garment/${id}`)
+    refreshPurchases()
+      .then(() => {
+        toast.success('Thank you. The pattern is yours.')
+        setSizeSheetOpen(true)
+      })
+      .catch(() => {})
+  }, [purchasesLoading, refreshPurchases, router, id])
+
+  const onCta = () => (needsPaying ? buy() : inProgress ? enterGuide() : setSizeSheetOpen(true))
+  const ctaLabel = needsPaying
+    ? `Buy pattern · €${garment.price}`
+    : inProgress
+      ? 'Continue sewing'
+      : finished
+        ? 'Sew it again'
+        : paymentsEnabled && getCatalogItem(id)
+          ? 'Start sewing'
+          : `Start sewing · €${garment.price}`
   const sizeRange = `${garment.sizes[0]}–${garment.sizes[garment.sizes.length - 1]}`
 
   const printHref = `/garment/${id}/pattern?print=true${project ? `&size=${project.size}` : ''}`
 
   const cta = (
     <div className="flex flex-col gap-2">
-      <Button size="lg" className="w-full" onClick={onCta}>
+      <Button size="lg" className="w-full" disabled={paying || (paymentsEnabled && !project && purchases.loading)} onClick={onCta}>
         {ctaLabel}
         {inProgress && <IconArrowRight data-icon="inline-end" />}
       </Button>
@@ -98,16 +146,17 @@ export default function GarmentDetailPage({ params }: { params: Promise<{ id: st
       <div className="md:grid md:min-h-0 md:flex-1 md:grid-cols-12 md:gap-x-(--grid-gutter) md:pr-8 md:pl-4">
         {/* Garment image: a rounded card like the listing tiles. Top of the page on phones; from md it fills the left half top to bottom */}
         <div className="md:col-span-6 md:h-full md:min-h-0 md:pb-6">
+          <ProductFrame className="mx-4 mt-4 sm:mx-6 md:m-0 md:h-full">
           <GarmentImage
             name={garment.name}
-            className="mx-4 mt-4 aspect-product rounded-(--radius) sm:mx-6 md:m-0 md:aspect-auto md:h-full"
-            artClassName="max-w-72 md:max-w-sm"
+            className="aspect-product rounded-(--image-radius) md:aspect-auto md:h-full"
             sizes="(min-width: 768px) 50vw, 100vw"
             priority
             photoSrc={garment.photo}
           >
-            {!garment.photo && <PhotoLabel className="absolute bottom-3 left-3 normal-case tracking-normal">Inspiration photo · Unsplash</PhotoLabel>}
+            {!garment.photo && garmentPhoto(garment.name) && <PhotoLabel className="absolute bottom-3 left-3 normal-case tracking-normal">Inspiration photo</PhotoLabel>}
           </GarmentImage>
+          </ProductFrame>
         </div>
 
         <div className="flex flex-col md:col-span-6 md:min-h-0 md:pb-6">

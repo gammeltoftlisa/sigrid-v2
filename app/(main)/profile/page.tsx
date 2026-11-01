@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
 import { CategoryTabs } from '@/components/patterns/category-tabs'
+import { AccountPanel } from '@/components/patterns/account-panel'
 import { Panel, PanelRow, StepDot } from '@/components/patterns/panel'
 import { ProfilePhoto } from '@/components/patterns/profile-photo'
 import { SizePicker } from '@/components/patterns/size-picker'
@@ -89,9 +90,10 @@ export default function ProfilePage() {
         <Panel label="Profile picture">
           <ProfilePhoto />
         </Panel>
+        <AccountPanel />
         <Panel label="Your data" footer={deleteButton}>
           <p className="px-1 text-sm text-muted-foreground">
-            There’s no account during the beta. Everything Sigrid remembers is saved on this device only.{' '}
+            Your projects, progress, size and photo are saved on this device only, even when you’re logged in. To delete your account, use Manage account.{' '}
             <Link href="/legal/privacy" className="text-foreground underline underline-offset-4">Privacy policy</Link>
           </p>
         </Panel>

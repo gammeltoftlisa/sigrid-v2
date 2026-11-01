@@ -3,14 +3,15 @@ import { IconArrowRight } from '@tabler/icons-react'
 
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { GarmentImage } from '@/components/garment/GarmentArt'
+import { GarmentImage } from '@/components/garment/GarmentImage'
 
 /**
- * One project in progress, as a white card inside the brown-glass projects panel that sits in the same grid as product tiles:
+ * One project in progress, inside a ProductGrid:
  * the garment photo, its name, the next step, a progress line and "Continue sewing".
  */
 export function ProjectCard({
   name,
+  photoSrc,
   href,
   continueHref,
   sizeLabel,
@@ -19,6 +20,8 @@ export function ProjectCard({
   total,
 }: {
   name: string
+  /** The photo attached to the garment; see GarmentImage */
+  photoSrc?: string | null
   href: string
   continueHref: string
   sizeLabel: string
@@ -29,9 +32,9 @@ export function ProjectCard({
   const finished = total > 0 && done >= total
   const percent = total ? Math.round((done / total) * 100) : 0
   return (
-    <article className="flex flex-col gap-3 rounded-(--control-radius) bg-card p-2 pb-1">
+    <article className="flex flex-col gap-3">
       <Link href={href} className="block outline-none rounded-(--image-radius)">
-        <GarmentImage name={name} sizes="(min-width: 1280px) 18vw, (min-width: 768px) 30vw, 50vw" className="aspect-cover rounded-(--image-radius)" />
+        <GarmentImage name={name} photoSrc={photoSrc} sizes="(min-width: 1280px) 18vw, (min-width: 768px) 30vw, 50vw" className="aspect-cover rounded-(--image-radius)" />
       </Link>
       <div className="flex flex-col gap-0.5 px-1">
         <Link href={href} className="truncate text-sm font-medium outline-none hover:underline hover:underline-offset-4">
@@ -46,7 +49,7 @@ export function ProjectCard({
           </span>
         </div>
       </div>
-      <Button variant="ghost" className="self-center" nativeButton={false} render={<Link href={finished ? href : continueHref} />}>
+      <Button variant="ghost" className="w-full px-1!" nativeButton={false} render={<Link href={finished ? href : continueHref} />}>
         {finished ? 'View garment' : 'Continue sewing'}
         <IconArrowRight data-icon="inline-end" />
       </Button>

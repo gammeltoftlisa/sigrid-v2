@@ -7,8 +7,8 @@ Where things live here: tokens and the brand layer in `app/globals.css`, shadcn 
 The sewing guide (`components/sewing/`, `components/legacy/`) is older code that still uses legacy class aliases (`bg-surface`, `text-ink`…); don't use those names or `components/legacy` in new code.
 
 > **Brand: liquid glass, warm editorial atelier.** Built on the `liquid-glass-frontend` skill (`.claude/skills/liquid-glass-frontend`, read its `references/` before UI work).
-> Real Apple-style frosted glass over a calm page with one soft, still light and a faint grain, in the skill's own colours. A characterful serif (Fraunces) does the talking, with italic brown accents and small mono kickers.
-> **Signature moment:** page titles wipe up from behind a mask over the living aura; the Home hero is the over-invested version of it. Calm copy, confident type.
+> Real Apple-style frosted glass over a calm page: a cutting mat as the floor, seen from low down looking towards the top right, on a stipple of tiny dots (`Atmosphere`), in black, white and beige. A characterful serif (Fraunces) does the talking, with italic accents and small mono kickers.
+> **Signature moment:** page titles wipe up from behind a mask. Calm copy, confident type.
 
 ## 0. Workflow
 
@@ -35,22 +35,24 @@ Base UI note: triggers compose with `render={<Button … />}`, **not** `asChild`
 
 ## 2. Colour
 
-**One source of truth:** three RGB triplets in `:root`, everything that has colour is warm brown: `--tri-primary` saddle brown `#7B4B2A`, `--tri-primary-soft` tan `#B98A62`, `--tri-accent` caramel `#D2AE84`, on obsidian `#15110D` and ivory `#EFEADE`. Main buttons are black (light in dark mode). Status colours stay functional. Every tint is `rgb(var(--tri-primary) / 0.x)`. Re-skin by editing those three lines.
+**One source of truth:** three RGB triplets in `:root`. There is no brand colour for now, only black, white and beige: `--tri-primary` ink `#211C16` (bone on dark), `--tri-primary-soft` beige `#B0A694`, `--tri-accent` beige `#C4BAA8`, on obsidian `#15110D` and ivory `#EFEADE`. Main buttons are black (light in dark mode). Status colours stay functional. Every tint is `rgb(var(--tri-primary) / 0.x)`. Re-skin by editing those three lines.
 
 Themes: `next-themes` sets `<html data-theme="light|dark">` (system by default, switch in Profile → Appearance). The brand stays the same; only the `--app-*` surface tokens and `--aura` change. shadcn names point at them, so components never know the theme.
 
 | Token | Light / dark | Use |
 | --- | --- | --- |
 | `--app-bg` → `background` | `#EFEADE` / `#15110D` | The page, under the atmosphere |
-| `--app-panel` | `#FBF8F1` / `#1E1813` | Mixed into every glass surface |
-| `--app-elev` → `card` (72%) | `#FFFFFF` / `#2A2219` | Insets: what sits on glass |
+| `--app-panel` | `#FFFFFF` / `#1C1C1C` | Solid surfaces; neutral, only the page is warm |
+| `--glass-fill` / `-inset` / `-solid` / `-bar` / `-menu` | `--glass-fill` white at 45% (7% on dark), `-inset` transparent, `-solid` / `-bar` / `-menu` white at 80 / 78 / 90% (near-black on dark) | Every glass surface |
+| `--app-elev` | `#FFFFFF` / `#2B2B2B` | Solid fills, such as a focused field |
+| `card` → `--glass-inset` | see above | Insets: what sits on glass |
 | `--app-text` → `foreground` | `#211C16` / `#F0ECE1` | Text |
 | `--app-text-soft` → `muted-foreground` | `#625746` / `#A79C8C` | Secondary text (AA on every surface) |
 | `--app-border` / `-strong` | ink or bone at 10% / 20% | Hairlines on glass, field and button edges |
-| `primary`, `brand`, `ring` | saddle brown (tan on dark) | The main button, progress, chosen states, focus on fields |
-| `--accent-ink` | clay / soft clay | Italic headline accents, kickers |
+| `primary`, `brand`, `ring` | ink (bone or beige on dark) | Progress, chosen states, focus on fields |
+| `--accent-ink` | ink / beige | Italic headline accents, kickers |
 | `success` / `destructive` / `warning` / `info` | deep tone for text, `-solid` for the accent; lighter tones in dark | State only, with text or an icon (`StatusBadge`, `StatusMessage`) |
-| `data-1` … `data-4` | one clay hue, light → dark (reversed in dark) | Charts and the heatmap |
+| `data-1` … `data-4` | one neutral hue, light → dark (reversed in dark) | Charts and the heatmap |
 
 - Only token utilities (`bg-card`, `text-muted-foreground`, `bg-data-2`). Never `bg-white`, `text-black` or hex in components; the print sheet is the one exception.
 - **One primary action per screen or dialog.**
@@ -58,19 +60,24 @@ Themes: `next-themes` sets `<html data-theme="light|dark">` (system by default, 
 
 ## 3. Surfaces: liquid glass
 
-Glass is **frost, not transparency**: heavy `backdrop-filter: blur()` + `saturate()` + a 1px specular top edge + the atmosphere behind it to refract. `Atmosphere` (in the root layout) draws one soft, still light and the grain behind every screen. No drifting blobs, no moving fades.
+**Everything sits in a container, never on the background.** Only titles, body text, buttons and button groups may sit directly on the page.
+
+**Products have their own container.** A product (photo plus text) always sits in `ProductGrid`: a solid fill a little lighter than the page (`--product-fill`) with the page's dots. A page shares one container for all its products, with a stroke between them instead of a box around each. The same goes for products in a labelled section (`ProductGrid label="…"`). Never put products directly on the background or in a glass `Panel`. A single large photo uses `ProductFrame`.
+
+Glass is **one material, whatever its size**: white: a white tint (`--glass-fill`) + `--glass-blur` + a 1px top edge. `--glass-blur` drains the colour, lifts it towards white and blurs. Never darken it or raise its contrast: that turns small differences in the page into gray. A panel, a secondary button and a button group look the same. Whatever sits inside glass adds no fill of its own (`--glass-inset`), so it looks the same there as on the page. Only the page is warm: no cream tints on glass and no `saturate()`, which turns the warm page yellow. Only surfaces that text scrolls under are thicker: fixed bars, sheets and dialogs, menus. `Atmosphere` (in the root layout) draws the mat and a stipple of tiny dots behind every screen. No drifting blobs, no moving fades.
 
 | Material | What | How |
 | --- | --- | --- |
 | Surface | panels, cards, alerts, the segmented control | `Panel`, `glass-panel`, `glass-surface`; automatic on `Card` and `Alert` |
-| Soft (heaviest) | floating bars: rail, tab bar, `ActionBar`; sheets and dialogs | `glass` / `glass-surface-soft`; automatic on sheets and dialogs |
-| Menu (~94% solid) | dropdowns, popovers, tooltips, toasts | automatic; `glass-menu` for custom popovers |
+| Soft | floating bars: rail, tab bar, `ActionBar`; sheets and dialogs. Bars fixed over scrolling content are thicker (`--glass-fill-bar`) so labels stay readable | `glass` / `glass-surface-soft`; automatic on sheets and dialogs |
+| Menu (~82% solid) | dropdowns, popovers, tooltips, toasts | automatic; `glass-menu` for custom popovers |
 | Inset (no blur) | everything **inside** glass: rows, fields, chips, buttons, tiles | `PanelRow`, `Inset`, `DetailList`; fields and buttons turn inset automatically |
 | Glass pill | primary and outline buttons on the page | automatic on `Button` |
 
+- **Never animate `opacity`, `filter` or `mask` on glass or on anything that contains it, even with a fill-forwards animation that has ended.** The browser then cuts the glass off from the page: its computed styles look right, but there is nothing behind it to blur. Entrance animations move only (`sg-rise`).
 - **Never nest `backdrop-filter`.** Inside glass, use the inset (tint + sheen). The global CSS does this for shadcn parts.
-- **Nothing blended may sit above the page.** A fixed layer with `mix-blend-mode` over content stops every glass surface from blurring. Texture goes inside `Atmosphere`, behind the content.
-- Light theme glass is *thinner* and *more saturated* than dark (already tuned in the CSS).
+- **No `mix-blend-mode` anywhere, including on `::before`/`::after` and in shadcn parts.** One blended element on screen stops every glass surface from blurring, even a tiny avatar border, so glass changes as you scroll. Texture goes inside `Atmosphere`, behind the content.
+- Light and dark use the same glass recipe; only the tokens differ.
 - Popovers render in portals at the root (Base UI does this), so `backdrop-filter` stacking contexts never trap them.
 - Product photos and reading text are never glass. Labels on photos use `PhotoLabel`.
 - Reduced transparency turns glass solid and hides the atmosphere.
@@ -90,11 +97,11 @@ Image shapes: `aspect-product` (4:5, product tiles), `aspect-cover` (4:3, projec
 
 ## 5. Type and spacing (the rhythm)
 
-**Typography is the design.** Big, characterful and mixed: a roman line, then an italic clay line.
+**Typography is the design.** Big, characterful and mixed: a roman line, then an italic ink line.
 
 | Type | Size | Use |
 | --- | --- | --- |
-| `kicker` / `eyebrow` | 11px mono, 0.22em tracking, uppercase | Above titles, panel labels (`kicker` is clay) |
+| `kicker` / `eyebrow` | 11px mono, 0.22em tracking, uppercase | Above titles, panel labels (`kicker` is ink) |
 | `text-xs` | 13px | Details, meta, captions, field labels |
 | `text-sm` | 15px | Body, lists (the default UI size) |
 | `text-base` | 17px | Lead text under a title, reading text |
@@ -102,7 +109,7 @@ Image shapes: `aspect-product` (4:5, product tiles), `aspect-cover` (4:3, projec
 | `h1` | `clamp(2.75rem, 6.2vw, 5.75rem)`, Fraunces 360, leading 0.95 | The page title, one per screen |
 | `hero-title` | `clamp(3.5rem, 9vw, 8.5rem)`, leading 0.9 | `HeroBand` only |
 
-Put the line that carries the feeling in `<em className="display-italic">` (italic, WONK axis, clay). Body is Be Vietnam Pro 400, emphasis 500. `tabular-nums` on measurements, counts and prices. Reading text is `max-w-prose`.
+Put the line that carries the feeling in `<em className="display-italic">` (italic, WONK axis, ink). Body is Be Vietnam Pro 400, emphasis 500. `tabular-nums` on measurements, counts and prices. Reading text is `max-w-prose`.
 
 | Space | Use |
 | --- | --- |
@@ -125,10 +132,10 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 | Small button and chips | 32px (40px on touch) | `size="sm"`; filter chips, removable filters, the bag |
 | Icon button | 36–44px | `size="icon-lg"` in bars, always with `aria-label` |
 
-- Chips and size tiles are frosted, clay when chosen.
+- Chips and size tiles are frosted, ink when chosen.
 - Labels: 13px medium, 8px above the field. Every field has a visible label; placeholders are examples.
-- While you type, a field turns solid with a clay edge and a soft clay ring.
-- The slider is a 2px clay track with small glass handles; it can always be typed into as well.
+- While you type, a field turns solid with a ink edge and a soft ink ring.
+- The slider is a 2px ink track with small glass handles; it can always be typed into as well.
 - Touch targets are at least 44×44px on phones.
 
 ## 7. Layout
@@ -162,8 +169,10 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 | Buying fabric for a garment | `GarmentThumb` before the garment field, metres in the panel meta, `FabricChoices` chips (its recommended fabrics, all or one) |
 | Group things | `Panel` (glass), rows in `PanelRow`, plain white blocks in `Inset` |
 | Label–value details | `DetailList` |
-| A garment in a grid | `GarmentCard` |
-| A fabric in a grid | `FabricCard` |
+| Any products, on a page or in a section | One `ProductGrid` around a `tiles` grid, with a stroke between products |
+| One large product photo | `ProductFrame` around `GarmentImage` |
+| A garment in a grid | `GarmentCard` in a `ProductGrid` |
+| A fabric in a grid | `FabricCard` in a `ProductGrid` |
 | Featured product at the start of a grid | `GarmentCard lead description={…}` |
 | Light / dark / system | `useTheme()` from `next-themes`; the switch lives in Profile |
 | Started projects | `ProjectGrid` (cards: `ProjectCard`, data: `projectCardData()`) |
@@ -216,7 +225,7 @@ No bounce. Animate after hydration (`useRevealReady`). Reduced motion is respect
 
 ## 12. Imagery
 
-`GarmentImage` shows the garment photo from `lib/garment-photos.ts` (free Unsplash photos, credited on the company page). The garment is the subject: plain backdrops, cropped to the garment, no faces (`focus` crops past them). Without a photo it falls back to `GarmentArt`. Fabric photos belong to the shops.
+`GarmentImage` shows the garment photo from `lib/garment-photos.ts` (files in `public/garments`). The garment is the subject of the picture. A photo attached to a garment shows everywhere that garment appears, so always pass `garment.photo`. With no photo, or one that won't load, it shows a plain no-photo icon, never a drawn stand-in. Fabric photos belong to the shops.
 
 ## 13. Accessibility (WCAG 2.2 AA)
 

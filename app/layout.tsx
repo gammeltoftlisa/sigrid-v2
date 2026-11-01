@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from 'next'
+import { ClerkProvider } from '@clerk/nextjs'
 import { Be_Vietnam_Pro, Fraunces, JetBrains_Mono } from 'next/font/google'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
 import { MotionProvider } from '@/components/motion-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Atmosphere } from '@/components/patterns/atmosphere'
+import { clerkAppearance, clerkLocalization } from '@/lib/clerk-appearance'
 import './globals.css'
 
 // Display: an expressive serif with optical sizing and the WONK/SOFT axes for italic accents.
@@ -35,15 +37,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}>
       <body className="min-h-full bg-background font-sans text-foreground">
-        <ThemeProvider>
-          <MotionProvider>
-            <TooltipProvider>
-              <Atmosphere />
-              {children}
-              <Toaster position="bottom-center" />
-            </TooltipProvider>
-          </MotionProvider>
-        </ThemeProvider>
+        <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up" appearance={clerkAppearance} localization={clerkLocalization}>
+          <ThemeProvider>
+            <MotionProvider>
+              <TooltipProvider>
+                <Atmosphere />
+                {children}
+                <Toaster position="bottom-center" />
+              </TooltipProvider>
+            </MotionProvider>
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   )

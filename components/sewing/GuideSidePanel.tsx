@@ -9,9 +9,9 @@ import {
 import type { SewingStep2D } from '@/lib/types'
 import { groupIntoJourneys, type JourneyKind } from '@/lib/journeys'
 import { SECTION_ICONS, type SectionIconKey } from '@/components/studio/section-icons'
-import { StatusDot, progressStateOf, stepRowClass, stepTextClass, type ProgressState } from '@/components/legacy/progress'
+import { progressStateOf, type ProgressState } from '@/components/legacy/progress'
+import { Panel, StepDot } from '@/components/patterns/panel'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { TOOLS } from './tools'
 import { ACTION_LABELS } from './actions'
 import { ease } from '@/components/patterns/reveal'
@@ -130,18 +130,18 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
         key={s.id}
         ref={active ? activeRef : undefined}
         data-step={i}
-        className={`mb-1 ${stepRowClass(state, isOpen)}`}
+        className="mb-1"
       >
         {/* Row header */}
         <button
           onClick={() => toggle(i)}
           aria-expanded={isOpen}
           aria-current={isOpen ? 'step' : undefined}
-          className="w-full flex items-center gap-2 px-2.5 py-2 text-left"
+          className="guide-step flex w-full items-center gap-2.5 rounded-(--control-radius) px-2 py-1.5 text-left"
         >
-          <StatusDot state={state}>{n}</StatusDot>
+          <StepDot state={state} className="size-6">{n}</StepDot>
 
-          <span className={`flex-1 text-sm leading-tight truncate ${stepTextClass(state)} ${isOpen ? 'font-medium text-foreground' : ''}`}>
+          <span className={`flex-1 truncate text-sm leading-tight ${state === 'done' && !isOpen ? 'text-muted-foreground' : 'text-foreground'} ${state === 'active' || isOpen ? 'font-medium' : ''}`}>
             {s.title}
           </span>
 
@@ -225,21 +225,45 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
   }
 
   return (
-    <div className="glass-panel order-2 md:order-none flex-1 min-h-0 md:flex-none md:w-88 lg:w-96 md:shrink-0 rounded-(--radius) flex flex-col overflow-hidden">
-      {/* Label + progress count */}
-      <div className="px-3 pt-4 pb-2 shrink-0">
-        <div className="flex items-center justify-between mb-2">
-          <p className="kicker">Steps</p>
-          <p className="text-xs font-medium text-muted-foreground tabular-nums">
-            {completedUntil} / {steps.length}
-          </p>
-        </div>
-        {/* Progress bar — advances only when steps are effectively marked done */}
-        <Progress value={(completedUntil / steps.length) * 100} aria-label="Steps done" />
-      </div>
+    <Panel
+      label="Steps"
+      meta={`${completedUntil} / ${steps.length}`}
+      progress={(completedUntil / steps.length) * 100}
+      className="order-2 min-h-0 flex-1 md:order-none md:col-span-4 xl:col-span-3"
+      bodyClassName="flex-1 overflow-y-auto"
+      footer={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon-lg" onClick={onPrev} disabled={viewStep === 0} aria-label="Previous step">
+            <IconChevronLeft />
+          </Button>
 
-      {/* Scrollable step list */}
-      <div ref={listRef} className="flex-1 overflow-y-auto px-2 pb-2">
+          {viewingOther ? (
+            // Looking at another step: Mark done would complete a step that's off screen,
+            // so the main button takes you back to the one you're on instead.
+            <Button variant="outline" size="lg" className="flex-1" onClick={() => onPreview(completedUntil)}>
+              <IconArrowBackUp data-icon="inline-start" />
+              Back to step {completedUntil + 1}
+            </Button>
+          ) : (
+            <Button size="lg" className="flex-1" onClick={onNext}>
+              {allDone ? <IconConfetti data-icon="inline-start" /> : <IconCheck data-icon="inline-start" stroke={2.5} />}
+              {allDone ? 'View summary' : isLast ? 'Finish' : 'Mark done'}
+            </Button>
+          )}
+
+          <Button
+            variant="outline"
+            size="icon-lg"
+            onClick={() => !isLast && onPreview(Math.min(viewStep + 1, steps.length - 1))}
+            disabled={viewStep >= steps.length - 1}
+            aria-label="Next step"
+          >
+            <IconChevronRight />
+          </Button>
+        </div>
+      }
+    >
+      <div ref={listRef} className="flex flex-col gap-2">
         {journeys.map((j) => {
           const doneCount = j.stepIndices.filter((i) => i < completedUntil).length
           const total     = j.stepIndices.length
@@ -253,18 +277,17 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
           return (
             <div
               key={j.key}
-              data-slot="inset"
-              className="mb-2 rounded-(--control-radius) overflow-hidden"
+              className="overflow-hidden rounded-(--control-radius) border"
             >
               {/* Journey header — expanding only shows steps, never marks progress */}
               <button
                 onClick={() => toggleJourney(j.key)}
                 aria-expanded={expanded}
-                className="glass-inset-hover w-full flex items-center gap-2.5 px-2.5 py-2.5 text-left"
+                className="guide-step flex w-full items-center gap-3 px-2.5 py-2.5 text-left"
               >
-                <StatusDot state={jState} size="md"><Icon size={15} /></StatusDot>
+                <StepDot state={jState}><Icon size={14} /></StepDot>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm leading-tight truncate ${stepTextClass(jState)}`}>
+                  <p className={`truncate text-sm leading-tight ${jState === 'done' ? 'text-muted-foreground' : 'text-foreground'} ${jState === 'active' ? 'font-medium' : ''}`}>
                     {j.title}
                   </p>
                 </div>
@@ -296,39 +319,6 @@ export default function GuideSidePanel({ steps, completedUntil, viewStep, isLast
           )
         })}
       </div>
-
-      {/* ── Sticky bottom navigation — < Mark done > ── */}
-      <div className="shrink-0 px-3 pt-1 pb-3">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon-lg" onClick={onPrev} disabled={viewStep === 0} aria-label="Previous step">
-            <IconChevronLeft />
-          </Button>
-
-          {viewingOther ? (
-            // Looking at another step: Mark done would complete a step that's off screen,
-            // so the main button takes you back to the one you're on instead.
-            <Button variant="outline" size="lg" className="flex-1" onClick={() => onPreview(completedUntil)}>
-              <IconArrowBackUp data-icon="inline-start" />
-              Back to step {completedUntil + 1}
-            </Button>
-          ) : (
-            <Button size="lg" className="flex-1" onClick={onNext}>
-              {allDone ? <IconConfetti data-icon="inline-start" /> : <IconCheck data-icon="inline-start" stroke={2.5} />}
-              {allDone ? 'View summary' : isLast ? 'Finish' : 'Mark done'}
-            </Button>
-          )}
-
-          <Button
-            variant="outline"
-            size="icon-lg"
-            onClick={() => !isLast && onPreview(Math.min(viewStep + 1, steps.length - 1))}
-            disabled={viewStep >= steps.length - 1}
-            aria-label="Next step"
-          >
-            <IconChevronRight />
-          </Button>
-        </div>
-      </div>
-    </div>
+    </Panel>
   )
 }

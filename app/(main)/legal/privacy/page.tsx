@@ -34,8 +34,13 @@ export default function PrivacyPage() {
             Only the search words are sent, never anything about you.
           </li>
           <li>
-            <strong>Sign-up details.</strong> During the beta, the sign-up form does not send or store your email or password.
-            When accounts launch we will update this policy before collecting anything.
+            <strong>Your account.</strong> If you create an account, Clerk Inc. stores your email address, your login details and your sign-in
+            sessions for us. Legal basis: running the account you asked for (GDPR art. 6.1 b). You can delete your account in Profile.
+          </li>
+          <li>
+            <strong>Payments.</strong> If you buy a pattern, you pay on a page run by Stripe, which handles your card details. Sigrid never
+            sees or stores your full card number. Stripe tells us what was bought and whether it was paid. Legal basis: carrying out the purchase
+            (GDPR art. 6.1 b) and keeping accounting records (art. 6.1 c).
           </li>
         </ul>
         <p>We do not use analytics, advertising trackers or social media pixels, and we do not sell personal data.</p>

@@ -12,8 +12,8 @@ const WINDOW_MS = 60_000
 
 /**
  * Searches every fabric source.
- *   ?garment=classic-tshirt                       every recommended fabric for a garment, with `matches`
- *   ?garment=classic-tshirt&choice=cotton-jersey  just one of them
+ *   ?garment=lace-waist-skirt                      every recommended fabric for a garment, with `matches`
+ *   ?garment=lace-waist-skirt&choice=viscose  just one of them
  *   ?department=linen                              a store department
  *   ?q=washed linen                                the store's search box
  *   (nothing)                                      browse the latest fabric in every shop

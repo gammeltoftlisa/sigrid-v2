@@ -12,6 +12,13 @@ export interface ProjectSummary {
   percent: number
 }
 
+/** Average minutes per step for a garment, from its estimate ("3–4 hours") and step count */
+export function minutesPerStep(estimate: string, steps: number) {
+  const nums = estimate.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [3]
+  const hours = nums.reduce((a, b) => a + b, 0) / nums.length
+  return steps ? (hours * 60) / steps : 0
+}
+
 /** Every project the user has started on this device, in-progress first. Browser only. */
 export function listProjects(): ProjectSummary[] {
   return [...garments, ...listPublishedGarments()]
@@ -31,6 +38,7 @@ export function projectCardData({ garment, project, totalSteps }: ProjectSummary
   const steps = getGarmentGuide(garment.id)?.steps ?? []
   return {
     name: garment.name,
+    photoSrc: garment.photo,
     href: `/garment/${garment.id}`,
     continueHref: `/garment/${garment.id}/guide`,
     sizeLabel: sizeLabel(project.size),

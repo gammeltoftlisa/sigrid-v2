@@ -20,8 +20,7 @@ export default function CompanyPage() {
       </LegalSection>
       <LegalSection title="Image credits">
         <p>
-          Garment photos come from Unsplash (unsplash.com) under the Unsplash License, mostly by the photographer engin akyurt. They
-          are inspiration, not garments made from our patterns. Fabric photos belong to the shops that sell the fabric.
+          Garment photos are inspiration, not garments made from our patterns. Fabric photos belong to the shops that sell the fabric.
         </p>
       </LegalSection>
     </LegalPage>

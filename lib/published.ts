@@ -30,7 +30,7 @@ function asGarment(p: StudioPattern): Garment {
     isCreator: false,
     sizes: p.sizes,
     description: p.description,
-    photo: p.photo,
+    photo: p.photo ?? null,
     published: true,
   }
 }

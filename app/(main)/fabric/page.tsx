@@ -19,6 +19,7 @@ import { ActiveFilters, FabricFilterGroups, FabricFilterPills } from '@/componen
 import { FabricChoices, GarmentThumb } from '@/components/patterns/fabric-choices'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
 import { Panel } from '@/components/patterns/panel'
+import { ProductGrid } from '@/components/patterns/product-grid'
 import { StatusMessage } from '@/components/patterns/status-message'
 import { useMounted } from '@/hooks/use-mounted'
 import { garments, getGarmentById } from '@/lib/data'
@@ -329,7 +330,8 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
           </div>
 
           {load.state === 'loading' && (
-            <div className="tiles" aria-busy="true" aria-label="Looking through the shops">
+            <ProductGrid aria-busy="true" aria-label="Looking through the shops">
+            <div className="tiles">
               {Array.from({ length: 6 }, (_, i) => (
                 <div key={i} className="flex flex-col gap-3">
                   <Skeleton className="aspect-product rounded-none" />
@@ -339,6 +341,7 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
                 </div>
               ))}
             </div>
+            </ProductGrid>
           )}
 
           {load.state === 'error' && (
@@ -381,11 +384,13 @@ export default function FabricPage({ searchParams }: { searchParams: Promise<Par
               </Empty>
             ) : (
               <div className="flex flex-col items-center gap-6">
-                <div key={listKey} className="tile-grid tiles w-full">
+                <ProductGrid className="w-full">
+                <div key={listKey} className="tile-grid tiles">
                   {listings.slice(0, shownCount).map((l, i) => (
                     <FabricCard key={l.id} eager={i < 4} listing={l} meters={meters} size={size} inBag={inBag.has(l.id)} onToggleBag={() => toggleBag(l)} />
                   ))}
                 </div>
+                </ProductGrid>
                 {listings.length > shownCount && (
                   <Button variant="outline" size="lg" onClick={() => setShownCount((n) => n + PAGE)}>
                     Show {Math.min(PAGE, listings.length - shownCount)} more
