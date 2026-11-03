@@ -11,7 +11,7 @@ import type { ShopItem, ShopVariant } from './types'
 
 const NOT_A_CUT = /sample|swatch|thread|pattern|kit/i
 const sellable = (v: RawVariant) => v.available !== false && !NOT_A_CUT.test(v.title) && Number(v.price) > 0
-const withWidth = (src: string, w: number) => `${src}${src.includes('?') ? '&' : '?'}width=${w}`
+export const withWidth = (src: string, w: number) => `${src}${src.includes('?') ? '&' : '?'}width=${w}`
 
 /** What's true of one variant: its colour and size, from its own name */
 function variantFacets(p: RawProduct, v: RawVariant, sizeFacet: (typeof SIZE_FACET)[keyof typeof SIZE_FACET]): Facets {

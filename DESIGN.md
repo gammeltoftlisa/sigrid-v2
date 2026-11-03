@@ -285,7 +285,7 @@ Every failure says **what happened**, **why** (usually a connection problem) and
 | You (`/profile`) | An overview of you and what's yours: your card (`ProfileHeader`: photo, name, account type, Settings) in the side column, then Made by you (pattern makers, `MadePatterns`) and Your patterns (`OwnedPatterns`). There's no separate My patterns page; `/patterns` redirects here. Preferences never live on You, they live in Settings. |
 | What kind of user someone is | `useAccountType()`: sewer or pattern maker, on the Clerk account. Decides what shows, never what someone may do or pay for |
 | Side panel | `PanelSheet` |
-| The fabric bag | `FabricBagButton` + `FabricBagSheet` |
+| The bag | `FabricBagButton` + `FabricBagSheet`: each line with its photo, leading to its product page; colour or size, unit price, length or count, Undo on remove; a subtotal and checkout per shop, the total at the bottom |
 | State (saved, failed, needs a look, info) | `StatusMessage`; `StatusBadge` for short labels |
 | Quick confirmation | `toast()` from `sonner` |
 | Nothing here yet | `Empty` with one next action |

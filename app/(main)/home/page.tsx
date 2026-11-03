@@ -107,10 +107,10 @@ export default function HomePage() {
                 {/* Numbers with nothing in them only discourage, so they wait for the first finished step */}
                 {activity.length > 0 && <SewingDashboard activity={activity} projects={projects} />}
                 {bag.length > 0 && (
-                  <Panel label="Fabric bag">
+                  <Panel label="Your bag">
                     <PanelRow
                       href="/fabric"
-                      title={`${bag.length} ${bag.length === 1 ? 'fabric' : 'fabrics'} to buy`}
+                      title={`${bag.length} ${bag.length === 1 ? 'thing' : 'things'} to buy`}
                       detail="Waiting for you to check out at the shop"
                     />
                   </Panel>

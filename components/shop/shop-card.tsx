@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FabricCard } from '@/components/patterns/fabric-card'
+import { productHref } from '@/lib/shop/href'
 import type { FabricListing } from '@/lib/fabric/types'
 import type { FacetId } from '@/lib/shop/taxonomy'
 import type { ShopItem, ShopVariant } from '@/lib/shop/types'
@@ -11,7 +12,7 @@ import type { ShopItem, ShopVariant } from '@/lib/shop/types'
 const VARIANT_FACETS = new Set<FacetId>(['colour', 'length', 'size', 'width'])
 
 /** The one a filter asked for, when there's a filter that says: choosing blue shows the blue zip */
-function bestVariant(item: ShopItem, filters: Partial<Record<FacetId, string[]>>): ShopVariant | undefined {
+export function bestVariant(item: ShopItem, filters: Partial<Record<FacetId, string[]>>): ShopVariant | undefined {
   const variants = item.variants
   if (!variants?.length) return undefined
   const wanted = (Object.entries(filters) as [FacetId, string[]][]).filter(([id, v]) => v?.length && VARIANT_FACETS.has(id))
@@ -25,7 +26,7 @@ function bestVariant(item: ShopItem, filters: Partial<Record<FacetId, string[]>>
 }
 
 /** Exactly what goes in the bag: the product, in the chosen variant */
-function asListing(item: ShopItem, variant?: ShopVariant): FabricListing {
+export function asListing(item: ShopItem, variant?: ShopVariant): FabricListing {
   const listing: FabricListing = {
     id: item.id,
     kind: item.kind,
@@ -48,7 +49,7 @@ function asListing(item: ShopItem, variant?: ShopVariant): FabricListing {
   return {
     ...listing,
     id: `${item.id}:${variant.id}`,
-    title: `${item.title} – ${variant.label}`,
+    variant: variant.label,
     unitPrice: variant.price,
     image: variant.image ?? item.image,
     checkout: item.checkout.kind === 'shopify-cart' ? { ...item.checkout, variantId: variant.id } : item.checkout,
@@ -76,7 +77,7 @@ export function ShopCard({
   const shown = { ...listing, title: item.title, id: item.id }
 
   return (
-    <FabricCard listing={shown} eager={eager} priceUnit={item.priceUnit} inBag={inBag(listing.id)} onToggleBag={() => onToggleBag(listing)}>
+    <FabricCard listing={shown} href={productHref(item, item.variants ? variant?.id : undefined) ?? undefined} eager={eager} priceUnit={item.priceUnit} inBag={inBag(listing.id)} onToggleBag={() => onToggleBag(listing)}>
       {item.variants && variant && (
         <div className="relative z-10 mt-2">
           <Select

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 import { cn } from 'cn'
@@ -24,6 +24,7 @@ export function GarmentGallery({
   sizes,
   priority,
   onIndexChange,
+  show,
   children,
 }: {
   name: string
@@ -39,11 +40,19 @@ export function GarmentGallery({
   priority?: boolean
   /** Told which photo is showing, e.g. so the studio can remove that one */
   onIndexChange?: (index: number) => void
+  /** Turn to this photo when it changes, e.g. the one of a colour just chosen */
+  show?: number
   /** Labels and controls over the photo, placed with absolute classes */
   children?: React.ReactNode
 }) {
   const track = useRef<HTMLDivElement>(null)
   const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    const el = track.current
+    if (!el || show === undefined || show < 0) return
+    el.scrollTo({ left: show * el.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+  }, [show])
 
   if (!photos || photos.length < 2) {
     return (

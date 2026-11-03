@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { IconCheck, IconPlus, IconShirt } from '@tabler/icons-react'
 import { cn } from 'cn'
 
@@ -16,7 +17,8 @@ const conditionTag: Record<FabricCondition, string | null> = {
 
 /**
  * A fabric (or notion) for sale, styled like a store tile: photo, shop, name, fibre and width,
- * then one price: for the length your size needs, or per metre when browsing. The name links to the shop's own page.
+ * then one price: for the length your size needs, or per metre when browsing. The name links to the product's
+ * page in Sigrid when there is one (`href`), else to the shop's own page.
  */
 export function FabricCard({
   listing,
@@ -26,6 +28,7 @@ export function FabricCard({
   onToggleBag,
   eager,
   priceUnit,
+  href,
   children,
   className,
 }: {
@@ -40,6 +43,8 @@ export function FabricCard({
   eager?: boolean
   /** "per metre" and the like, for supplies the shop sells by length */
   priceUnit?: string
+  /** The product's own page in Sigrid. Without it, the name opens the shop's page in a new tab. */
+  href?: string
   /** A choice under the price, such as a zip's length */
   children?: React.ReactNode
   className?: string
@@ -83,10 +88,16 @@ export function FabricCard({
       <CardHeader className="gap-0.5">
         <p className="eyebrow mb-0.5 truncate text-muted-foreground">{listing.sourceName}</p>
         <CardTitle className="line-clamp-2">
-          <a href={listing.url} target="_blank" rel="noopener" className="outline-none after:absolute after:inset-0">
-            {listing.title}
-            <span className="sr-only"> (opens {listing.sourceName} in a new tab)</span>
-          </a>
+          {href ? (
+            <Link href={href} className="outline-none after:absolute after:inset-0">
+              {listing.title}
+            </Link>
+          ) : (
+            <a href={listing.url} target="_blank" rel="noopener" className="outline-none after:absolute after:inset-0">
+              {listing.title}
+              <span className="sr-only"> (opens {listing.sourceName} in a new tab)</span>
+            </a>
+          )}
         </CardTitle>
         {listing.composition && <p className="line-clamp-1 text-xs text-muted-foreground">{listing.composition}</p>}
       </CardHeader>

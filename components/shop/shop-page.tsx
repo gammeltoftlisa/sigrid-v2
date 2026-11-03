@@ -19,6 +19,7 @@ import { addToBag, removeFromBag, useBag } from '@/lib/fabric/bag'
 import { marketplaces } from '@/lib/fabric/marketplaces'
 import { formatMoney, unitsFor } from '@/lib/fabric/pricing'
 import type { FabricListing } from '@/lib/fabric/types'
+import { productHref } from '@/lib/shop/href'
 import { categories, colours, facetLabels, getCategory, MULTICOLOUR, subLabel, type Category, type FacetId } from '@/lib/shop/taxonomy'
 import type { ShopItem, ShopResponse, ShopRowsResponse, ShopSort } from '@/lib/shop/types'
 
@@ -146,7 +147,7 @@ function colourSwatch(value: string) {
 }
 
 /** The bag, for both views of the store */
-function useShopBag() {
+export function useShopBag() {
   const bag = useBag()
   const [bagOpen, setBagOpen] = useState(false)
   const inBag = new Set(bag.map((i) => i.listing.id))
@@ -229,8 +230,8 @@ function ShopSearch({ category, q, onSearch }: { category?: Category; q: string;
             title: item.title,
             detail: `${item.sourceName} · ${formatMoney(item.unitPrice, item.currency)}${item.priceUnit ? ` ${item.priceUnit}` : ''}`,
             media: item.image ? <Image src={item.image} alt="" width={40} height={50} className="object-cover" /> : <IconShirt aria-hidden />,
-            href: item.url,
-            external: true,
+            href: productHref(item) ?? item.url,
+            external: !productHref(item),
           })),
         },
       ]

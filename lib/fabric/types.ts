@@ -20,6 +20,8 @@ export interface FabricListing {
   /** Product page at the seller, with Sigrid's referral parameters */
   url: string
   image?: string
+  /** The chosen colour or size, when the product comes in several */
+  variant?: string
   condition: FabricCondition
   /** ISO 4217, e.g. GBP */
   currency: string

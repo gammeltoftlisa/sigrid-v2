@@ -76,6 +76,12 @@ export function setUnits(listingId: string, units: number) {
   write(read().map((i) => (i.listing.id === listingId ? { ...i, units: Math.max(1, units) } : i)))
 }
 
+/** Puts a removed line back where it was, for Undo */
+export function restoreToBag(item: BagItem, index: number) {
+  const rest = read().filter((i) => i.listing.id !== item.listing.id)
+  write([...rest.slice(0, index), item, ...rest.slice(index)])
+}
+
 export function removeFromBag(listingId: string) {
   write(read().filter((i) => i.listing.id !== listingId))
 }
