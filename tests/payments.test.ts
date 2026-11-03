@@ -35,6 +35,7 @@ let pg: PGlite
 let fake: {
   webhooks: Stripe['webhooks']
   paymentIntents: { retrieve: ReturnType<typeof vi.fn> }
+  paymentMethodConfigurations: { list: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> }
   checkout: { sessions: { list: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; retrieve: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> } }
 }
 
@@ -45,6 +46,10 @@ beforeEach(async () => {
   fake = {
     webhooks: real.webhooks,
     paymentIntents: { retrieve: vi.fn(async () => ({ metadata: { garmentId, userId: 'user_a' } })) },
+    paymentMethodConfigurations: {
+      list: vi.fn(async () => ({ data: [{ id: 'pmc_default', is_default: true, parent: null, active: true, name: 'Default', card: { display_preference: {} }, link: { display_preference: {} }, klarna: { display_preference: {} } }] })),
+      create: vi.fn(async () => ({ id: 'pmc_sigrid' })),
+    },
     checkout: {
       sessions: {
         list: vi.fn(async () => ({ data: [] })),
@@ -215,6 +220,29 @@ describe('starting a checkout', () => {
     expect(params.payment_intent_data.metadata).toMatchObject({ garmentId, userId: 'user_a' })
     expect(params.metadata.withdrawalWaiver).toBe('pending')
     expect(options.idempotencyKey).toContain(`user_a-${garmentId}-`)
+  })
+
+  it('offers cards and phone wallets only, through one setup made once', async () => {
+    await startCheckout({ garmentId })
+    await startCheckout({ garmentId })
+    expect(fake.paymentMethodConfigurations.create).toHaveBeenCalledTimes(1)
+    const [setup] = fake.paymentMethodConfigurations.create.mock.calls[0]
+    expect(setup).toMatchObject({
+      name: 'Sigrid checkout',
+      card: { display_preference: { preference: 'on' } },
+      apple_pay: { display_preference: { preference: 'on' } },
+      google_pay: { display_preference: { preference: 'on' } },
+      link: { display_preference: { preference: 'off' } },
+      klarna: { display_preference: { preference: 'off' } },
+    })
+    expect(fake.checkout.sessions.create.mock.calls[0][0].payment_method_configuration).toBe('pmc_sigrid')
+  })
+
+  it('uses the setup that already exists', async () => {
+    fake.paymentMethodConfigurations.list.mockResolvedValue({ data: [{ id: 'pmc_made', name: 'Sigrid checkout', active: true }] })
+    await startCheckout({ garmentId })
+    expect(fake.paymentMethodConfigurations.create).not.toHaveBeenCalled()
+    expect(fake.checkout.sessions.create.mock.calls[0][0].payment_method_configuration).toBe('pmc_made')
   })
 
   it('a second tab gets the same open checkout, so it cannot pay twice', async () => {

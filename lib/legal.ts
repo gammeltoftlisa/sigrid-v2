@@ -15,3 +15,9 @@ export const business = {
 }
 
 export const isPlaceholder = (v: string) => v.startsWith('[')
+
+/**
+ * Whether prices include VAT. Swedish law has consumer prices shown with VAT included, so once a
+ * real VAT number is filled in above, the checkout says so. Until then nothing is claimed.
+ */
+export const pricesIncludeVat = !isPlaceholder(business.vatNumber)

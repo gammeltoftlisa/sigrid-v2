@@ -10,6 +10,7 @@ import { PageContainer, PageHeader } from '@/components/patterns/page-header'
 import { Panel } from '@/components/patterns/panel'
 import { usePurchases } from '@/hooks/use-purchases'
 import { creators, getCatalogItem, getGarmentById, getGuideOutline } from '@/lib/data'
+import { pricesIncludeVat } from '@/lib/legal'
 import { paymentsEnabled } from '@/lib/payments'
 
 /** What one payment gets you. Kept to what is true for every pattern. */
@@ -67,7 +68,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
               <span className="text-sm">Total</span>
               <span className="title-md tabular-nums">€{garment.price}</span>
             </div>
-            <p className="px-1 text-xs text-muted-foreground">One payment, in euros.</p>
+            <p className="px-1 text-xs text-muted-foreground">{pricesIncludeVat ? 'One payment, in euros, including VAT.' : 'One payment, in euros.'}</p>
           </Panel>
         </div>
 

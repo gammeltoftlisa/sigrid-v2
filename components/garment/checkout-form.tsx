@@ -216,7 +216,7 @@ function PayForm({ garmentId, price, sessionId, email }: { garmentId: string; pr
 
   return (
     <div className="flex flex-col gap-4 px-1 pt-1">
-      {/* Card first, one method open at a time. Which methods show is set in Stripe's Dashboard */}
+      {/* Card first, one method open at a time. Which methods show is set by paymentMethodSetup in lib/stripe.ts */}
       <PaymentElement
         options={{
           layout: { type: 'accordion', defaultCollapsed: false, radios: 'if_multiple', spacedAccordionItems: true },

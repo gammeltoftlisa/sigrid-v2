@@ -20,6 +20,42 @@ export function getStripe(): Stripe {
 /** Test seam */
 export function setStripeForTests(fake: Stripe | null) {
   client = fake
+  methodSetup = null
+}
+
+/** What Sigrid's checkout offers. Apple Pay and Google Pay show only on devices that have them. */
+const METHOD_SETUP = 'Sigrid checkout'
+const OFFERED = new Set(['card', 'apple_pay', 'google_pay'])
+let methodSetup: Promise<string> | null = null
+
+/**
+ * The id of Sigrid's own payment method setup in Stripe: cards and phone wallets, nothing else,
+ * not even Link's "save my info" form. The account's default offers every method Stripe has turned
+ * on, and this Stripe version no longer takes a list of methods per checkout, so a named setup is
+ * the only way. Made on the first checkout in test and in live mode alike, then found by name.
+ */
+function paymentMethodSetup(): Promise<string> {
+  methodSetup ??= (async () => {
+    const stripe = getStripe()
+    const setups = await stripe.paymentMethodConfigurations.list({ limit: 100 })
+    const ours = setups.data.find((c) => c.name === METHOD_SETUP && c.active)
+    if (ours) return ours.id
+    // Every method the account knows, so the ones not offered are switched off rather than left to Stripe
+    const base = setups.data.find((c) => c.is_default && !c.parent) ?? setups.data[0]
+    const known = Object.keys(base ?? {}).filter((k) => {
+      const v = (base as unknown as Record<string, unknown>)[k]
+      return !!v && typeof v === 'object' && 'display_preference' in v
+    })
+    const params: Record<string, unknown> = { name: METHOD_SETUP }
+    for (const m of new Set([...known, ...OFFERED])) params[m] = { display_preference: { preference: OFFERED.has(m) ? 'on' : 'off' } }
+    const made = await stripe.paymentMethodConfigurations.create(params as Stripe.PaymentMethodConfigurationCreateParams, { idempotencyKey: 'payment-method-setup-v1' })
+    return made.id
+  })().catch((err) => {
+    // Try again on the next checkout
+    methodSetup = null
+    throw err
+  })
+  return methodSetup
 }
 
 /** The Stripe customer of a logged-in user, kept on their Clerk account where only the server can read it. */
@@ -65,6 +101,7 @@ export async function createCheckout({ userId, garmentId, name, price, origin }:
     {
       mode: 'payment',
       ui_mode: 'elements',
+      payment_method_configuration: await paymentMethodSetup(),
       customer: customerId,
       line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: Math.round(price * 100), product_data: { name } } }],
       metadata,
@@ -74,7 +111,7 @@ export async function createCheckout({ userId, garmentId, name, price, origin }:
       // Only used when the bank asks for a check on its own page; otherwise the checkout page carries on
       return_url: `${origin}/garment/${garmentId}?checkout_session={CHECKOUT_SESSION_ID}`,
     },
-    { idempotencyKey: `checkout-elements-${userId}-${garmentId}-${bucket}` },
+    { idempotencyKey: `checkout-cards-${userId}-${garmentId}-${bucket}` },
   )
   if (!session.client_secret) throw new Error('Stripe returned no client secret')
   return { sessionId: session.id, clientSecret: session.client_secret, email }

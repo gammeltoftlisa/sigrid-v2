@@ -175,7 +175,8 @@ Buying a pattern opens its own checkout page (`/garment/[id]/checkout`), not Str
 - **Your order** (solid `Panel`): the photo, name and maker, what's included, the total. Beside the payment from md and sticky; first and short on phones.
 - **Payment** (glass `Panel`): card first, one method open at a time. Then the right-to-cancel waiver as a checkbox, then **Pay €12** with a lock, the one primary. A line under it says why it's disabled ("Tick the box above to pay", "Fill in your payment details to pay"), then where the receipt goes.
 - **Trust, said once and plainly**: "Encrypted" in the panel's header and one line at the bottom: the card goes straight to Stripe and never reaches Sigrid. No badges, no seals.
-- Which payment methods show is set in Stripe's Dashboard, not in code.
+- **Cards, Apple Pay and Google Pay only**, through one named Stripe setup ("Sigrid checkout", made by `paymentMethodSetup` in `lib/stripe.ts`). No Link form, no bank redirects. The account's own defaults are left alone.
+- **VAT**: the total says "including VAT" only once a real VAT number is in `lib/legal.ts` (`pricesIncludeVat`). Until then it claims nothing.
 - A declined card shows Stripe's reason in a `StatusMessage` above Pay; nothing is charged. After paying, the pattern page confirms with Stripe and opens the size choice.
 
 ### Button hierarchy
