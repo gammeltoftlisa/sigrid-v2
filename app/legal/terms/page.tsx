@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { LegalPage, LegalSection } from '@/components/patterns/legal-page'
 import { business } from '@/lib/legal'
 
-export const metadata = { title: 'Terms · Sigrid' }
+export const metadata = { title: 'Terms' }
 
 export default function TermsPage() {
   return (
@@ -12,6 +12,13 @@ export default function TermsPage() {
         <p>
           Sigrid is run by {business.name}, organisation number {business.orgNumber}, {business.address}. Contact:{' '}
           {business.email}. Full details are on the <Link href="/legal/company">company details</Link> page.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Who can use Sigrid">
+        <p>
+          You must be 13 or older to have an account. You confirm this when you start. If you’re under 13, please don’t sign up; if we learn that someone
+          under 13 has an account, we delete it and its data.
         </p>
       </LegalSection>
 

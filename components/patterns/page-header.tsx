@@ -19,8 +19,11 @@ export function PageHeader({
   back,
   breadcrumbs,
   barActions,
+  compact,
   className,
 }: {
+  /** The title shares the screen with what the page is for, like a checkout: the smaller page title */
+  compact?: boolean
   /** Small mono label above the title */
   kicker?: React.ReactNode
   title: React.ReactNode
@@ -37,11 +40,11 @@ export function PageHeader({
   return (
     <>
       {(back || breadcrumbs || barActions) && <TopBar back={back} breadcrumbs={breadcrumbs} actions={barActions} />}
-      <header className={cn('page-header flex flex-col pt-4', className)}>
+      <header className={cn('page-header flex flex-col', className)}>
         <div className="flex items-end justify-between gap-4">
-          <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex min-w-0 flex-col gap-3">
             {kicker && <p className="kicker">{kicker}</p>}
-            <h1>{title}</h1>
+            <h1 className={cn(compact && 'title-compact')}>{title}</h1>
             {description && <p className="max-w-prose text-base text-muted-foreground">{description}</p>}
           </div>
           {action}
@@ -69,7 +72,7 @@ export function TopBar({
   return (
     <div
       className={cn(
-        'top-bar flex h-14 items-center gap-1 -mb-4 md:-mb-6',
+        'top-bar flex items-center gap-1',
         className,
       )}
     >

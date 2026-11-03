@@ -1,5 +1,7 @@
 'use client'
 
+import { cn } from 'cn'
+
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { euSizes } from '@/lib/sizes'
 import type { StandardSize } from '@/lib/types'
@@ -29,7 +31,9 @@ export function SizePicker({
       spacing={2}
       value={value ? [value] : []}
       onValueChange={(next) => next[0] && onValueChange(next[0] as StandardSize)}
-      className="grid w-full grid-cols-4 @xl:grid-cols-7"
+      // Up to five sizes share one row, so none is left alone on a second; more wrap in fours, then sevens
+      className={cn('grid w-full', sizes.length <= 5 ? '' : 'grid-cols-4 @xl:grid-cols-7')}
+      style={sizes.length <= 5 ? { gridTemplateColumns: `repeat(${sizes.length}, minmax(0, 1fr))` } : undefined}
     >
       {sizes.map((s) => (
         <ToggleGroupItem
@@ -38,7 +42,7 @@ export function SizePicker({
           data-shape="tile"
           data-size-picker
           aria-label={`Size ${s}, EU ${euSizes[s]}${current === s ? ', current size' : ''}`}
-          className="h-12 w-full flex-col gap-0 rounded-xl data-pressed:border-primary data-pressed:bg-primary data-pressed:text-primary-foreground"
+          className="h-12 w-full flex-col gap-0 rounded-xl"
         >
           <span className="font-medium">{s}</span>
           <span className="text-xs font-normal opacity-70 tabular-nums">

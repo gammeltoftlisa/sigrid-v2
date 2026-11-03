@@ -14,8 +14,9 @@ export function StatusChip({ pattern, onClick, className }: { pattern: StudioPat
     <button
       type="button"
       onClick={onClick}
+      data-control
       className={cn(
-        'inline-flex h-8 shrink-0 items-center rounded-full bg-glass px-3 text-xs font-medium text-foreground tabular-nums transition-colors duration-150 hover:bg-card',
+        'inline-flex h-8 shrink-0 items-center rounded-full bg-glass px-3 text-xs font-medium text-foreground tabular-nums transition-colors duration-150',
         pattern.publishedAt && 'bg-success-soft',
         className,
       )}

@@ -4,7 +4,7 @@ import { useState, use, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
-import { IconPrinter, IconChevronDown, IconNeedleThread } from '@tabler/icons-react'
+import { IconPrinter, IconChevronDown, IconListNumbers, IconNeedleThread } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { getGarmentById, standardSizes } from '@/lib/data'
@@ -17,7 +17,9 @@ import { logStepDone } from '@/lib/activity'
 import { sizeLabel } from '@/lib/sizes'
 import SizeSheet from '@/components/garment/SizeSheet'
 import PatternCanvas from '@/components/sewing/PatternCanvas'
-import GuideSidePanel from '@/components/sewing/GuideSidePanel'
+import StepCard from '@/components/sewing/StepCard'
+import StepsList from '@/components/sewing/StepsList'
+import { PanelSheet } from '@/components/patterns/panel-sheet'
 import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
 import { ProductFrame } from '@/components/patterns/product-grid'
 import { GarmentImage } from '@/components/garment/GarmentImage'
@@ -27,9 +29,7 @@ import { TOOLS } from '@/components/sewing/tools'
 import { getFabricNeed, metersFor } from '@/lib/fabric/needs'
 import { formatMeters } from '@/lib/fabric/pricing'
 import { readRaw, writeRaw } from '@/lib/local-store'
-import StepInstruction from '@/components/sewing/StepInstruction'
 import { groupIntoJourneys } from '@/lib/journeys'
-import { progressStateOf } from '@/components/legacy/progress'
 import { ease } from '@/components/patterns/reveal'
 
 const DEFAULT_MEASUREMENTS: UserMeasurements = {
@@ -61,6 +61,8 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [size, setSize] = useState<StandardSize | null>(null)
   const [sizeSheetOpen, setSizeSheetOpen] = useState(false)
   const [doneOpen, setDoneOpen] = useState(false)
+  // The whole guide, on demand: the step card shows one step at a time
+  const [stepsOpen, setStepsOpen] = useState(false)
   // Bumped when the project restarts so the step list rebuilds from scratch
   const [runId, setRunId] = useState(0)
   // Re-read when progress made on another device arrives
@@ -117,7 +119,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   useEffect(() => {
     const total = guide?.steps.length ?? 0
     const onKey = (e: KeyboardEvent) => {
-      if (sizeSheetOpen || doneOpen || e.metaKey || e.ctrlKey || e.altKey) return
+      if (sizeSheetOpen || doneOpen || stepsOpen || e.metaKey || e.ctrlKey || e.altKey) return
       const t = e.target as HTMLElement | null
       if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return
       if (e.key === 'ArrowRight') { setDirection(1); setViewStep((v) => Math.min(v + 1, total - 1)) }
@@ -125,7 +127,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [guide, sizeSheetOpen, doneOpen])
+  }, [guide, sizeSheetOpen, doneOpen, stepsOpen])
 
   const printPattern = () => window.open(`/garment/${id}/pattern?print=true${size ? `&size=${size}` : ''}`, '_blank')
 
@@ -210,27 +212,23 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     }, 500)
   }
 
-  // Navigate canvas view backwards — does NOT change completion status
-  const goBack = () => {
-    if (viewStep === 0) return
-    setDirection(-1)
-    setViewStep((s) => s - 1)
-  }
-
-  // Preview any step in the canvas — does NOT change completion status
+  // Show any step: never changes what's done
   const preview = (index: number) => {
-    setDirection(index < viewStep ? -1 : 1)
-    setViewStep(index)
+    const to = Math.max(0, Math.min(index, steps.length - 1))
+    if (to === viewStep) return
+    setDirection(to < viewStep ? -1 : 1)
+    setViewStep(to)
   }
-
-  const step  = steps[viewStep]
-  const viewJourney = journeys.find((j) => j.stepIndices.includes(viewStep))
 
   return (
     <main className="guide-page">
       <GuideTopBar garment={garment}>
         {size && (
           <>
+            <Button variant="outline" size="sm" onClick={() => setStepsOpen(true)} aria-label="All steps">
+              <IconListNumbers data-icon="inline-start" />
+              <span className="max-sm:sr-only">All steps</span>
+            </Button>
             <Button variant="outline" size="sm" className="tabular-nums" onClick={() => setSizeSheetOpen(true)} aria-label={`Size ${sizeLabel(size)}. Change size`}>
               {sizeLabel(size)}
               <IconChevronDown data-icon="inline-end" />
@@ -267,70 +265,88 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
 
       <CompletionDialog garment={garment} open={doneOpen} onClose={() => setDoneOpen(false)} />
 
-      <h1 className="sr-only">{garment.name}: sewing guide</h1>
-      <div className="guide-body px-4 pb-3 md:pr-8 md:pb-6 md:pl-4">
-        {size && <GuideSidePanel
-          keepSections={guide.keepSections}
-          sectionIcons={guide.sectionIcons}
-          key={runId}
-          steps={steps}
-          completedUntil={completedUntil}
-          viewStep={viewStep}
-          isLast={isLast}
-          allDone={allDone}
-          onNext={advance}
-          onPrev={goBack}
-          onPreview={preview}
-        />}
+      <PanelSheet
+        open={stepsOpen}
+        onOpenChange={setStepsOpen}
+        title="All steps"
+        description={`${Math.min(completedUntil, steps.length)} of ${steps.length} done. Pick one to see it; nothing is marked done.`}
+      >
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-4">
+          <StepsList
+            key={runId}
+            steps={steps}
+            completedUntil={completedUntil}
+            viewStep={viewStep}
+            keepSections={guide.keepSections}
+            sectionIcons={guide.sectionIcons}
+            onPick={(i) => {
+              preview(i)
+              setStepsOpen(false)
+            }}
+          />
+        </div>
+      </PanelSheet>
 
-        {/* The scene and its instructions (on phones: a fixed-height strip above the steps) */}
-        <div className="order-1 guide-canvas-pane flex shrink-0 flex-col gap-(--grid-gutter) md:order-none md:col-span-8 md:h-auto md:min-h-0 xl:col-span-9">
+      <h1 className="sr-only">{garment.name}: sewing guide</h1>
+      {/* One step at a time: the card to read and act on, and the picture of it. Phones: the picture on top. */}
+      <div className="guide-body px-4 pb-3 md:pr-8 md:pb-6 md:pl-4">
+        {size && (
+          <div className="order-2 flex min-h-0 flex-1 flex-col md:order-none md:col-span-5 lg:col-span-4 xl:col-span-3">
+            <StepCard
+              key={runId}
+              steps={steps}
+              journeys={journeys}
+              viewStep={viewStep}
+              completedUntil={completedUntil}
+              garmentName={garment.name}
+              onNext={advance}
+              onPreview={preview}
+            />
+          </div>
+        )}
+
+        <div className="order-1 guide-canvas-pane flex shrink-0 flex-col md:order-none md:col-span-7 md:h-auto md:min-h-0 lg:col-span-8 xl:col-span-9">
           <ProductFrame className="flex min-h-0 flex-1 flex-col p-2 md:p-3">
             <div className="relative min-h-0 flex-1 overflow-hidden rounded-(--image-radius)">
               {allDone ? (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="w-full h-full flex flex-col items-center justify-center gap-4 text-center px-6"
+                  className="flex h-full w-full items-center justify-center p-6"
                 >
-                  <GarmentImage name={garment.name} photoSrc={garment.photo} sizes="144px" className="size-28 rounded-(--radius) md:size-36" />
-                  <div className="flex flex-col gap-2">
-                    <p className="kicker">All {steps.length} steps done</p>
-                    <p className="title-xl">{garment.name} is <em className="display-italic">finished.</em></p>
-                  </div>
-                  <Button variant="outline" onClick={() => setDoneOpen(true)}>View summary</Button>
+                  <GarmentImage name={garment.name} photoSrc={garment.photo} sizes="(min-width: 768px) 40vw, 60vw" className="aspect-product h-full max-h-96 rounded-(--image-radius)" />
                 </motion.div>
               ) : (
-              <AnimatePresence mode="wait" custom={direction}>
-                <motion.div
-                  key={viewStep}
-                  custom={direction}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ duration: 0.32, ease }}
-                  className="w-full h-full"
-                >
-                  <PatternCanvas steps={guide.steps} index={viewStep} pieces={guide.pieces} measurements={measurements} />
-                </motion.div>
-              </AnimatePresence>
+                <AnimatePresence mode="wait" custom={direction}>
+                  <motion.div
+                    key={viewStep}
+                    custom={direction}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ duration: 0.32, ease }}
+                    className="h-full w-full"
+                  >
+                    <PatternCanvas steps={guide.steps} index={viewStep} pieces={guide.pieces} measurements={measurements} />
+                  </motion.div>
+                </AnimatePresence>
               )}
 
-              {/* Done flash — centered over the canvas only */}
+              {/* Done flash, over the picture only */}
               <AnimatePresence>
                 {doneAnim && (
                   <motion.div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    className="pointer-events-none absolute inset-0 flex items-center justify-center"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
                   >
                     <motion.div
-                      className="done-flash size-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
+                      className="done-flash flex size-20 items-center justify-center rounded-full bg-primary text-primary-foreground"
                       initial={{ scale: 0.6 }} animate={{ scale: 1 }} exit={{ scale: 1.3 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                     >
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden>
                         <path d="M20 7L9 18L4 13" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </motion.div>
@@ -339,20 +355,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
               </AnimatePresence>
             </div>
           </ProductFrame>
-
-          {/* Instructions for the step on the canvas (desktop; phones read them in the list) */}
-          {!allDone && (
-              <div className="hidden shrink-0 md:block">
-                <StepInstruction
-                  step={step}
-                  index={viewStep}
-                  journeyTitle={viewJourney?.title}
-                  numberInJourney={(viewJourney?.stepIndices.indexOf(viewStep) ?? 0) + 1}
-                  journeyLength={viewJourney?.stepIndices.length ?? 1}
-                  state={progressStateOf(viewStep, completedUntil)}
-                />
-              </div>
-          )}
         </div>
       </div>
     </main>

@@ -101,6 +101,16 @@ export const guideOutlines: Record<string, GuideOutline> = {
         "tool": "iron"
       }
     ],
+    "stages": [
+      5,
+      2,
+      2,
+      5,
+      2,
+      2,
+      4,
+      2
+    ],
     "pieces": 4
   },
   "lace-waist-skirt": {
@@ -202,6 +212,16 @@ export const guideOutlines: Record<string, GuideOutline> = {
         "title": "Final press",
         "tool": "iron"
       }
+    ],
+    "stages": [
+      2,
+      4,
+      3,
+      3,
+      3,
+      3,
+      3,
+      4
     ],
     "pieces": 3
   }

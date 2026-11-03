@@ -7,8 +7,9 @@ export function ProjectGrid({ label, projects, count = false }: { label: string;
   return (
     <ProductGrid label={label} meta={count ? projects.length : undefined}>
       <div className="tiles">
-        {projects.map((p) => (
-          <ProjectCard key={p.garment.id} {...projectCardData(p)} />
+        {/* The most recent comes first; its button is the page's one primary, the rest are secondary */}
+        {projects.map((p, i) => (
+          <ProjectCard key={p.garment.id} {...projectCardData(p)} primary={i === 0 && !p.finished} />
         ))}
       </div>
     </ProductGrid>

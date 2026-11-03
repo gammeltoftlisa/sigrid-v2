@@ -16,6 +16,7 @@ export function ProjectCard({
   nextStep,
   done,
   total,
+  primary = false,
 }: {
   name: string
   /** The photo attached to the garment; see GarmentImage */
@@ -25,6 +26,8 @@ export function ProjectCard({
   nextStep?: string
   done: number
   total: number
+  /** The page's one main action: only the project to pick up first gets the filled button */
+  primary?: boolean
 }) {
   const hasGuide = total > 0
   const finished = hasGuide && done >= total
@@ -43,7 +46,7 @@ export function ProjectCard({
           <span className="text-2xs text-muted-foreground tabular-nums">{done} / {total}</span>
         </div>
       )}
-      <Button variant="outline" className="mt-auto w-full" nativeButton={false} render={<Link href={hasGuide && !finished ? continueHref : href} />}>
+      <Button variant={primary ? 'default' : 'outline'} className="mt-auto w-full" nativeButton={false} render={<Link href={hasGuide && !finished ? continueHref : href} />}>
         {finished || !hasGuide ? 'View pattern' : done === 0 ? 'Start sewing' : 'Continue'}
       </Button>
     </article>

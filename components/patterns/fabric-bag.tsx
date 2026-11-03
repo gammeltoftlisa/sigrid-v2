@@ -88,8 +88,9 @@ export function FabricBagSheet({ items, open, onOpenChange }: { items: BagItem[]
                     ))}
                   </ul>
 
+                  {/* One shop: checking out is the sheet's one main action. Several: equal choices, so none outranks the others */}
                   {g.cartUrl ? (
-                    <Button variant="outline" className="w-full" nativeButton={false} render={<a href={g.cartUrl} target="_blank" rel="noopener" />}>
+                    <Button variant={groups.length === 1 ? 'default' : 'outline'} className="w-full" nativeButton={false} render={<a href={g.cartUrl} target="_blank" rel="noopener" />}>
                       Check out at {g.sourceName}
                       <IconExternalLink data-icon="inline-end" />
                     </Button>

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { corruptCopyKey } from '@/lib/local-store'
-import { createPattern, deletePattern, loadPattern, loadPatterns, patternKey, photoKey, savePattern, type StudioPattern } from '@/lib/studio/patterns'
+import { createPattern, deletePattern, loadPattern, loadPatterns, MAX_PHOTOS, patternKey, photoKey, savePattern, setPhotos, type StudioPattern } from '@/lib/studio/patterns'
 
 import { installFakeStorage } from './fake-storage'
 
@@ -87,4 +87,23 @@ describe('saving', () => {
     savePattern({ ...p, photo: undefined, updatedAt: p.updatedAt + 2 })
     expect(localStorage.getItem(photoKey(p.id))).toBeNull()
   })
+
+  it('keeps several photos in order, the first as the cover, and reads an old single photo', () => {
+    const p = createPattern()
+    savePattern({ ...p, ...setPhotos(['data:a', 'data:b', 'data:c']), updatedAt: p.updatedAt + 1 })
+    expect(storageHasNoPhotos(p.id)).toBe(true)
+    const back = loadPattern(p.id)!
+    expect(back.photos).toEqual(['data:a', 'data:b', 'data:c'])
+    expect(back.photo).toBe('data:a')
+    localStorage.setItem(photoKey(p.id), 'data:old')
+    expect(loadPattern(p.id)?.photos).toEqual(['data:old'])
+  })
+
+  it('keeps at most a few photos', () => {
+    expect(setPhotos(Array.from({ length: MAX_PHOTOS + 3 }, (_, i) => `data:${i}`)).photos).toHaveLength(MAX_PHOTOS)
+    expect(setPhotos([])).toEqual({ photo: undefined, photos: undefined })
+  })
 })
+
+/** The photos live under their own key, never in the pattern's text */
+const storageHasNoPhotos = (id: string) => !(localStorage.getItem(patternKey(id)) ?? '').includes('data:')

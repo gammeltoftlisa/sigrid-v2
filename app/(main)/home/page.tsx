@@ -1,17 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import { IconNeedleThread } from '@tabler/icons-react'
+import { IconChevronRight } from '@tabler/icons-react'
 import { cn } from 'cn'
 
 import { Button } from '@/components/ui/button'
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { GarmentCard } from '@/components/patterns/garment-card'
 import { HomeDashboard } from '@/components/patterns/home-dashboard'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
 import { Panel, PanelRow } from '@/components/patterns/panel'
 import { ProductGrid } from '@/components/patterns/product-grid'
-import { ProjectGrid } from '@/components/patterns/project-grid'
 import { SewingDashboard } from '@/components/patterns/sewing-dashboard'
 import { useMounted } from '@/hooks/use-mounted'
 import { loadActivity } from '@/lib/activity'
@@ -19,28 +18,24 @@ import { easiestPatterns } from '@/lib/data'
 import { useBag } from '@/lib/fabric/bag'
 import { listProjects } from '@/lib/project-summary'
 
-const HEADER = 'pt-3'
 
-/** Someone with nothing on the table yet: one way forward, and a few easy patterns to make it concrete. */
+/**
+ * Someone with nothing on the table yet: the title says what to do, and the easiest patterns are right there to
+ * start from, with a way to see them all. No empty box: an empty state shouldn't take more room than the way out.
+ */
 function FirstVisit() {
   return (
     <>
-      <PageHeader title="Start sewing" className={HEADER} />
-      <Empty className="border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <IconNeedleThread />
-          </EmptyMedia>
-          <EmptyTitle>Nothing on your table yet</EmptyTitle>
-          <EmptyDescription>Pick a pattern you like. Your progress is saved after every step.</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button size="lg" nativeButton={false} render={<Link href="/explore" />}>
-            Find your first pattern
+      <PageHeader title="Start sewing" description="Pick a pattern you like. Your progress is saved after every step." />
+      <ProductGrid
+        label="Good places to start"
+        action={
+          <Button variant="ghost" size="sm" nativeButton={false} render={<Link href="/explore" />}>
+            All patterns
+            <IconChevronRight data-icon="inline-end" />
           </Button>
-        </EmptyContent>
-      </Empty>
-      <ProductGrid label="Good places to start">
+        }
+      >
         <div className="tiles">
           {easiestPatterns(3).map((g) => (
             <GarmentCard
@@ -50,6 +45,8 @@ function FirstVisit() {
               difficulty={g.difficulty}
               time={g.estimatedTime}
               price={g.price}
+              photoSrc={g.photo}
+              photos={g.photos}
             />
           ))}
         </div>
@@ -58,7 +55,10 @@ function FirstVisit() {
   )
 }
 
-/** Home is what you're sewing and how it's going. Finding something new is what Explore is for. */
+/**
+ * Home is what you're sewing now and how it's going. Finished projects leave Home: they stay on You, marked
+ * Finished, and still count in This week. Finding something new is what Explore is for.
+ */
 export default function HomePage() {
   // Projects are saved in this browser, so they're only known after mount
   const mounted = useMounted()
@@ -67,7 +67,7 @@ export default function HomePage() {
   if (!mounted) {
     return (
       <PageContainer>
-        <PageHeader title="Your sewing" className={HEADER} />
+        <PageHeader title="Your sewing" />
       </PageContainer>
     )
   }
@@ -75,7 +75,6 @@ export default function HomePage() {
   const projects = listProjects()
   const activity = loadActivity()
   const active = projects.filter((p) => !p.finished)
-  const finished = projects.filter((p) => p.finished)
   const hasSide = activity.length > 0 || bag.length > 0
 
   return (
@@ -84,7 +83,7 @@ export default function HomePage() {
         <FirstVisit />
       ) : (
         <>
-          <PageHeader title="Your sewing" className={HEADER} />
+          <PageHeader title="Your sewing" />
           <div className="grid-12">
             <div className={cn('flex flex-col gap-3', hasSide && 'col-main')}>
               {active.length > 0 ? (
@@ -102,8 +101,6 @@ export default function HomePage() {
                   </EmptyContent>
                 </Empty>
               )}
-              {/* In this column so its cards are the same size as the ones in progress */}
-              {finished.length > 0 && <ProjectGrid label="Finished" projects={finished} count />}
             </div>
             {hasSide && (
               <div className="col-side flex flex-col gap-3">

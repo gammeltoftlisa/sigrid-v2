@@ -6,10 +6,12 @@ import { paymentsEnabled } from '@/lib/payments'
 import { rateLimit } from '@/lib/rate-limit'
 import { hasEntitlement } from '@/lib/server/entitlements'
 import { errorMessage, logEvent } from '@/lib/server/log'
-import { createCheckout } from '@/lib/stripe'
+import { acceptWaiver, createCheckout } from '@/lib/stripe'
 
-const bodySchema = z.object({
-  garmentId: z.string().min(1).max(100),
+const bodySchema = z.object({ garmentId: z.string().min(1).max(100) })
+
+const waiverSchema = z.object({
+  sessionId: z.string().regex(/^cs_[a-zA-Z0-9_]{1,200}$/),
   /** The buyer asked to start straight away and knows they lose the right to cancel once they open it */
   acceptWithdrawalWaiver: z.literal(true),
 })
@@ -33,10 +35,28 @@ export async function POST(request: Request) {
 
   try {
     if (await hasEntitlement(userId, garmentId)) return Response.json({ error: 'Already yours' }, { status: 409 })
-    const url = await createCheckout({ userId, garmentId, name: item.name, price: item.price, origin: new URL(request.url).origin })
-    return Response.json({ url })
+    const checkout = await createCheckout({ userId, garmentId, name: item.name, price: item.price, origin: new URL(request.url).origin })
+    return Response.json(checkout, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     logEvent('error', 'checkout.start', { garmentId, error: errorMessage(error) })
     return Response.json({ error: 'Could not start checkout' }, { status: 502 })
+  }
+}
+
+/** Pressing Pay: records that the buyer asked to start straight away, just before Stripe takes the payment */
+export async function PATCH(request: Request) {
+  if (!paymentsEnabled) return Response.json({ error: 'Payments are off' }, { status: 404 })
+  const { userId } = await auth()
+  if (!userId) return Response.json({ error: 'Log in first' }, { status: 401 })
+
+  const parsed = waiverSchema.safeParse(await request.json().catch(() => null))
+  if (!parsed.success) return Response.json({ error: 'That request could not be read' }, { status: 400 })
+
+  try {
+    if (!(await acceptWaiver({ userId, sessionId: parsed.data.sessionId }))) return Response.json({ error: 'Unknown payment' }, { status: 404 })
+    return Response.json({ ok: true })
+  } catch (error) {
+    logEvent('error', 'checkout.waiver', { error: errorMessage(error) })
+    return Response.json({ error: 'Could not save that' }, { status: 502 })
   }
 }

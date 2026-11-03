@@ -2,7 +2,6 @@
 
 import { useId } from 'react'
 import { IconCheck } from '@tabler/icons-react'
-import { cn } from 'cn'
 
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -33,7 +32,8 @@ export function SectionPicker({
       <PopoverTrigger
         aria-label={`Section icon and title: ${title}. Change`}
         title="Change icon and title"
-        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-glass text-foreground transition-colors hover:bg-primary hover:text-primary-foreground aria-expanded:bg-primary aria-expanded:text-primary-foreground"
+        data-control
+        className="flex size-7 shrink-0 items-center justify-center rounded-full border border-dashed bg-glass text-foreground transition-colors"
       >
         <Current size={15} aria-hidden />
       </PopoverTrigger>
@@ -52,9 +52,11 @@ export function SectionPicker({
                       onChange({ title: p.title, icon: p.icon })
                       onOpenChange(false)
                     }}
-                    className="flex w-full items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left text-sm transition-colors hover:bg-muted"
+                    data-control
+                    aria-pressed={chosen}
+                    className="flex w-full items-center gap-2.5 rounded-md border border-dashed border-transparent px-1.5 py-1.5 text-left text-sm transition-colors"
                   >
-                    <span className="flex size-7 items-center justify-center rounded-full bg-muted">
+                    <span className="icon-bubble size-7">
                       <P size={15} aria-hidden />
                     </span>
                     <span className="flex-1">{p.title}</span>
@@ -83,10 +85,8 @@ export function SectionPicker({
                   aria-pressed={on}
                   title={label}
                   onClick={() => onChange({ icon: key })}
-                  className={cn(
-                    'flex aspect-square items-center justify-center rounded-md transition-colors',
-                    on ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground hover:bg-glass',
-                  )}
+                  data-control
+                  className="flex aspect-square items-center justify-center rounded-md border border-dashed bg-glass text-foreground transition-colors"
                 >
                   <Icon size={16} aria-hidden />
                 </button>

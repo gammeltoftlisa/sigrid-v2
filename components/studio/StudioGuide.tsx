@@ -14,12 +14,13 @@ import {
   IconPlus,
   IconRuler2,
   IconRulerMeasure,
+  IconTool,
   IconTrash,
 } from '@tabler/icons-react'
 import { cn } from 'cn'
 import { toast } from 'sonner'
 
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -33,9 +34,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ChipGroup } from '@/components/patterns/chip-group'
+import { PanelSheet } from '@/components/patterns/panel-sheet'
+import { StepDot } from '@/components/patterns/panel'
+import { ProductFrame } from '@/components/patterns/product-grid'
+import { StatusBadge } from '@/components/patterns/status-badge'
 import PatternCanvas from '@/components/sewing/PatternCanvas'
+import { StageProgress } from '@/components/sewing/StageProgress'
 import { ACTION_LABELS } from '@/components/sewing/actions'
+import { TOOLS, type Tool } from '@/components/sewing/tools'
 import { standardSizes } from '@/lib/data'
+import { groupIntoJourneys } from '@/lib/journeys'
 import {
   actionFromTitle,
   duplicateStep,
@@ -64,14 +72,16 @@ import { sectionIconKey, type SectionIconKey } from './section-icons'
 
 type Change = (patch: Partial<StudioPattern>) => void
 
-
 const focusLater = (label: string) =>
   requestAnimationFrame(() => document.querySelector<HTMLElement>(`[aria-label="${label}"]`)?.focus())
 
+const unwritten = (s: StudioStep) => !s.title.trim() || s.title === 'New step' || !s.instruction.trim()
+
 /**
- * The sewing guide exactly as a sewer sees it (step list on the left, the
- * drawing, the instruction panel underneath), written in place: pick a step in
- * the list and type straight into its instruction panel.
+ * The sewing guide exactly as a sewer sees it, written in place: the step card on one side with the
+ * step's title, instruction, measurement, tool and tip typed straight into it, and the picture on the
+ * other. All steps (in the top bar) opens the whole guide in a sheet, where steps and sections are
+ * added, renamed, dragged and deleted. Pattern pieces are the guide's first step, measured in the card.
  */
 export function StudioGuide({
   pattern,
@@ -81,6 +91,8 @@ export function StudioGuide({
   pieceFocus,
   onPieceFocus,
   onOpenSizes,
+  stepsOpen,
+  onStepsOpenChange,
 }: {
   pattern: StudioPattern
   onChange: Change
@@ -91,6 +103,9 @@ export function StudioGuide({
   pieceFocus: string | null
   onPieceFocus: (id: string | null) => void
   onOpenSizes: () => void
+  /** The All steps sheet */
+  stepsOpen: boolean
+  onStepsOpenChange: (open: boolean) => void
 }) {
   const { steps, pieces } = pattern
   // Picking a sewing step leaves the pieces step
@@ -253,433 +268,451 @@ export function StudioGuide({
       </div>
     ) : null
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 pt-0 md:flex-row">
-      {/* ── Step list, like the guide's side panel ── */}
-      <div className="glass-panel order-3 flex min-h-96 flex-col md:min-h-0 overflow-hidden rounded-(--radius) md:order-none md:w-88 md:shrink-0 lg:w-96">
-        <div className="shrink-0 px-3 pt-4 pb-2">
-          <div className="mb-1.5 flex items-center justify-between">
-            <p className="kicker">Steps</p>
-            <p className="text-xs font-medium text-muted-foreground tabular-nums">0 / {steps.length}</p>
-          </div>
-          <div className="stitch-track h-0.5 rounded-full" aria-hidden />
-        </div>
 
-        <div ref={listRef} className="flex-1 overflow-y-auto px-2 pb-2">
-          {/* First step of the guide: the pattern pieces and their measurements in every size */}
-          <div data-slot="inset" className="mb-2 rounded-(--control-radius)">
-            <button
-              type="button"
-              onClick={() => onPieceFocus(pieceFocus === null ? (pieces[0]?.id ?? '') : pieceFocus)}
-              className="flex w-full items-center gap-2.5 px-2.5 py-2 text-left"
-            >
-              <span className="step-dot-upcoming flex size-7 shrink-0 items-center justify-center rounded-full">
-                <IconRulerMeasure size={15} aria-hidden />
-              </span>
-              <span className="flex-1 truncate text-sm">Pattern pieces</span>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {pieces.length === 0 ? 'None yet' : `${pieces.filter((p) => pattern.sizes.length > 0 && pattern.sizes.every((s) => pieceSizeDone(p, s))).length}/${pieces.length}`}
-              </span>
-            </button>
-            <div className="px-2 pb-1">
-              {pieces.map((p, i) => {
-                const on = pieceFocus === p.id
-                const done = pattern.sizes.length > 0 && pattern.sizes.every((s) => pieceSizeDone(p, s))
-                return (
-                  <div key={p.id} className={cn('group/piece mb-1 flex items-center rounded-(--control-radius) pr-1 transition-colors', on ? 'step-row-active' : 'glass-inset-hover')}>
-                    <button
-                      type="button"
-                      onClick={() => onPieceFocus(p.id)}
-                      aria-current={on ? 'step' : undefined}
-                      className="flex min-w-0 flex-1 items-center gap-2 py-2 pr-1.5 pl-8 text-left outline-none"
-                    >
-                      <span
-                        className={cn(
-                          'flex size-5 shrink-0 items-center justify-center rounded-full text-2xs font-medium',
-                          on ? 'step-dot-active' : 'step-dot-upcoming text-muted-foreground',
-                        )}
-                      >
-                        {p.label}
-                      </span>
-                      <span className={cn('flex-1 truncate text-sm', on ? 'font-medium text-foreground' : 'text-foreground')}>
-                        {p.name === 'New piece' ? <span className="text-muted-foreground">New piece</span> : p.name}
-                      </span>
-                      {done ? <IconCheck className="size-3.5 text-muted-foreground" aria-label="All sizes measured" /> : <TodoMark>Measure</TodoMark>}
-                    </button>
-                    {/* Move the piece in the list; shown on hover, focus, on phones and on the open piece */}
-                    {pieces.length > 1 && (
-                      <span className={cn('flex shrink-0 opacity-0 transition-opacity group-hover/piece:opacity-100 group-focus-within/piece:opacity-100 pointer-coarse:opacity-100', on && 'opacity-100')}>
-                        <Button variant="ghost" size="icon-xs" aria-label={`Move ${p.name} up`} disabled={i === 0} onClick={() => movePiece(i, -1)}>
-                          <IconArrowUp />
-                        </Button>
-                        <Button variant="ghost" size="icon-xs" aria-label={`Move ${p.name} down`} disabled={i === pieces.length - 1} onClick={() => movePiece(i, 1)}>
-                          <IconArrowDown />
-                        </Button>
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-              {pieces.length > 0 && (
-                <button type="button" onClick={addPiece} className="glass-inset-hover mb-1 flex w-full items-center gap-2 rounded-(--control-radius) px-2.5 py-2 text-left text-sm text-muted-foreground">
-                  <IconPlus className="size-4" aria-hidden />
-                  Add piece
-                </button>
-              )}
-            </div>
-          </div>
+  const journeys = useMemo(() => groupIntoJourneys(steps, { keepSections: true }), [steps])
+  const inSection = section ? section.indices.indexOf(current) + 1 : 1
+  const next = step ? steps[current + 1] : undefined
+  const tool = step?.tool ? TOOLS[step.tool] : null
+  // Picking anything in the sheet shows it and closes the sheet, as in the sewer's guide
+  const pick = (i: number) => {
+    setSelected(i)
+    onStepsOpenChange(false)
+  }
+  const pickPiece = (id: string) => {
+    onPieceFocus(id)
+    onStepsOpenChange(false)
+  }
 
-          {sections.map((sec) => {
-            const firstId = steps[sec.indices[0]].id
+  /** Everything you can do with a step: in the card's corner and on each row of the list */
+  const stepMenu = (i: number, n: number, s: StudioStep, className?: string) => {
+    const others = sections.filter((o) => o.group !== s.group)
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`More for step ${n}, ${s.title}`} className={className} />}>
+          <IconDotsVertical />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem disabled={i === 0} onClick={() => move(i, -1)}>
+            <IconArrowUp />
+            Move up
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled={i === steps.length - 1} onClick={() => move(i, 1)}>
+            <IconArrowDown />
+            Move down
+          </DropdownMenuItem>
+          {others.length > 0 && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Move to section</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-48">
+                {others.map((o) => (
+                  <DropdownMenuItem key={`${o.group}-${o.indices[0]}`} onClick={() => moveTo(i, o.indices[o.indices.length - 1] + 1, o.group)}>
+                    {o.group}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          )}
+          <DropdownMenuItem
+            onClick={() => {
+              setSteps(duplicateStep(steps, i))
+              setSelected(i + 1)
+            }}
+          >
+            <IconCopy />
+            Duplicate
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onClick={() => deleteStep(i)}>
+            <IconTrash />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+  const piecesDone = pieces.filter((p) => pattern.sizes.length > 0 && pattern.sizes.every((s) => pieceSizeDone(p, s))).length
+
+  // ── All steps: the whole guide, as the sewer's list, with everything to build it ──
+  const list = (
+    <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 pb-4">
+      {/* First step of the guide: the pattern pieces and their measurements in every size */}
+      <div className="overflow-hidden rounded-(--control-radius) border">
+        <button type="button" onClick={() => pickPiece(pieceFocus ?? pieces[0]?.id ?? '')} aria-current={pieceFocus !== null ? 'step' : undefined} className="guide-step flex w-full items-center gap-3 px-2.5 py-2.5 text-left">
+          <StepDot state="upcoming"><IconRulerMeasure className="size-3.5" /></StepDot>
+          <span className="min-w-0 flex-1 truncate text-sm">Pattern pieces</span>
+          <span className="text-xs tabular-nums text-muted-foreground">{pieces.length === 0 ? 'None yet' : `${piecesDone}/${pieces.length}`}</span>
+        </button>
+        <ol className="flex flex-col gap-1 px-2 pt-1 pb-2">
+          {pieces.map((p, i) => {
+            const on = pieceFocus === p.id
+            const done = pattern.sizes.length > 0 && pattern.sizes.every((s) => pieceSizeDone(p, s))
             return (
-              <div key={`${sec.group}-${sec.indices[0]}`} className="mb-2 rounded-(--control-radius) bg-card">
-                <div className="flex items-center gap-2.5 px-2.5 py-2">
-                  <SectionPicker
-                    title={sec.group}
-                    icon={sectionIconKey(sec, steps, pattern.sectionIcons)}
-                    open={pickerFor === firstId}
-                    onOpenChange={(o) => setPickerFor(o ? firstId : null)}
-                    onChange={(next) => setSection(sec, next)}
-                  />
-                  <InlineText
-                    required
-                    label="Section name"
-                    value={sec.group}
-                    placeholder="Section name"
-                    onChange={(name) => setSection(sec, { title: name })}
-                    className="text-sm"
-                  />
-                  <span className="text-xs tabular-nums text-muted-foreground">0/{sec.indices.length}</span>
-                </div>
-                <div className="px-2 pb-1">
-                  {sec.indices.map((i, n) => {
-                    const s = steps[i]
-                    const isCurrent = i === current
-                    const others = sections.filter((o) => o.group !== sec.group)
-                    return (
-                      <div key={s.id} data-drop="row" data-to={i} data-group={sec.group}>
-                        {dropLine(i, sec.group)}
-                        <div
-                          style={drag?.from === i ? { transform: `translateY(${drag.dy}px)` } : undefined}
-                          className={cn(
-                            'group/row relative mb-1 flex items-center gap-1 rounded-(--control-radius) pr-1',
-                            drag?.from === i ? 'z-20 bg-card' : 'transition-colors',
-                            isCurrent ? 'step-row-active' : drag ? '' : 'glass-inset-hover',
-                          )}
-                        >
-                          {/* Handle: press and drag to move the step */}
-                          <span
-                            onPointerDown={(e) => startDrag(e, i)}
-                            onPointerMove={moveDrag}
-                            onPointerUp={() => endDrag(true)}
-                            onPointerCancel={() => endDrag(false)}
-                            title="Drag to move"
-                            aria-hidden
-                            className={cn(
-                              'flex h-9 w-6 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground transition-colors select-none hover:text-foreground',
-                              drag?.from === i && 'cursor-grabbing text-foreground',
-                            )}
-                          >
-                            <IconGripVertical className="size-4" />
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setSelected(i)}
-                            aria-current={isCurrent ? 'step' : undefined}
-                            className="flex min-w-0 flex-1 items-center gap-2 py-2 text-left outline-none"
-                          >
-                            {/* The step number, also on the step being edited (the guide shows a dot there) */}
-                            <span
-                              className={cn(
-                                'flex size-5 shrink-0 items-center justify-center rounded-full text-2xs font-medium tabular-nums transition-colors',
-                                isCurrent ? 'step-dot-active' : 'step-dot-upcoming text-muted-foreground',
-                              )}
-                            >
-                              {n + 1}
-                            </span>
-                            <span className={cn('flex-1 truncate text-sm', isCurrent ? 'font-medium text-foreground' : 'text-foreground')}>
-                              {s.title === 'New step' ? <span className="text-muted-foreground">New step</span> : s.title}
-                            </span>
-                            {(!s.title.trim() || s.title === 'New step' || !s.instruction.trim()) && <TodoMark className="mr-1">To write</TodoMark>}
-                          </button>
-                          {/* Everything you can do with a step; also how to move it by keyboard or on a phone */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              render={
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  aria-label={`More for step ${n + 1}, ${s.title}`}
-                                  className={cn(
-                                    'shrink-0 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 aria-expanded:opacity-100 pointer-coarse:opacity-100',
-                                    isCurrent && 'opacity-100',
-                                  )}
-                                />
-                              }
-                            >
-                              <IconDotsVertical />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-52">
-                              <DropdownMenuItem disabled={i === 0} onClick={() => move(i, -1)}>
-                                <IconArrowUp />
-                                Move up
-                              </DropdownMenuItem>
-                              <DropdownMenuItem disabled={i === steps.length - 1} onClick={() => move(i, 1)}>
-                                <IconArrowDown />
-                                Move down
-                              </DropdownMenuItem>
-                              {others.length > 0 && (
-                                <DropdownMenuSub>
-                                  <DropdownMenuSubTrigger>Move to section</DropdownMenuSubTrigger>
-                                  <DropdownMenuSubContent className="w-48">
-                                    {others.map((o) => (
-                                      <DropdownMenuItem key={`${o.group}-${o.indices[0]}`} onClick={() => moveTo(i, o.indices[o.indices.length - 1] + 1, o.group)}>
-                                        {o.group}
-                                      </DropdownMenuItem>
-                                    ))}
-                                  </DropdownMenuSubContent>
-                                </DropdownMenuSub>
-                              )}
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSteps(duplicateStep(steps, i))
-                                  setSelected(i + 1)
-                                }}
-                              >
-                                <IconCopy />
-                                Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem variant="destructive" onClick={() => deleteStep(i)}>
-                                <IconTrash />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  {dropLine(sec.indices[sec.indices.length - 1] + 1, sec.group)}
-                  <button
-                    type="button"
-                    data-drop="end"
-                    data-to={sec.indices[sec.indices.length - 1] + 1}
-                    data-group={sec.group}
-                    onClick={() => addStep(sec.indices[sec.indices.length - 1] + 1, sec.group)}
-                    className="glass-inset-hover mb-1 flex w-full items-center gap-2 rounded-(--control-radius) px-2.5 py-2 text-left text-sm text-muted-foreground"
-                  >
-                    <IconPlus className="size-4" aria-hidden />
-                    Add step
-                  </button>
-                </div>
-              </div>
+              <li key={p.id} className="group/piece flex items-center gap-1">
+                <button type="button" onClick={() => pickPiece(p.id)} aria-current={on ? 'step' : undefined} className="guide-step flex min-w-0 flex-1 items-center gap-2.5 rounded-(--control-radius) px-2 py-1.5 text-left">
+                  <StepDot state={on ? 'active' : 'upcoming'} className="size-6">{p.label}</StepDot>
+                  <span className={cn('min-w-0 flex-1 truncate text-sm', on && 'font-medium')}>
+                    {p.name === 'New piece' ? <span className="text-muted-foreground">New piece</span> : p.name}
+                  </span>
+                  {done ? <IconCheck className="size-3.5 text-muted-foreground" aria-label="All sizes measured" /> : <TodoMark>Measure</TodoMark>}
+                </button>
+                {pieces.length > 1 && (
+                  <span className="flex shrink-0 opacity-0 transition-opacity group-hover/piece:opacity-100 group-focus-within/piece:opacity-100 pointer-coarse:opacity-100">
+                    <Button variant="ghost" size="icon-xs" aria-label={`Move ${p.name} up`} disabled={i === 0} onClick={() => movePiece(i, -1)}>
+                      <IconArrowUp />
+                    </Button>
+                    <Button variant="ghost" size="icon-xs" aria-label={`Move ${p.name} down`} disabled={i === pieces.length - 1} onClick={() => movePiece(i, 1)}>
+                      <IconArrowDown />
+                    </Button>
+                  </span>
+                )}
+              </li>
             )
           })}
-          {steps.length === 0 ? (
-            <div data-slot="inset" className="mb-2 flex items-center gap-2.5 rounded-(--control-radius) px-2.5 py-2">
-              <span className="step-dot-upcoming flex size-7 shrink-0 items-center justify-center rounded-full">
-                <IconNeedleThread size={15} aria-hidden />
-              </span>
-              <span className="flex-1 truncate text-sm">Sewing steps</span>
-              {/* The middle panel already offers it when it shows the empty guide */}
-              {pieceFocus === null ? (
-                <span className="text-xs text-muted-foreground">None yet</span>
-              ) : (
-                <Button variant="outline" size="xs" onClick={addSection}>
-                  <IconPlus data-icon="inline-start" />
-                  Add step
-                </Button>
-              )}
-            </div>
-          ) : (
-            <Button variant="ghost" className="w-full text-muted-foreground" onClick={addSection}>
-              <IconPlus data-icon="inline-start" />
-              Add section
-            </Button>
-          )}
-        </div>
-
-        {/* The sewer's ‹ Mark done › bar; here the arrows move through the steps */}
-        <div className={cn('shrink-0 px-3 pt-1 pb-3', steps.length === 0 && 'hidden')}>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon-lg" onClick={() => setSelected(Math.max(0, current - 1))} disabled={current <= 0} aria-label="Previous step">
-              <IconChevronLeft />
-            </Button>
-            {/* What the sewer sees; here it does nothing, so it isn't a real button */}
-            <span aria-hidden title="Sewers press this when a step is done" className="flex-1">
-              <Button size="lg" tabIndex={-1} className="pointer-events-none w-full">
-                <IconCheck data-icon="inline-start" stroke={2.5} />
-                Mark done
-              </Button>
-            </span>
-            <Button variant="outline" size="icon-lg" onClick={() => setSelected(Math.min(steps.length - 1, current + 1))} disabled={current >= steps.length - 1} aria-label="Next step">
-              <IconChevronRight />
-            </Button>
-          </div>
-        </div>
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                addPiece()
+                onStepsOpenChange(false)
+              }}
+              className="guide-step flex w-full items-center gap-2.5 rounded-(--control-radius) px-2 py-1.5 text-left text-sm text-muted-foreground"
+            >
+              <IconPlus className="size-4" aria-hidden />
+              Add piece
+            </button>
+          </li>
+        </ol>
       </div>
 
-      {/* ── The drawing, then the instruction panel ── */}
-      {pieceFocus !== null ? (
-        focusedPiece ? (
-          <div className="contents md:flex md:min-h-0 md:flex-1 md:flex-col">
-            <div className="relative order-1 h-72 shrink-0 overflow-hidden guide-canvas rounded-(--radius) md:order-none md:h-auto md:min-h-0 md:flex-1">
-              <PieceShape piece={focusedPiece} sizes={pattern.sizes} active={activeSize} highlight={activeLine} />
-            </div>
-            <section aria-label="Piece measurements" className="glass-panel order-2 shrink-0 overflow-y-auto rounded-(--radius) px-5 py-4 md:order-none md:mt-3 md:max-h-1/2">
-              <PieceEditor
-                // A fresh editor per piece, so nothing typed or opened on one piece shows on the next
-                key={focusedPiece.id}
-                pattern={pattern}
-                piece={focusedPiece}
-                size={activeSize}
-                onSize={setPieceSize}
-                onPiece={updatePiece}
-                onDelete={() => deletePiece(focusedPiece.id)}
-                onOpenSizes={onOpenSizes}
-                onActiveLine={setActiveLine}
+      {sections.map((sec) => {
+        const firstId = steps[sec.indices[0]].id
+        return (
+          <div key={`${sec.group}-${sec.indices[0]}`} className="rounded-(--control-radius) border">
+            <div className="flex items-center gap-2.5 px-2.5 py-2">
+              <SectionPicker
+                title={sec.group}
+                icon={sectionIconKey(sec, steps, pattern.sectionIcons)}
+                open={pickerFor === firstId}
+                onOpenChange={(o) => setPickerFor(o ? firstId : null)}
+                onChange={(nextIcon) => setSection(sec, nextIcon)}
               />
-            </section>
-          </div>
-        ) : (
-          <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 guide-canvas rounded-(--radius) p-6 text-center md:order-none">
-            <IconRulerMeasure className="size-8 text-muted-foreground" aria-hidden />
-            <h2 className="title-lg">Start with the <em className="display-italic">pattern pieces</em></h2>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              Measure each piece from top to bottom, in every size. Sigrid draws it from your numbers, and the steps can show it.
-            </p>
-            <Button onClick={addPiece}>
-              <IconPlus data-icon="inline-start" />
-              Add a piece
-            </Button>
+              <InlineText required label="Section name" value={sec.group} placeholder="Section name" onChange={(name) => setSection(sec, { title: name })} className="text-sm" />
+              <span className="text-xs tabular-nums text-muted-foreground">{sec.indices.length}</span>
+            </div>
+            <ol className="flex flex-col gap-1 px-2 pt-1 pb-2">
+              {sec.indices.map((i, n) => {
+                const s = steps[i]
+                const isCurrent = pieceFocus === null && i === current
+                return (
+                  <li key={s.id} data-drop="row" data-to={i} data-group={sec.group}>
+                    {dropLine(i, sec.group)}
+                    <div
+                      style={drag?.from === i ? { transform: `translateY(${drag.dy}px)` } : undefined}
+                      className={cn('group/row relative flex items-center gap-1', drag?.from === i && 'z-20')}
+                    >
+                      {/* Handle: press and drag to move the step */}
+                      <span
+                        onPointerDown={(e) => startDrag(e, i)}
+                        onPointerMove={moveDrag}
+                        onPointerUp={() => endDrag(true)}
+                        onPointerCancel={() => endDrag(false)}
+                        title="Drag to move"
+                        aria-hidden
+                        className={cn('flex h-9 w-5 shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground select-none hover:text-foreground', drag?.from === i && 'cursor-grabbing text-foreground')}
+                      >
+                        <IconGripVertical className="size-4" />
+                      </span>
+                      <button type="button" onClick={() => pick(i)} aria-current={isCurrent ? 'step' : undefined} className={cn('guide-step flex min-w-0 flex-1 items-center gap-2.5 rounded-(--control-radius) px-2 py-1.5 text-left', drag?.from === i && 'bg-card')}>
+                        <StepDot state={isCurrent ? 'active' : 'upcoming'} className="size-6">{n + 1}</StepDot>
+                        <span className={cn('min-w-0 flex-1 truncate text-sm', isCurrent && 'font-medium')}>
+                          {s.title === 'New step' ? <span className="text-muted-foreground">New step</span> : s.title}
+                        </span>
+                        {unwritten(s) && <TodoMark>To write</TodoMark>}
+                      </button>
+                      {stepMenu(i, n + 1, s, 'shrink-0 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 aria-expanded:opacity-100 pointer-coarse:opacity-100')}
+                    </div>
+                  </li>
+                )
+              })}
+              {dropLine(sec.indices[sec.indices.length - 1] + 1, sec.group)}
+              <li>
+                <button
+                  type="button"
+                  data-drop="end"
+                  data-to={sec.indices[sec.indices.length - 1] + 1}
+                  data-group={sec.group}
+                  onClick={() => {
+                    addStep(sec.indices[sec.indices.length - 1] + 1, sec.group)
+                    onStepsOpenChange(false)
+                  }}
+                  className="guide-step flex w-full items-center gap-2.5 rounded-(--control-radius) px-2 py-1.5 text-left text-sm text-muted-foreground"
+                >
+                  <IconPlus className="size-4" aria-hidden />
+                  Add step
+                </button>
+              </li>
+            </ol>
           </div>
         )
-      ) : step ? (
-        <div className="contents md:flex md:min-h-0 md:flex-1 md:flex-col">
-          <div className="relative order-1 h-56 shrink-0 overflow-hidden guide-canvas rounded-(--radius) md:order-none md:h-auto md:min-h-0 md:flex-1">
-            <PatternCanvas key={`${step.id}-${stepIds.join('+')}-${step.action}`} steps={steps} index={current} pieces={drawablePieces} measurements={standardSizes.M} />
-            <div className="glass absolute top-3 left-3 flex items-center gap-1 rounded-full py-1 pr-2 pl-3 text-xs">
-              Drawing
-              <InlinePick className="mx-0 font-medium" label="Drawing" text={stepIds.length === 1 && piece ? `${piece.label} · ${piece.name}` : drawingText} placeholder="none">
-                {pieces.length === 0 ? (
-                  <Button variant="outline" size="sm" onClick={() => onPieceFocus('')}>
-                    Add pattern pieces
-                  </Button>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    <ChipGroup
-                      multiple
-                      label="Drawing"
-                      options={pieces.flatMap((p) => [
-                        { value: p.id, label: `${p.label} · ${p.name}` },
-                        // A piece cut twice can join its own second cut (two halves, two collar layers)
-                        ...(p.quantity >= 2 ? [{ value: `${p.id}#2`, label: `${p.label}² · second ${p.name.toLowerCase()}` }] : []),
-                      ])}
-                      value={stepIds}
-                      onValueChange={(ids) => {
-                        // Keep the order they were picked in: the first one is the base the others join
-                        const ordered = [...stepIds.filter((x) => ids.includes(x)), ...ids.filter((x) => !stepIds.includes(x))]
-                        update({ pieceId: pieceOf(ordered[0] ?? '') || undefined, pieceIds: ordered.length > 1 ? ordered : undefined, secondPieceId: undefined })
-                      }}
-                    />
-                    {stepIds.length > 1 && (
-                      <div className="flex flex-col gap-1.5">
-                        <p className="text-xs text-muted-foreground">How {stepIds.slice(1).map(labelOf).join(' + ')} {stepIds.length > 2 ? 'go' : 'goes'} onto {labelOf(stepIds[0])}</p>
-                        <ChipGroup<JoinKind>
-                          label="How the pieces meet"
-                          options={[
-                            { value: 'side', label: 'Side by side' },
-                            { value: 'top', label: 'Onto the top edge' },
-                            { value: 'layer', label: 'Laid on top' },
-                          ]}
-                          value={[step.join ?? 'side']}
-                          onValueChange={([join]) => update({ join })}
-                        />
-                      </div>
-                    )}
-                    <p className="max-w-72 text-xs text-muted-foreground">Pick two or more when this step joins pieces; the first is the one the others go onto. What earlier steps joined stays together.</p>
-                  </div>
-                )}
-              </InlinePick>
+      })}
+      <Button
+        variant="ghost"
+        className="w-full text-muted-foreground"
+        onClick={() => {
+          addSection()
+          onStepsOpenChange(false)
+        }}
+      >
+        <IconPlus data-icon="inline-start" />
+        Add section
+      </Button>
+    </div>
+  )
+
+  // ── The card: what the sewer reads for this step, typed straight into it ──
+  let card: React.ReactNode
+  if (pieceFocus !== null) {
+    card = (
+      <section aria-label="Piece measurements" className="glass-panel step-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-(--radius) border">
+        <header className="container-head flex items-baseline justify-between gap-3">
+          <p className="eyebrow min-w-0 truncate text-muted-foreground">Pattern pieces</p>
+          <p className="shrink-0 text-xs font-medium text-brand-ink tabular-nums">{pieces.length === 0 ? 'None yet' : `${piecesDone} of ${pieces.length} measured`}</p>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-1 pb-4">
+          {focusedPiece ? (
+            <PieceEditor
+              // A fresh editor per piece, so nothing typed or opened on one piece shows on the next
+              key={focusedPiece.id}
+              pattern={pattern}
+              piece={focusedPiece}
+              size={activeSize}
+              onSize={setPieceSize}
+              onPiece={updatePiece}
+              onDelete={() => deletePiece(focusedPiece.id)}
+              onOpenSizes={onOpenSizes}
+              onActiveLine={setActiveLine}
+            />
+          ) : (
+            <div className="flex flex-col gap-3">
+              <h2 className="title-lg">Start with the <em className="display-italic">pattern pieces</em></h2>
+              <p className="max-w-prose text-base text-muted-foreground">Measure each piece from top to bottom, in every size. Sigrid draws it from your numbers, and the steps can show it.</p>
             </div>
+          )}
+        </div>
+        <footer className="flex items-center gap-2 border-t p-3">
+          {focusedPiece ? (
+            <Button variant="outline" size="lg" className="flex-1" onClick={() => onPieceFocus(null)} disabled={steps.length === 0}>
+              <IconNeedleThread data-icon="inline-start" />
+              Go to the steps
+            </Button>
+          ) : null}
+          <Button size="lg" className="flex-1" onClick={addPiece}>
+            <IconPlus data-icon="inline-start" />
+            Add piece
+          </Button>
+        </footer>
+      </section>
+    )
+  } else if (step) {
+    card = (
+      <section aria-label="This step" className="glass-panel step-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-(--radius) border">
+        {/* Where you are, as the sewer sees it */}
+        <header className="container-head flex flex-col gap-2.5">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="eyebrow min-w-0 truncate text-muted-foreground">
+              {step.group}
+              {section && section.indices.length > 1 ? ` · ${inSection} of ${section.indices.length}` : ''}
+            </p>
+            <p className="shrink-0 text-xs font-medium text-brand-ink tabular-nums">Step {current + 1} of {steps.length}</p>
           </div>
+          <StageProgress journeys={journeys} completedUntil={0} total={steps.length} />
+        </header>
 
-          <section aria-label="Step" className="glass-panel order-2 shrink-0 rounded-(--radius) px-5 py-4 md:order-none md:mt-3">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <p className="kicker">
-                {step.group} · Step {(section?.indices.indexOf(current) ?? 0) + 1} of {section?.indices.length ?? 1}
-              </p>
-              <div className="flex items-center">
-                <Button variant="ghost" size="icon-sm" aria-label="Move step up" disabled={current === 0} onClick={() => move(current, -1)}>
-                  <IconArrowUp />
-                </Button>
-                <Button variant="ghost" size="icon-sm" aria-label="Move step down" disabled={current === steps.length - 1} onClick={() => move(current, 1)}>
-                  <IconArrowDown />
-                </Button>
-                <Button variant="ghost" size="icon-sm" aria-label="Delete step" onClick={() => deleteStep()}>
-                  <IconTrash />
-                </Button>
-              </div>
+        {/* What to do, written where it will be read */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-1 pb-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <StatusBadge status="neutral">{ACTION_LABELS[step.action]}</StatusBadge>
+              {unwritten(step) && <TodoMark>To write</TodoMark>}
+              {stepMenu(current, current + 1, step, 'ml-auto')}
             </div>
-
-            <div className="mb-2 flex items-center gap-2.5">
-              <span className="eyebrow shrink-0 rounded-full bg-card px-2.5 py-1 text-muted-foreground">{ACTION_LABELS[step.action]}</span>
-              <InlineText
+            <h2 className="title-lg">
+              <InlineTextarea
+                inheritFont
                 required
                 label="Step title"
                 value={step.title === 'New step' ? '' : step.title}
                 placeholder="Start with what to do, e.g. Pin the side seams"
-                onChange={(title) => update({ title: title || 'New step', action: actionFromTitle(title, step.action) })}
-                className="title-lg"
+                onChange={(title) => update({ title: title.replace(/\n/g, ' ') || 'New step', action: actionFromTitle(title, step.action) })}
               />
-            </div>
-
+            </h2>
             <InlineTextarea
               required
               label="Step instruction"
               value={step.instruction}
               placeholder="Explain it in short sentences. Give numbers with units: sew 1.5 cm from the edge."
               onChange={(instruction) => update({ instruction })}
-              className="max-w-prose text-base text-muted-foreground"
+              className="max-w-prose text-base leading-relaxed"
             />
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-card py-1 pr-2 pl-3 text-sm font-medium">
-                <IconRuler2 size={16} aria-hidden />
-                <InlineText
-                  label="Key measurement"
-                  value={step.measurement ?? ''}
-                  placeholder="Add a measurement"
-                  onChange={(m) => update({ measurement: m || undefined })}
-                  className="field-sizing-content w-auto min-w-24"
-                />
-              </span>
-            </div>
+            <ul className="flex flex-wrap gap-2">
+              <li className="step-fact">
+                <IconRuler2 aria-hidden />
+                <InlineText label="Key measurement" value={step.measurement ?? ''} placeholder="Add a measurement" onChange={(m) => update({ measurement: m || undefined })} className="field-sizing-content w-auto min-w-24" />
+              </li>
+              <li className="step-fact">
+                {tool ? <tool.Icon aria-hidden /> : <IconTool aria-hidden />}
+                <InlinePick label="Tool" text={tool?.label ?? ''} placeholder="Add a tool">
+                  <ChipGroup<Tool>
+                    label="Tool"
+                    options={(Object.keys(TOOLS) as Tool[]).map((t) => ({ value: t, label: TOOLS[t].label }))}
+                    value={step.tool ? [step.tool] : []}
+                    onValueChange={([t]) => update({ tool: t === step.tool ? undefined : t })}
+                  />
+                </InlinePick>
+              </li>
+            </ul>
 
-            <div className="mt-3 flex items-start gap-2 rounded-(--control-radius) bg-card px-4 py-3">
-              <IconBulb size={18} className="mt-0.5 shrink-0 text-primary" aria-hidden />
-              <InlineText
-                label="Tip"
-                value={step.tip ?? ''}
-                placeholder="Add a tip (optional)"
-                onChange={(tip) => update({ tip: tip || undefined })}
-                className="text-sm data-[empty=true]:bg-transparent"
-              />
-            </div>
-          </section>
+            <aside className="step-tip">
+              <IconBulb aria-hidden />
+              <InlineTextarea label="Tip" value={step.tip ?? ''} placeholder="Add a tip (optional)" onChange={(tip) => update({ tip: tip || undefined })} />
+            </aside>
+
+            {next && (
+              <button type="button" data-control onClick={() => setSelected(current + 1)} className="step-next">
+                <span className="eyebrow text-muted-foreground">Next</span>
+                <span className="min-w-0 truncate">{next.title}</span>
+                <IconChevronRight aria-hidden className="ml-auto size-4 shrink-0 text-muted-foreground" />
+              </button>
+            )}
+          </div>
         </div>
-      ) : (
-        <div className="order-1 flex flex-1 flex-col items-center justify-center gap-3 guide-canvas rounded-(--radius) p-6 text-center md:order-none">
-          <IconNeedleThread className="size-8 text-muted-foreground" aria-hidden />
-          <h2 className="title-lg">Write the <em className="display-italic">sewing steps</em></h2>
-          <p className="max-w-sm text-sm text-muted-foreground">You write each step right here, exactly where sewers will read it.</p>
-          <Button onClick={addSection}>
-            <IconPlus data-icon="inline-start" />
-            Add a step
+
+        {/* The sewer's ‹ Mark done › bar; here the middle button adds the next step */}
+        <footer className="flex items-center gap-2 border-t p-3">
+          <Button variant="outline" size="icon-lg" onClick={() => setSelected(Math.max(0, current - 1))} disabled={current <= 0} aria-label="Previous step">
+            <IconChevronLeft />
           </Button>
+          <Button size="lg" className="flex-1" onClick={() => addStep(current + 1, step.group)}>
+            <IconPlus data-icon="inline-start" />
+            Add step
+          </Button>
+          <Button variant="outline" size="icon-lg" onClick={() => setSelected(Math.min(steps.length - 1, current + 1))} disabled={current >= steps.length - 1} aria-label="Next step">
+            <IconChevronRight />
+          </Button>
+        </footer>
+      </section>
+    )
+  } else {
+    card = (
+      <section aria-label="Sewing steps" className="glass-panel step-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-(--radius) border">
+        <header className="container-head">
+          <p className="eyebrow text-muted-foreground">Sewing steps</p>
+        </header>
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pt-1 pb-4">
+          <h2 className="title-lg">Write the <em className="display-italic">sewing steps</em></h2>
+          <p className="max-w-prose text-base text-muted-foreground">You write each step right here, exactly where sewers will read it.</p>
         </div>
-      )}
-    </div>
+        <footer className="border-t p-3">
+          <Button size="lg" className="w-full" onClick={addSection}>
+            <IconPlus data-icon="inline-start" />
+            Add the first step
+          </Button>
+        </footer>
+      </section>
+    )
+  }
+
+  // ── The picture: the piece, the step's drawing, or the empty floor ──
+  let picture: React.ReactNode
+  if (pieceFocus !== null) {
+    picture = focusedPiece ? (
+      <PieceShape piece={focusedPiece} sizes={pattern.sizes} active={activeSize} highlight={activeLine} />
+    ) : (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        <IconRulerMeasure className="size-8" aria-hidden />
+      </div>
+    )
+  } else if (step) {
+    picture = (
+      <>
+        <PatternCanvas key={`${step.id}-${stepIds.join('+')}-${step.action}`} steps={steps} index={current} pieces={drawablePieces} measurements={standardSizes.M} />
+        {/* Which pieces the drawing shows: on the picture, where you see the result */}
+        <div className="glass-chip absolute top-3 left-3 flex items-center gap-1 rounded-full py-1 pr-2 pl-3 text-xs">
+          Drawing
+          <InlinePick className="mx-0 font-medium" label="Drawing" text={stepIds.length === 1 && piece ? `${piece.label} · ${piece.name}` : drawingText} placeholder="none">
+            {pieces.length === 0 ? (
+              <Button variant="outline" size="sm" onClick={() => onPieceFocus('')}>
+                Add pattern pieces
+              </Button>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <ChipGroup
+                  multiple
+                  label="Drawing"
+                  options={pieces.flatMap((p) => [
+                    { value: p.id, label: `${p.label} · ${p.name}` },
+                    // A piece cut twice can join its own second cut (two halves, two collar layers)
+                    ...(p.quantity >= 2 ? [{ value: `${p.id}#2`, label: `${p.label}² · second ${p.name.toLowerCase()}` }] : []),
+                  ])}
+                  value={stepIds}
+                  onValueChange={(ids) => {
+                    // Keep the order they were picked in: the first one is the base the others join
+                    const ordered = [...stepIds.filter((x) => ids.includes(x)), ...ids.filter((x) => !stepIds.includes(x))]
+                    update({ pieceId: pieceOf(ordered[0] ?? '') || undefined, pieceIds: ordered.length > 1 ? ordered : undefined, secondPieceId: undefined })
+                  }}
+                />
+                {stepIds.length > 1 && (
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-xs text-muted-foreground">How {stepIds.slice(1).map(labelOf).join(' + ')} {stepIds.length > 2 ? 'go' : 'goes'} onto {labelOf(stepIds[0])}</p>
+                    <ChipGroup<JoinKind>
+                      label="How the pieces meet"
+                      options={[
+                        { value: 'side', label: 'Side by side' },
+                        { value: 'top', label: 'Onto the top edge' },
+                        { value: 'layer', label: 'Laid on top' },
+                      ]}
+                      value={[step.join ?? 'side']}
+                      onValueChange={([join]) => update({ join })}
+                    />
+                  </div>
+                )}
+                <p className="max-w-72 text-xs text-muted-foreground">Pick two or more when this step joins pieces; the first is the one the others go onto. What earlier steps joined stays together.</p>
+              </div>
+            )}
+          </InlinePick>
+        </div>
+      </>
+    )
+  } else {
+    picture = (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        <IconNeedleThread className="size-8" aria-hidden />
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <PanelSheet
+        open={stepsOpen}
+        onOpenChange={onStepsOpenChange}
+        title="All steps"
+        description="Pick one to write it. Drag a step by its handle to move it."
+      >
+        {list}
+      </PanelSheet>
+
+      {/* One step at a time, the same frame as the sewer's guide. Phones: the picture on top. */}
+      <div className="guide-body px-4 pb-3 md:pr-8 md:pb-6 md:pl-4">
+        <div className="order-2 flex min-h-0 flex-1 flex-col md:order-none md:col-span-5 lg:col-span-4 xl:col-span-3">{card}</div>
+        <div className="order-1 guide-canvas-pane flex shrink-0 flex-col md:order-none md:col-span-7 md:h-auto md:min-h-0 lg:col-span-8 xl:col-span-9">
+          <ProductFrame className="flex min-h-0 flex-1 flex-col p-2 md:p-3">
+            <div className="relative min-h-0 flex-1 overflow-hidden rounded-(--image-radius)">{picture}</div>
+          </ProductFrame>
+        </div>
+      </div>
+    </>
   )
 }

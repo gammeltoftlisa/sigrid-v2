@@ -110,8 +110,10 @@ export interface StudioFabric {
 export interface StudioPattern {
   /** When it was published: it's in Explore with its own product page until unpublished (edits show live) */
   publishedAt?: number | null
-  /** A photo of the made garment, shown on the pattern list; optional */
+  /** The cover photo of the made garment (the first of `photos`), shown on the pattern list; optional */
   photo?: string
+  /** Every photo of the made garment, the cover first. Set both through setPhotos() */
+  photos?: string[]
   id: string
   name: string
   category: GarmentCategory
@@ -219,12 +221,13 @@ const savedPatternSchema = z.looseObject({
 })
 
 /** Null when this saved value can't become a pattern. Its key is left alone, so it isn't lost. */
-function readSaved(value: unknown, photo: string | null): StudioPattern | null {
+function readSaved(value: unknown, photoRaw: string | null): StudioPattern | null {
   const parsed = savedPatternSchema.safeParse(value)
   if (!parsed.success) return null
   try {
     const saved = parsed.data as unknown as Saved
-    return normalize(photo ? { ...saved, photo } : saved)
+    const photos = readPhotos(photoRaw) ?? (saved.photo ? [saved.photo] : [])
+    return normalize(photos.length ? { ...saved, photo: photos[0], photos } : saved)
   } catch {
     return null
   }
@@ -243,9 +246,29 @@ const deletedIds = (): string[] => {
   return result.status === 'ok' ? result.value : []
 }
 
-/** Writes the two keys of one pattern. Keeps the photo out of the text, and skips what hasn't changed. */
+/** The most photos one pattern keeps. They live in this browser's storage, which only holds a few megabytes. */
+export const MAX_PHOTOS = 6
+
+/** The cover and the list together, so they can't disagree */
+export const setPhotos = (photos: string[]): Pick<StudioPattern, 'photo' | 'photos'> => {
+  const kept = photos.filter(Boolean).slice(0, MAX_PHOTOS)
+  return { photo: kept[0], photos: kept.length ? kept : undefined }
+}
+
+/** The photo key holds one photo (as saved before there could be more) or a list of them */
+function readPhotos(raw: string | null): string[] | null {
+  if (!raw) return null
+  if (!raw.startsWith('[')) return [raw]
+  const list = parseJson(raw)
+  return Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string') : null
+}
+
+/** Writes the two keys of one pattern. Keeps the photos out of the text, and skips what hasn't changed. */
 function writeOne(pattern: StudioPattern, write: typeof writeRaw): WriteResult {
-  const { photo, ...rest } = pattern
+  const { photo: cover, photos: all, ...rest } = pattern
+  const list = all?.length ? all : cover ? [cover] : []
+  // One photo is saved as before, so older versions of the app still read it
+  const photo = list.length === 0 ? '' : list.length === 1 ? list[0] : JSON.stringify(list)
   const text = JSON.stringify(rest)
   const key = patternKey(pattern.id)
   if (readRaw(key) !== text) {

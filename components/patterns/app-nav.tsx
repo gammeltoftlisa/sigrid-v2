@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { IconBooks, IconCompass, IconHome, IconShoppingBag, IconUser, type Icon } from '@tabler/icons-react'
+import { IconCompass, IconHome, IconShoppingBag, IconUser, type Icon } from '@tabler/icons-react'
 import { motion } from 'motion/react'
 import { cn } from 'cn'
 
@@ -14,10 +14,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 const items: { href: string; label: string; /** Tab bar label, when the name is too long for a phone */ short?: string; icon: Icon }[] = [
   { href: '/home', label: 'Home', icon: IconHome },
-  { href: '/patterns', label: 'My patterns', short: 'Patterns', icon: IconBooks },
   { href: '/explore', label: 'Explore', icon: IconCompass },
   { href: '/fabric', label: 'Shop', icon: IconShoppingBag },
-  { href: '/profile', label: 'Profile', icon: IconUser },
+  { href: '/profile', label: 'You', icon: IconUser },
 ]
 
 function useActive() {
@@ -25,13 +24,13 @@ function useActive() {
   return (href: string) => pathname === href || pathname.startsWith(href + '/')
 }
 
-/** Phones: a floating glass tab bar, like iOS. Thin icons, short labels, a soft pill marks the current tab. */
+/** Phones: a floating glass tab bar, like iOS. Thin icons, short labels, a round pill marks the current tab. */
 export function AppTabBar() {
   const isActive = useActive()
   return (
     <nav
       aria-label="Main"
-      className="glass fixed inset-x-3 bottom-tabbar z-40 mx-auto max-w-md rounded-pane-lg p-1 text-foreground md:hidden"
+      className="glass fixed inset-x-3 bottom-tabbar z-40 mx-auto max-w-md rounded-full p-1 text-foreground md:hidden"
     >
       <ul className="flex">
         {items.map(({ href, label, short, icon: ItemIcon }) => {
@@ -42,7 +41,7 @@ export function AppTabBar() {
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'relative flex h-13 flex-col items-center justify-center gap-0.5 rounded-pane-inner text-2xs font-medium outline-none transition-colors',
+                  'nav-link rail-link relative flex h-13 flex-col items-center justify-center gap-0.5 rounded-full text-2xs font-medium outline-none transition-colors',
                   active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -50,8 +49,8 @@ export function AppTabBar() {
                   <motion.span
                     layoutId="tabbar-marker"
                     aria-hidden
-                    className="absolute inset-0 rounded-pane-inner bg-foreground/7"
-                    transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+                    className="control-thumb absolute inset-0 rounded-full"
+                    transition={{ type: 'spring', bounce: 0.22, duration: 0.5 }}
                   />
                 )}
                 {href === '/profile' ? (
@@ -69,6 +68,23 @@ export function AppTabBar() {
   )
 }
 
+/**
+ * The rail's mark for the current page: one round stitched bubble that glides to whichever destination is open,
+ * the avatar included. Round like the hover under it and the avatar, so nothing changes shape. A soft spring with a
+ * little give, so it settles rather than snaps. Its layoutId is shared app-wide (MotionProvider's LayoutGroup),
+ * so it glides even when the page's frame changes.
+ */
+function RailMarker() {
+  return (
+    <motion.span
+      layoutId="sidebar-marker"
+      aria-hidden
+      className="control-thumb absolute inset-0 rounded-full"
+      transition={{ type: 'spring', bounce: 0.22, duration: 0.5 }}
+    />
+  )
+}
+
 /** md and up: a slim floating glass rail with the same destinations; names show as tooltips. */
 export function AppSidebar() {
   const isActive = useActive()
@@ -80,7 +96,7 @@ export function AppSidebar() {
       </Link>
       <nav aria-label="Main">
         <ul className="flex flex-col items-center gap-2">
-          {/* Profile is the avatar at the bottom of the rail, so it isn't repeated here */}
+          {/* You is the avatar at the bottom of the rail, so it isn't repeated here */}
           {items.filter((i) => i.href !== '/profile').map(({ href, label, icon: ItemIcon }) => {
             const active = isActive(href)
             return (
@@ -93,20 +109,13 @@ export function AppSidebar() {
                         aria-label={label}
                         aria-current={active ? 'page' : undefined}
                         className={cn(
-                          'nav-link relative flex size-11 items-center justify-center rounded-xl outline-none transition-colors',
-                          active ? 'text-foreground' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+                          'nav-link rail-link relative flex size-11 items-center justify-center rounded-full outline-none',
+                          active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                         )}
                       />
                     }
                   >
-                    {active && (
-                      <motion.span
-                        layoutId="sidebar-marker"
-                        aria-hidden
-                        className="absolute inset-0 rounded-xl bg-foreground/7"
-                        transition={{ type: 'spring', stiffness: 420, damping: 38 }}
-                      />
-                    )}
+                    {active && <RailMarker />}
                     <ItemIcon className="relative size-5" stroke={active ? 1.75 : 1.4} aria-hidden />
                   </TooltipTrigger>
                   <TooltipContent side="right" sideOffset={10}>
@@ -123,19 +132,18 @@ export function AppSidebar() {
           render={
             <Link
               href="/profile"
-              aria-label="Profile"
+              aria-label="You"
               aria-current={isActive('/profile') ? 'page' : undefined}
-              className={cn(
-                'mt-auto rounded-full outline-none',
-                isActive('/profile') && 'outline-2 outline-offset-2 outline-foreground/70',
-              )}
+              className="nav-link rail-link relative mt-auto flex size-11 items-center justify-center rounded-full outline-none"
             />
           }
         >
-          <UserAvatar className="size-9" />
+          {/* The same marker slides down here, instead of a ring of its own */}
+          {isActive('/profile') && <RailMarker />}
+          <UserAvatar className="relative size-9" />
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={10}>
-          Profile
+          You
         </TooltipContent>
       </Tooltip>
       </div>

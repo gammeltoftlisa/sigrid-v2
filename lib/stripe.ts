@@ -37,41 +37,57 @@ async function customerFor(userId: string) {
   return { customerId: customer.id, email }
 }
 
-/** A checkout page stays payable for at least an hour; two tabs within the same hour share one */
+/** A checkout stays payable for at least an hour; two tabs within the same hour share one */
 const HOUR = 3600
 
 /**
- * Stripe's own payment page for one pattern. The card is typed there and never reaches Sigrid.
- * One open page per person and pattern, so two tabs or a double click can't lead to paying twice.
+ * Starts paying for one pattern, on Sigrid's own checkout page. The card is typed into Stripe's
+ * fields in that page and never reaches Sigrid. One open checkout per person and pattern, so two tabs
+ * or a double click can't lead to paying twice. Returns what the page needs to show Stripe's fields.
  */
 export async function createCheckout({ userId, garmentId, name, price, origin }: { userId: string; garmentId: string; name: string; price: number; origin: string }) {
   const stripe = getStripe()
   const { customerId, email } = await customerFor(userId)
 
   const open = await stripe.checkout.sessions.list({ customer: customerId, status: 'open', limit: 100 })
-  const existing = open.data.find((s) => s.metadata?.garmentId === garmentId && s.metadata?.userId === userId && s.url)
-  if (existing) return existing.url
+  const existing = open.data.find((s) => s.metadata?.garmentId === garmentId && s.metadata?.userId === userId && s.ui_mode === 'elements')
+  if (existing) {
+    // A list leaves the secret out, so ask for this one
+    const again = existing.client_secret ? existing : await stripe.checkout.sessions.retrieve(existing.id)
+    if (again.client_secret) return { sessionId: again.id, clientSecret: again.client_secret, email }
+  }
 
-  const metadata = { garmentId, userId, withdrawalWaiver: 'accepted' }
+  // The waiver is asked for on the checkout page and added when the person presses Pay
+  const metadata = { garmentId, userId, withdrawalWaiver: 'pending' }
   // Fixed within the hour, because Stripe refuses a repeated key with different values
   const bucket = Math.floor(Date.now() / 1000 / HOUR) * HOUR
   const session = await stripe.checkout.sessions.create(
     {
       mode: 'payment',
+      ui_mode: 'elements',
       customer: customerId,
       line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: Math.round(price * 100), product_data: { name } } }],
       metadata,
       // Refunds and disputes only mention the payment, so it carries who and what as well
-      payment_intent_data: {
-        metadata,
-        receipt_email: email,
-        description: `${name}. You asked to start straight away and confirmed that you lose the right to cancel once you open the pattern or guide.`,
-      },
+      payment_intent_data: { metadata: { garmentId, userId }, receipt_email: email, description: `Sigrid pattern: ${name}` },
       expires_at: bucket + 2 * HOUR,
-      success_url: `${origin}/garment/${garmentId}?checkout_session={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/garment/${garmentId}`,
+      // Only used when the bank asks for a check on its own page; otherwise the checkout page carries on
+      return_url: `${origin}/garment/${garmentId}?checkout_session={CHECKOUT_SESSION_ID}`,
     },
-    { idempotencyKey: `checkout-${userId}-${garmentId}-${bucket}` },
+    { idempotencyKey: `checkout-elements-${userId}-${garmentId}-${bucket}` },
   )
-  return session.url
+  if (!session.client_secret) throw new Error('Stripe returned no client secret')
+  return { sessionId: session.id, clientSecret: session.client_secret, email }
+}
+
+/**
+ * The buyer ticked "start straight away" and pressed Pay. Only their own, still open checkout can be
+ * marked, and the mark is what the webhook stores with the purchase.
+ */
+export async function acceptWaiver({ userId, sessionId }: { userId: string; sessionId: string }) {
+  const stripe = getStripe()
+  const session = await stripe.checkout.sessions.retrieve(sessionId)
+  if (session.metadata?.userId !== userId || session.status !== 'open') return false
+  await stripe.checkout.sessions.update(sessionId, { metadata: { ...session.metadata, withdrawalWaiver: 'accepted', withdrawalWaiverAt: new Date().toISOString() } })
+  return true
 }

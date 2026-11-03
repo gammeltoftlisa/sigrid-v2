@@ -1,3 +1,4 @@
+import { AuthBack } from '@/components/patterns/auth-back'
 import { GarmentImage } from '@/components/garment/GarmentImage'
 import { ProductGrid } from '@/components/patterns/product-grid'
 import { Wordmark } from '@/components/patterns/wordmark'
@@ -32,7 +33,12 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
       </section>
 
       <div className="auth-form">
-        <div className="auth-page">{children}</div>
+        <div className="auth-page">
+          <div className="auth-stack">
+            <AuthBack />
+            {children}
+          </div>
+        </div>
       </div>
     </main>
   )

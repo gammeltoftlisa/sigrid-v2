@@ -9,8 +9,9 @@ import { PageContainer } from '@/components/patterns/page-header'
 import { PanelSheet } from '@/components/patterns/panel-sheet'
 
 /**
- * A shop page that fits the screen: a bar with search and the bag that always stays, and under it one scrolling
- * area with the categories, a narrow panel of dropdowns that stays in view, and the products. The page itself never scrolls.
+ * A browsing page that fits the screen, for the Shop and Explore: a bar with search (and the bag, or Explore's
+ * switch and dropdowns) that always stays, and under it one scrolling area with the categories, a narrow panel
+ * of dropdowns that stays in view, and the products. The page itself never scrolls.
  */
 export function ShopLayout({
   title,
@@ -27,9 +28,12 @@ export function ShopLayout({
   sheetFooter,
   chosenCount = 0,
   search,
+  lead,
   children,
 }: {
   title: string
+  /** At the start of the bar, before the search: Explore's Patterns / Makers switch */
+  lead?: React.ReactNode
   /** The way back up, when you've gone into something */
   breadcrumbs?: Crumb[]
   nav?: React.ReactNode
@@ -54,6 +58,7 @@ export function ShopLayout({
       <div className="shop-body">
         <div className="shop-bar glass-bar">
           {search ? <h1 className="sr-only">{title}</h1> : <h1 className="shop-title min-w-0 flex-1 truncate pl-2">{title}</h1>}
+          {lead}
           {search && <div className="min-w-0 flex-1">{search}</div>}
           {panel && (
             <Button variant="outline" size="lg" className="lg:hidden" aria-label={chosenCount > 0 ? `Filters, ${chosenCount} chosen` : 'Filters'} onClick={() => onSheetOpenChange?.(true)}>

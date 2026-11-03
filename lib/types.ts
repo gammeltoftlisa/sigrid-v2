@@ -19,6 +19,8 @@ export interface Garment {
   description: string
   /** The photo attached to this garment. null: a published pattern with no photo of its own */
   photo?: string | null
+  /** Every photo of it, the cover (`photo`) first; only patterns from the studio have more than one */
+  photos?: string[]
   /** Published from the pattern studio on this device */
   published?: boolean
 }
@@ -145,5 +147,7 @@ export interface GarmentGuide {
 /** A guide's outline: see getGuideOutline in lib/data.ts */
 export interface GuideOutline {
   steps: { title: string; tool?: SewingStep2D['tool'] }[]
+  /** How many steps each stage (section) of the guide holds, in order */
+  stages: number[]
   pieces: number
 }

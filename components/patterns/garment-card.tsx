@@ -3,7 +3,7 @@ import { cn } from 'cn'
 
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { GarmentImage } from '@/components/garment/GarmentImage'
+import { GarmentGallery } from '@/components/garment/GarmentGallery'
 import type { Difficulty } from '@/lib/types'
 import { PhotoLabel } from '@/components/patterns/photo-label'
 
@@ -24,6 +24,7 @@ export function GarmentCard({
   lead,
   description,
   photoSrc,
+  photos,
   className,
 }: {
   href: string
@@ -42,6 +43,8 @@ export function GarmentCard({
   description?: string
   /** The photo attached to the garment; see GarmentImage */
   photoSrc?: string | null
+  /** Every photo, the cover first: more than one can be swiped through on the tile */
+  photos?: string[]
   className?: string
 }) {
   const details = [difficulty, time].filter(Boolean).join(' · ')
@@ -50,9 +53,11 @@ export function GarmentCard({
       data-variant="product"
       className={cn('group/tile relative gap-3 pt-0', lead && 'tile-lead', className)}
     >
-      <GarmentImage
+      <GarmentGallery
         name={name}
         photoSrc={photoSrc}
+        photos={photos}
+        href={href}
         sizes={lead ? '(min-width: 1280px) 40vw, (min-width: 768px) 60vw, 100vw' : undefined}
         className="product-image aspect-product"
         imageClassName="hover-zoom"
@@ -60,7 +65,7 @@ export function GarmentCard({
         {tag && (
           <PhotoLabel className="absolute top-3 left-3">{tag}</PhotoLabel>
         )}
-      </GarmentImage>
+      </GarmentGallery>
       <CardHeader className="gap-0.5">
         {lead && <p className="kicker">Featured pattern</p>}
         <CardTitle>

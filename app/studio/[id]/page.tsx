@@ -6,9 +6,13 @@ import { useRouter } from 'next/navigation'
 import { AppShell } from '@/components/patterns/app-nav'
 import { PageBreadcrumbs } from '@/components/patterns/page-breadcrumbs'
 import { PatternMissing } from '@/components/studio/PatternMissing'
+import { DeletePattern } from '@/components/studio/DeletePattern'
 import { StatusChip } from '@/components/studio/StatusChip'
 import { StudioPatternPage } from '@/components/studio/StudioPatternPage'
 import { CheckSheet, SizesSheet } from '@/components/studio/StudioSheets'
+import { toast } from 'sonner'
+
+import { deletePattern } from '@/lib/studio/patterns'
 import { useStudioPattern } from '@/lib/studio/use-pattern'
 import type { WizardStep } from '@/lib/studio/wizard'
 
@@ -49,12 +53,22 @@ export default function StudioPatternRoute({ params }: { params: Promise<{ id: s
 
   return (
     <AppShell>
-      <main className="min-h-svh md:flex md:h-svh md:flex-col md:overflow-hidden">
+      <main className="min-h-svh">
         {/* The garment page's top line; the studio adds only the status chip */}
-        <div className="shrink-0 px-4 md:pr-8 md:pl-4">
-          <div className="top-bar flex h-14 items-center gap-2">
+        <div className="shrink-0 px-4 pt-(--page-top) md:px-3">
+          <div className="top-bar flex items-center gap-2">
             <PageBreadcrumbs items={[{ label: 'Pattern studio', href: '/studio' }, { label: pattern.name }]} />
-            <StatusChip pattern={pattern} onClick={() => setCheckOpen(true)} className="ml-auto" />
+            <div className="ml-auto flex shrink-0 items-center gap-2">
+              <DeletePattern
+                pattern={pattern}
+                onDelete={() => {
+                  deletePattern(id)
+                  toast.success(`${pattern.name} is deleted.`)
+                  router.replace('/studio')
+                }}
+              />
+              <StatusChip pattern={pattern} onClick={() => setCheckOpen(true)} />
+            </div>
           </div>
         </div>
 

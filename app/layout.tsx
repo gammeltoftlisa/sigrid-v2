@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { Atmosphere } from '@/components/patterns/atmosphere'
 import { clerkAppearance, clerkLocalization } from '@/lib/clerk-appearance'
 import { StorageAlerts } from '@/components/storage-alerts'
+import { ConsentProvider } from '@/components/consent'
 import './globals.css'
 
 // Display: an expressive serif with optical sizing and the WONK/SOFT axes for italic accents.
@@ -18,7 +19,8 @@ const body = Be_Vietnam_Pro({ variable: '--font-vietnam', subsets: ['latin', 'la
 const mono = JetBrains_Mono({ variable: '--font-jetbrains', subsets: ['latin'], weight: ['400', '500'], display: 'swap' })
 
 export const metadata: Metadata = {
-  title: 'Sigrid – Sewing for everyone',
+  // Every page names itself, then Sigrid: "Explore · Sigrid". Pages without a title of their own get the default
+  title: { default: 'Sigrid – Sewing for everyone', template: '%s · Sigrid' },
   description: 'Sew your own clothes, one calm step at a time. Patterns in your size, with every step explained.',
 }
 
@@ -45,7 +47,7 @@ export default function RootLayout({
               <TooltipProvider>
                 <Atmosphere />
                 <SewingSync />
-                {children}
+                <ConsentProvider>{children}</ConsentProvider>
                 <Toaster position="bottom-center" />
                 <StorageAlerts />
               </TooltipProvider>

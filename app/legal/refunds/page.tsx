@@ -1,7 +1,7 @@
 import { LegalPage, LegalSection } from '@/components/patterns/legal-page'
 import { business } from '@/lib/legal'
 
-export const metadata = { title: 'Refund policy · Sigrid' }
+export const metadata = { title: 'Refund policy' }
 
 export default function RefundsPage() {
   return (

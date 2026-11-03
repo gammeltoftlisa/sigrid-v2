@@ -11,7 +11,7 @@ const MESSAGES: Record<StorageProblem, string> = {
   unreadable: 'Some saved work couldn’t be read. It’s still kept on this device, and everything else is safe.',
 }
 
-/** Says so when something couldn't be saved or read: work should never disappear quietly. */
+/** Says so when something couldn't be saved or read, or the device is offline: work should never disappear quietly. */
 export function StorageAlerts() {
   useEffect(() => {
     // Unreadable data is found again on every read, so say that once per visit
@@ -26,7 +26,23 @@ export function StorageAlerts() {
       toast.error(MESSAGES[problem], { id: `storage-${problem}`, duration: 10_000 })
     }
     window.addEventListener(STORAGE_PROBLEM_EVENT, onProblem)
-    return () => window.removeEventListener(STORAGE_PROBLEM_EVENT, onProblem)
+
+    // Offline: nothing is lost, but saving to the account and loading new things wait. It's said once and
+    // stays until the connection is back; the sync picks up by itself then (lib/sewing-sync).
+    const offline = () =>
+      toast.warning('You’re offline. Your sewing is saved on this device and goes up to your account when you’re back online. Pages that need the internet won’t load until then.', {
+        id: 'offline',
+        duration: Infinity,
+      })
+    const online = () => toast.dismiss('offline')
+    if (!navigator.onLine) offline()
+    window.addEventListener('offline', offline)
+    window.addEventListener('online', online)
+    return () => {
+      window.removeEventListener(STORAGE_PROBLEM_EVENT, onProblem)
+      window.removeEventListener('offline', offline)
+      window.removeEventListener('online', online)
+    }
   }, [])
   return null
 }

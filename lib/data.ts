@@ -1,5 +1,6 @@
 import { guideOutlines } from './guide-outline.generated'
 import { findPublishedGarment, findPublishedGuide } from './published'
+import { groupIntoJourneys } from './journeys'
 import type {
   Difficulty,
   Garment,
@@ -226,6 +227,12 @@ export function getCatalogItem(id: string): { name: string; price: number } | nu
 export const getCreatorById = (id: string) =>
   creators.find((c) => c.id === id) ?? creators[0]
 
+/** A maker by id, or null when there's no such maker: a page must say so, not show someone else */
+export const findCreator = (id: string) => creators.find((c) => c.id === id) ?? null
+
+/** Whether a catalog garment exists (published studio patterns are checked separately, in the browser) */
+export const isCatalogGarment = (id: string) => catalogGarments.some((g) => g.id === id)
+
 export const getPatternsByCreator = (creatorId: string) =>
   creatorPatterns.filter((p) => p.creatorId === creatorId)
 
@@ -237,6 +244,11 @@ export const getPatternsByCreator = (creatorId: string) =>
  */
 export function getGuideOutline(garmentId: string): GuideOutline | null {
   const published = findPublishedGuide(garmentId)
-  if (published) return { steps: published.steps.map((s) => ({ title: s.title, tool: s.tool })), pieces: published.pieces.length }
+  if (published)
+    return {
+      steps: published.steps.map((s) => ({ title: s.title, tool: s.tool })),
+      stages: groupIntoJourneys(published.steps, { keepSections: true }).map((j) => j.stepIndices.length),
+      pieces: published.pieces.length,
+    }
   return guideOutlines[garmentId] ?? null
 }

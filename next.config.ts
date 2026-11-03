@@ -13,22 +13,30 @@ const turnstile = "https://challenges.cloudflare.com";
 const clerkProtect = "https://cdn.protect.clerk.com https://specter.protect.clerk.com";
 // It tests the connection on several ports of a per-site address
 const clerkProtectProbe = "https://*.protect.clerk.com:*";
+// Vercel Web Analytics loads from the site itself (/_vercel/insights) in production, and only after consent
+// (components/consent.tsx). In development the package fetches its debug script from Vercel instead.
+const vercelAnalyticsDev = isDev ? " https://va.vercel-scripts.com" : "";
+// Stripe's card fields on the checkout page: its script, its framed fields and the bank's checks
+// (3-D Secure), and its API. The card is typed inside Stripe's frames, so it never reaches Sigrid.
+const stripeJs = "https://js.stripe.com https://*.js.stripe.com";
+const stripeFrames = `${stripeJs} https://hooks.stripe.com`;
+const stripeApi = "https://api.stripe.com";
 
 /**
  * Content Security Policy: only Sigrid's own scripts, styles, fonts and images load, plus Clerk for
- * login. Card details are typed on Stripe's own page, so Stripe needs no exception here.
+ * login, and Stripe's card fields on the checkout page.
  * Product photos come through Next's image optimiser (/_next/image), so they count as 'self'.
  * Inline scripts are allowed because Next needs them for static pages; nonces would make every
  * page render per request. Development also needs 'unsafe-eval' for React's error overlay.
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${clerk} ${clerkProtect} ${turnstile}${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' ${clerk} ${clerkProtect} ${turnstile} ${stripeJs}${vercelAnalyticsDev}${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https://img.clerk.com",
   "font-src 'self'",
-  `connect-src 'self' ${clerk} ${clerkProtectProbe}`,
-  `frame-src ${turnstile}`,
+  `connect-src 'self' ${clerk} ${clerkProtectProbe} ${stripeApi}`,
+  `frame-src ${turnstile} ${stripeFrames}`,
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
@@ -46,8 +54,8 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   // Shops see that a visitor came from Sigrid, not which page
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  // Sigrid uses none of these
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+  // Sigrid uses none of these, except payments for Apple Pay and Google Pay inside Stripe's fields
+  { key: "Permissions-Policy", value: 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com"), usb=()' },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ];
 

@@ -92,7 +92,7 @@ export function saveAvatar(photo: ImageBitmap, frame: PhotoFrame) {
   try {
     localStorage.setItem(KEY, canvas.toDataURL('image/jpeg', 0.85))
   } catch {
-    throw new Error('There isn’t room to save the photo on this device.')
+    throw new Error('There isn’t room to save the photo on this device. Your old photo is unchanged. Free up space in your browser, or try a smaller photo.')
   }
   window.dispatchEvent(new Event(EVENT))
 }

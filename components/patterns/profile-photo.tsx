@@ -87,8 +87,10 @@ function PhotoFramer({ photo, frame, onChange }: { photo: ImageBitmap; frame: Ph
 }
 
 /**
- * The picture at the top of Profile, round and as wide as its container (on a tablet, where that's the whole page, it stops at 24rem). Pressing the button opens a place to drop a photo, not the file browser;
- * a photo dragged from Finder or Photos can land anywhere on the page. Children sit between the picture and its button.
+ * The picture at the top of Profile, round and as wide as its container (on a tablet, where that's the whole page, it stops at 24rem).
+ * The picture itself is the button: clicking it opens a place to drop a photo, not the file browser. A camera shows on
+ * hover and keyboard focus, and stays as a small badge on touch screens. A photo dragged from Finder or Photos can land
+ * anywhere on the page. Children sit below the picture.
  */
 export function ProfilePhoto({ children }: { children?: React.ReactNode }) {
   const avatar = useAvatar()
@@ -114,7 +116,9 @@ export function ProfilePhoto({ children }: { children?: React.ReactNode }) {
       })
       setFrame(CENTERED)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'This photo couldn’t be opened.')
+      toast.error(e instanceof Error ? e.message : 'This photo couldn’t be opened. Try a JPG or PNG.', {
+        action: { label: 'Choose another', onClick: () => input.current?.click() },
+      })
     } finally {
       setBusy(false)
       if (input.current) input.current.value = ''
@@ -184,6 +188,7 @@ export function ProfilePhoto({ children }: { children?: React.ReactNode }) {
       toast.success('Profile picture saved.')
       close()
     } catch (e) {
+      // Usually the device is full, which trying again won't fix, so this explains instead of offering a button
       toast.error(e instanceof Error ? e.message : 'This photo couldn’t be saved.')
     }
   }
@@ -200,18 +205,18 @@ export function ProfilePhoto({ children }: { children?: React.ReactNode }) {
         <span
           aria-hidden
           className={cn(
-            'absolute inset-0 flex items-center justify-center rounded-full bg-foreground/45 text-background opacity-0 transition-opacity group-hover/photo:opacity-100',
+            'absolute inset-0 flex items-center justify-center rounded-full bg-foreground/45 text-background opacity-0 transition-opacity group-hover/photo:opacity-100 group-focus-visible/photo:opacity-100',
             dragging && !open && 'opacity-100',
           )}
         >
           <IconCamera className="size-8" />
         </span>
+        {/* Touch screens have no hover, so a small camera says the picture can be tapped */}
+        <span aria-hidden className="glass-chip absolute right-0 bottom-0 hidden size-8 items-center justify-center rounded-full pointer-coarse:flex">
+          <IconCamera className="size-4" />
+        </span>
       </button>
       {children}
-      <Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
-        <IconCamera data-icon="inline-start" />
-        {avatar ? 'Change photo' : 'Add photo'}
-      </Button>
 
       <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
         <DialogContent className="sm:max-w-md">
@@ -232,11 +237,15 @@ export function ProfilePhoto({ children }: { children?: React.ReactNode }) {
           ) : (
             <div className="photo-drop" data-dragging={dragging || undefined}>
               <IconPhotoPlus className="size-8 text-muted-foreground" aria-hidden />
+              {/* Touch screens can't drag, so there the button is the whole story */}
               <div className="flex flex-col gap-1">
-                <p className="title-sm">Drag a photo here</p>
-                <p className="text-xs text-muted-foreground">From Photos, Finder or your desktop. You can also paste one.</p>
+                <p className="title-sm pointer-coarse:hidden">Drag a photo here</p>
+                <p className="title-sm hidden pointer-coarse:block">Choose a photo</p>
+                <p className="text-xs text-muted-foreground pointer-coarse:hidden">From Photos, Finder or your desktop. You can also paste one.</p>
+                <p className="hidden text-xs text-muted-foreground pointer-coarse:block">From your photo library, or take a new one.</p>
               </div>
-              <Button variant="outline" onClick={() => input.current?.click()}>Choose a file</Button>
+              <Button className="pointer-coarse:hidden" onClick={() => input.current?.click()}>Choose a file</Button>
+              <Button className="hidden pointer-coarse:inline-flex" onClick={() => input.current?.click()}>Choose a photo</Button>
             </div>
           )}
 

@@ -22,7 +22,7 @@ function PageSection({
   className?: string
 }) {
   return (
-    <section id={id} className={cn("flex scroll-mt-6 flex-col gap-4", className)}>
+    <section id={id} className={cn("page-section flex scroll-mt-6 flex-col gap-4", className)}>
       {title && <div className="flex flex-col gap-1">
         <div className="flex items-center gap-4">
           <h2 className="page-section-title">{title}</h2>

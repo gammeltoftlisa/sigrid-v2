@@ -18,6 +18,7 @@ export function Stipple() {
 export function ProductGrid({
   label,
   meta,
+  action,
   children,
   className,
   ...props
@@ -26,6 +27,8 @@ export function ProductGrid({
   label?: string
   /** Right side of the label row, e.g. a count */
   meta?: React.ReactNode
+  /** A small action at the end of the label row, e.g. a link to see or manage all */
+  action?: React.ReactNode
   children: React.ReactNode
   className?: string
 } & React.ComponentProps<'section'>) {
@@ -33,9 +36,12 @@ export function ProductGrid({
     <section className={cn('product-grid', className)} {...props}>
       <Stipple />
       {label && (
-        <header className="product-grid-header flex items-center justify-between gap-3 px-4 py-3">
+        <header className="product-grid-header container-head flex items-center justify-between gap-3">
           <h2 className="eyebrow text-muted-foreground">{label}</h2>
-          {meta !== undefined && <span className="text-xs font-medium text-brand-ink tabular-nums">{meta}</span>}
+          <div className="flex items-center gap-3">
+            {meta !== undefined && <span className="text-xs font-medium text-brand-ink tabular-nums">{meta}</span>}
+            {action}
+          </div>
         </header>
       )}
       {children}

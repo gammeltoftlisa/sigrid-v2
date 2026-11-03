@@ -39,13 +39,13 @@ Base UI note: triggers compose with `render={<Button … />}`, **not** `asChild`
 
 **One source of truth:** three RGB triplets in `:root`. There is no brand colour for now, only black, white and beige: `--tri-primary` ink `#211C16` (bone on dark), `--tri-primary-soft` beige `#B0A694`, `--tri-accent` beige `#C4BAA8`, on obsidian `#15110D` and ivory `#EFEADE`. Main buttons are black (light in dark mode). Status colours stay functional. Every tint is `rgb(var(--tri-primary) / 0.x)`. Re-skin by editing those three lines.
 
-Themes: `next-themes` sets `<html data-theme="light|dark">` (system by default, switch in Profile → Appearance). The brand stays the same; only the `--app-*` surface tokens and `--aura` change. shadcn names point at them, so components never know the theme.
+Themes: `next-themes` sets `<html data-theme="light|dark">` (system by default, switch in You → Settings → Appearance). The brand stays the same; only the `--app-*` surface tokens and `--aura` change. shadcn names point at them, so components never know the theme.
 
 | Token | Light / dark | Use |
 | --- | --- | --- |
 | `--app-bg` → `background` | `#EFEADE` / `#15110D` | The page, under the atmosphere |
 | `--app-panel` | `#FFFFFF` / `#1C1C1C` | Solid surfaces; neutral, only the page is warm |
-| `--glass-fill` / `-inset` / `-solid` / `-bar` / `-menu` | `--glass-fill` white at 20% (5% on dark), `-inset` transparent, `-solid` / `-bar` / `-menu` white at 80 / 78 / 90% (near-black on dark) | Every glass surface |
+| `--glass-fill` / `-blur` / `-border` / `-edge` / `-inset` | white at 62% (dark gray at 62% on dark), a 20px blur, a dashed stroke, a top sheen with a soft lift; `-inset` transparent | Every glass surface, one material |
 | `--app-elev` | `#FFFFFF` / `#2B2B2B` | Solid fills, such as a focused field |
 | `card` → `--glass-inset` | see above | Insets: what sits on glass |
 | `--app-text` → `foreground` | `#211C16` / `#F0ECE1` | Text |
@@ -68,13 +68,13 @@ Themes: `next-themes` sets `<html data-theme="light|dark">` (system by default, 
 
 **Glass is only for things you act on:** buttons, button groups, fields, the rail and tab bar, menus, dialogs, and panels of controls (`<Panel glass>`, such as Browse in Find fabric, the guide's step list and Profile's `SettingsList`). Products and anything you only read use the solid container: `ProductGrid`, or `Panel` without `glass`, such as dashboard stats and step instructions.
 
-Glass is **one material, whatever its size**: white and see-through, a white tint (`--glass-fill`) + `--glass-blur` + a 1px top edge. `--glass-blur` drains the colour, maps the page to near white and raises the difference between the page and the mat's lines, so they show softly blurred through it. Tune brightness and contrast together: if the page lands below near white, glass turns gray. A panel, a secondary button and a button group look the same. Whatever sits inside glass adds no fill of its own (`--glass-inset`), so it looks the same there as on the page. Only the page is warm: no cream tints on glass and no `saturate()`, which turns the warm page yellow. Only surfaces that text scrolls under are thicker: fixed bars, sheets and dialogs, menus. `Atmosphere` (in the root layout) draws the mat and a stipple of tiny dots behind every screen. No drifting blobs, no moving fades.
+Glass is **one material, whatever its size and whatever is behind it**: white and clearly there, so it reads over the page and over photos alike. Five tokens are the whole material: `--glass-fill` (62% white), `--glass-blur` (20px), `--glass-border` (a dashed stroke), `--glass-edge` (a 1px top sheen and a soft lift). Every glass surface (panels, cards, bars, the shop bar, sheets, dialogs, the guide sheet, Clerk's cards, menus, dropdowns, selects, popovers, toasts, tooltips, chips on photos, glass buttons and fields) uses exactly these, from one rule in `globals.css`; nothing sets its own fill, blur, border or shadow. Whatever sits inside glass adds no fill of its own (`--glass-inset`), so it looks the same there as on the page. Only the page is warm: no cream tints on glass and no `saturate()`. Behind a modal (dialog, sheet, drawer, the guide, Clerk's window) the page is washed in its own colour and heavily blurred (`--overlay-fill`, `--overlay-blur`), never darkened, so nothing can be read through it. `Atmosphere` (in the root layout) draws the mat and a stipple of tiny dots behind every screen. No drifting blobs, no moving fades.
 
 | Material | What | How |
 | --- | --- | --- |
 | Surface | panels, cards, alerts, the segmented control | `Panel`, `glass-panel`, `glass-surface`; automatic on `Card` and `Alert` |
-| Soft | floating bars: rail, tab bar, `ActionBar`; sheets and dialogs. Bars fixed over scrolling content are thicker (`--glass-fill-bar`) so labels stay readable | `glass` / `glass-surface-soft`; automatic on sheets and dialogs |
-| Menu (~82% solid) | dropdowns, popovers, tooltips, toasts | automatic; `glass-menu` for custom popovers |
+| Soft | floating bars: rail, tab bar, `ActionBar`; sheets and dialogs. The same glass as panels | `glass` / `glass-surface-soft`; automatic on sheets and dialogs |
+| Floating (the same glass) | dropdowns, selects, popovers, toasts, tooltips, chips on photos | automatic; `glass-menu` for custom popovers |
 | Inset (no blur) | everything **inside** glass: rows, fields, chips, buttons, tiles | `PanelRow`, `Inset`, `DetailList`; fields and buttons turn inset automatically |
 | Glass pill | primary and outline buttons on the page | automatic on `Button` |
 
@@ -93,9 +93,9 @@ Glass is **one material, whatever its size**: white and see-through, a white tin
 | `rounded-(--radius)` | 22px | Panels, cards, sheets |
 | `rounded-(--field-radius)` | 22px | Fields and dropdowns: a full pill when one line tall, the same curve when taller |
 | `rounded-(--control-radius)` | 14px | White rows, `Inset`, size tiles |
-| `rounded-full` | | Every button (pills), badges, avatars, chips on photos |
+| `rounded-full` | | Every button (pills), badges, avatars, chips on photos, icon bubbles, the tab bar and every navigation item (rest, hover and current) |
 | `rounded-(--image-radius)` | 16px | Photos |
-| `rounded-pane` / `rounded-pane-lg` / `rounded-pane-inner` | 22 / 28 / 24px | The floating rail, tab bar, action bar and their inner pills |
+| `rounded-pane` / `rounded-pane-lg` | 22 / 28px | The floating rail, the action bar, the completion dialog |
 | `rounded-xs` | 4px | Heatmap cells, tiny marks |
 
 Image shapes: `aspect-product` (4:5, product tiles), `aspect-cover` (4:3, project cards), `aspect-wide` (2:1, maker covers).
@@ -128,12 +128,86 @@ Put the line that carries the feeling in `<em className="display-italic">` (ital
 | 4px (`gap-1`) | Lines inside one item: name → meta → price |
 | 8px (`gap-2`) | Related items: rows in a panel, chips, tiles in a stat grid |
 | 12px (`gap-3`) | Image → text, label → control |
-| 16px (`p-4`, `gap-4`) | Inside a component: panel padding, section title → content |
+| 16px (`p-4`, `gap-4`) | Inside a component: container padding, settings groups, section title → content |
+| 12px × 16px (`container-head`) | A container's label row: `Panel` and `ProductGrid` headers are the same height |
 | 12px (`gap-3`, `--grid-gutter`) | Between containers on the background, in every direction |
-| 32px | Page title → content (built into `PageHeader`) |
-| 40 / 48px | Between page sections, phones / from `md` (built into `PageContainer`) |
+| 24 / 32px (`--page-top`) | Top of every page, above its title or breadcrumbs (built into `PageContainer`) |
+| 24 / 32px (`--title-gap`) | Page title → first container (built into `PageHeader`) |
+| 40 / 48px (`--section-gap`) | Before a titled `PageSection` further down a page |
+| 32 / 48px (`--page-bottom`) | Below the last container |
+
+Phones / from `md`. **Pages never add their own top padding or margins between blocks** (no `pt-3` on a header, no `mt-…` between containers): the tokens in `globals.css` do it, so every page starts and breathes the same way.
 
 Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and pills. Never between things.
+
+**No drop shadows anywhere.** Containers, buttons, menus and controls are flat: they're told apart by their dashed edges and fills, never by a shadow or glow. Only the 1px top highlight on glass stays. Tailwind's `shadow-*` utilities are cancelled globally.
+
+### Page titles
+
+| Kind of page | Its heading | Example |
+| --- | --- | --- |
+| A main tab | The place, as a big `PageHeader` title | Your sewing |
+| A browsing tab | No visible title: the sticky search bar is the header (`ShopLayout`), with everything that narrows what you see in it | Explore, Shop |
+| Your own profile | **Your name**, in your card; no page title. The tab already says where you are | You |
+| A thing | **Its own name**, with breadcrumbs above | Cap-Sleeve Button Top, Mia Johansson |
+| A sub-page | Its name, with a breadcrumb back | Settings, Pattern studio |
+
+Every page also names itself in the browser tab, then Sigrid: "Explore · Sigrid" (the root layout's template). Client pages get theirs from a small `layout.tsx` beside them; patterns and makers use their own name.
+
+### Browsing: Explore and Shop
+
+Both use `ShopLayout`: one glass bar, 8px from the top like the rail, that stays while the products scroll under it to the screen's edges. Everything that changes what you see is in that bar, at one 40px height: Explore's Patterns / Makers switch (`lead`), the search, and the dropdowns (Explore) or the bag (Shop). On phones the dropdowns move into a Filters sheet behind a button in the bar, and anything that doesn't fit sits just under it.
+
+### The sewing guide
+
+Like a recipe app's cook mode: **one step at a time, everything about it in one place, the overview on demand.**
+
+- **The step card** (`StepCard`, the narrow column; under the picture on phones) holds everything about the step on screen, top to bottom: where you are (stage, "Step 7 of 24", a progress line cut into stages), the action, the title, the instruction in reading size, the measurement and tool as stitched labels, the tip (always shown, never behind a tap), what comes next, then ‹ **Mark done** ›. The card fills its column so the buttons sit in the same place on every step.
+- **The picture** gets the rest of the screen.
+- **All steps** (top bar) opens the whole guide in a sheet (`StepsList`): stages fold open to their steps, "Now" marks where you are, picking one shows it and closes the sheet.
+- **The studio writes the same screen.** The guide editor (`/studio/[id]/guide`, `StudioGuide`) is this screen with the text typed in place: the same top line (All steps, the size, the pattern pieces), the same step card (its title, instruction, measurement, tool and tip are write-in-place fields) and the same framed picture. The middle button is **Add step** instead of Mark done. All steps opens the whole guide in a sheet, where steps and sections are added, renamed, dragged and deleted, and the pattern pieces are measured in the card. Likewise the studio's pattern page is the garment page with its content editable.
+- **Viewing is never doing.** Looking at another step labels it "Done" or "Still to come", and the main button becomes "Back to step N". Only Mark done moves progress, and the progress line never shows the step you're looking at.
+
+### Checkout
+
+Buying a pattern opens its own checkout page (`/garment/[id]/checkout`), not Stripe's. The page is Sigrid's, and the card fields inside it are Stripe's (Checkout Elements, `CheckoutForm`), so the card goes straight to Stripe. They're drawn with the field tokens (fully rounded, dashed at rest, a crisp ink edge while typing) and follow light and dark.
+
+- **Your order** (solid `Panel`): the photo, name and maker, what's included, the total. Beside the payment from md and sticky; first and short on phones.
+- **Payment** (glass `Panel`): card first, one method open at a time. Then the right-to-cancel waiver as a checkbox, then **Pay €12** with a lock, the one primary. A line under it says why it's disabled ("Tick the box above to pay", "Fill in your payment details to pay"), then where the receipt goes.
+- **Trust, said once and plainly**: "Encrypted" in the panel's header and one line at the bottom: the card goes straight to Stripe and never reaches Sigrid. No badges, no seals.
+- Which payment methods show is set in Stripe's Dashboard, not in code.
+- A declined card shows Stripe's reason in a `StatusMessage` above Pay; nothing is charged. After paying, the pattern page confirms with Stripe and opens the size choice.
+
+### Button hierarchy
+
+**One primary per view** (the filled black button): the one thing the person most likely came to do. Secondary is `outline`, tertiary `ghost`, destructive a quiet red outline (red-filled only as the final confirm in a delete dialog). A dialog or sheet is its own view. Browsing, reading and settings pages have no primary. The full rules, with examples, are in `.claude/skills/button-hierarchy`.
+
+### Search
+
+Both browsing searches are `SearchSuggest`, a combobox like a store's: from the first letter, a container opens under the field with what matches, grouped, each row with a picture and the typed letters in medium weight. Explore suggests patterns and makers (straight from the page's data); the Shop suggests categories (at once) and products (from `/api/shop`, after a 180ms pause, within the category you're in). Clicking a row opens it (products open the shop's page in a new tab, like their cards). Enter, or the pinned **See all results** row, searches everything; arrows move, Escape closes. The container is placed at the end of the page, outside the bar, because glass inside glass can't blur. A failed lookup says so with **Try again**.
+
+### Pop-ups
+
+Dialogs, confirmations, sheets and phone drawers all read the same way: 16px padding, the title and description left-aligned at the top, actions at the bottom. Choices that fit on one row stay on one row (up to five sizes).
+
+### Motion in the navigation
+
+The rail's and tab bar's current-page marker is one round stitched bubble, the same shape as the hover under it and the avatar, that glides between destinations (including the avatar for You) on a soft spring with a little give (`bounce: 0.22`, 0.5s). It glides across page frames too, through the app-wide `LayoutGroup` in `MotionProvider`. Links ease their hover in, lift the icon 1px on hover, and give way slightly when pressed. All of it switches off with reduced motion.
+
+### Errors
+
+Every failure says **what happened**, **why** (usually a connection problem) and **what's safe** ("nothing was charged", "your bag is safe"). When something can be done about it, the message carries the button that does it: a `StatusMessage` with an action where content didn't load, or a toast with `action: { label, onClick }` after something you did. "Please try again" without a button is never enough.
+
+| Failure | What people see |
+| --- | --- |
+| Content didn't load (shop, fabric, your patterns, a guide, more products) | `StatusMessage` or empty state in its place, with **Try again** |
+| An action failed (checkout, deleting data, account type, a photo) | Toast saying what didn't change, with **Try again** or **Choose another** |
+| Couldn't check which patterns you own | **Check again** instead of Buy, so nobody buys a pattern twice |
+| A payment couldn't be confirmed | Toast that stays until dismissed, with **Check again** |
+| A link to a pattern, maker or page that doesn't exist | `NotFoundMessage`: what's missing, why, and a way on. Never something else in its place |
+| Offline | One toast that stays until you're back online; sewing saves on the device and syncs by itself |
+| Nothing can be done (device storage full, browser won't save) | An explanation of what wasn't saved and why, with no button |
+| A page crashes | `app/error.tsx`: **Try again** and **Go home** |
 
 ## 6. Controls
 
@@ -144,11 +218,11 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 | Small button and chips | 32px (40px on touch) | `size="sm"`; filter chips, removable filters, the bag |
 | Icon button | 36–44px | `size="icon-lg"` in bars, always with `aria-label` |
 
-- Chips and size tiles are frosted, ink when chosen.
+- **Every control that isn't the black primary button has the same three states** (`--control-rest`, `--control-hover`, `--control-active` in `globals.css`): frosted at rest, a bit lighter on hover, lighter still when chosen. **Stitches: one line at rest, two on hover or when chosen, never three.** The first line is the button's dashed edge; hover and chosen add one running stitch just inside it (lighter thread on hover, firmer when chosen). Never a solid ring. The black primary button follows the same rule. Chosen means pressed, selected or current; it is a stronger hover, never ink or a colour, and stays chosen under the pointer. This covers outline, secondary and ghost buttons, chips and size tiles, the segmented control, shop category bubbles, the nav's current tab, guide steps, menu rows and the studio's toggles. A hand-built control gets it with `data-control`.
 - Labels: 13px medium, 8px above the field. Every field has a visible label; placeholders are examples.
 - Fields have three looks: frosted at rest, whiter with a darker stitch on hover, solid white with a crisp 1px ink edge while typing or open. **Never a ring around a field.** A problem is a 1px solid red edge plus text under the field.
 - A dropdown is full width unless a row of controls needs a set size (`w-40`), and its open list is always exactly as wide as the field, including popover dropdowns (`w-(--anchor-width)`). Long options wrap and are never cut off. Lists scroll after about 8 rows, stopping mid-row so you can see there is more.
-- Inside a list: 4px padding, 32px rows, and the row you're on is a fully rounded pill in the page's beige (`--menu-row-hover`), by mouse or keyboard. The chosen row has a check and medium text. The list's text lines up with the field's. Hand-built choices in a popover use `.menu-option` for the same pill.
+- Inside a list: 4px padding, 32px rows, and the row you're on is a fully rounded pill in the hover glass (`--control-hover`); the chosen row is `--control-active`, by mouse or keyboard. The chosen row has a check and medium text. The list's text lines up with the field's. Hand-built choices in a popover use `.menu-option` for the same pill.
 - The slider is a 2px ink track with small glass handles; it can always be typed into as well.
 - Touch targets are at least 44×44px on phones.
 
@@ -170,6 +244,7 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 | Need | Use |
 | --- | --- |
 | A page title | `PageHeader` (optional `kicker`) |
+| The pattern studio's list | Your patterns as `GarmentCard`s in a `ProductGrid`, tagged Draft or Published; delete is on the pattern's own page |
 | Main / secondary / quiet action | `Button` (black, stitched) / `variant="outline"` (frosted pill) / `variant="ghost"` |
 | Delete or reset | `Button variant="destructive"` (outlined text) + `AlertDialog` that says what will be lost |
 | Icon-only action | `Button size="icon-lg"` + `aria-label` |
@@ -186,21 +261,27 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 | Group things | `Panel` (solid; `glass` when it holds controls), rows in `PanelRow`, plain white blocks in `Inset` |
 | Label–value details | `DetailList` |
 | Any products, on a page or in a section | One `ProductGrid` around a `tiles` grid, with a stroke between products |
-| One large product photo | `ProductFrame` around `GarmentImage` |
-| A garment in a grid | `GarmentCard` in a `ProductGrid` |
+| One large product photo | `ProductFrame` around `GarmentGallery`. On the garment page both columns are sticky, so whichever is shorter (the photo or the details) stays in view until the section below |
+| A garment in a grid | `GarmentCard` in a `ProductGrid` (pass `photos`: several can be swiped through on the tile) |
+| A pattern's photos | `GarmentGallery`: one photo at a time, swipe or arrows on hover, dots for how many. One photo is just `GarmentImage`. Studio patterns keep up to 6 (`setPhotos()`), the first is the cover |
+| An icon in a round bubble | `.icon-bubble` (`size-7` to `size-10`): a dashed outline, never a grey fill. `StepDot` "upcoming" is the same |
+| A row you press in a panel or dialog | `PanelRow` with `href` or `onClick` (or `.press-row` + `data-control`): one stitch at rest, the control states on hover. Never `hover:bg-background` |
+| Text typed in place (studio) | `InlineText`, `InlineTextarea`, `InlinePick` (`.inline-field`): reads like the page, the field's hover and typing states |
 | A product in the store | `ShopCard` (`FabricCard` plus its choice of size or colour) in a `ProductGrid` |
 | A fabric for a pattern | `FabricCard` in a `ProductGrid` |
 | Featured product at the start of a grid | `GarmentCard lead description={…}` |
-| Light / dark / system | `useTheme()` from `next-themes`; the switch lives in Profile |
+| Light / dark / system | `useTheme()` from `next-themes`; the switch lives in Settings (from You) |
 | What's in progress on Home | `HomeDashboard`: one project fills the container, several become equal `ProjectCard`s |
 | The user's picture and setting it | `UserAvatar`, `ProfilePhoto` (drop, paste or choose, then frame) |
 | Started projects | `ProjectGrid` (cards: `ProjectCard`, data: `projectCardData()`): `tiles` decides how many fit a row. Only the photo, name, next step, progress and one button |
-| A pattern maker | `MakerCard`; their page starts with `ProfileHeader` |
+| A pattern maker | `MakerCard`; their page is built like You: the same `ProfileHeader` in the side column, their patterns beside it |
+| A person's card | `ProfileHeader`, on You and on a maker's page alike: a big round photo, the name, a line under it, a label pill, bio, facts, one action |
 | A label on a photo | `PhotoLabel` |
 | A small white label | `Pill` |
 | Pick a size | `SizePicker`, or `SizeSheet` for a project |
 | This week and totals on Home | `SewingDashboard`: kept plain. The day's letter is ringed when you sewed that day, and each total sits in its own small container, one under the other |
-| A settings page | One `SettingsList` per kind of thing (`solid` when it only reads or links onward) > `SettingsGroup` > `SettingsRow`. Profile: About you, Selling (makers only), Settings and Your data, About Sigrid. Containers rather than tabs while a page fits in a short scroll |
+| A settings page | One `SettingsList` per kind of thing (`solid` when it only reads or links onward) > `SettingsGroup` > `SettingsRow`. Settings (`/profile/settings`, from the gear on You): About you, Settings, Your data, About Sigrid. |
+| You (`/profile`) | An overview of you and what's yours: your card (`ProfileHeader`: photo, name, account type, Settings) in the side column, then Made by you (pattern makers, `MadePatterns`) and Your patterns (`OwnedPatterns`). There's no separate My patterns page; `/patterns` redirects here. Preferences never live on You, they live in Settings. |
 | What kind of user someone is | `useAccountType()`: sewer or pattern maker, on the Clerk account. Decides what shows, never what someone may do or pay for |
 | Side panel | `PanelSheet` |
 | The fabric bag | `FabricBagButton` + `FabricBagSheet` |
@@ -211,7 +292,7 @@ Half steps (`px-2.5`, `py-1.5`) are only for padding inside small controls and p
 | A table | `Table` inside an `Inset` |
 | Login and sign-up | `AuthShell` around Clerk's form; its styling is in the global CSS |
 | A legal page | `LegalPage` + `LegalSection`, with `LegalFooter` under it. Always a page, never a modal: long reading that has to be linkable, printable and open to anyone |
-| Reaching the legal pages | `SettingsLinks` in Profile, plus a link where it matters: sign-up, the welcome's agreement, before paying. Those open in a new tab so nothing being filled in is lost. Not in a footer on every screen |
+| Reaching the legal pages | `SettingsLinks` in Settings, plus a link where it matters: sign-up, the welcome's agreement, before paying. Those open in a new tab so nothing being filled in is lost. Not in a footer on every screen |
 | Keep the page from jumping when a list shrinks | `KeepHeight` |
 
 ## 9. Product rules (sewing)
@@ -237,7 +318,7 @@ One easing everywhere: `[0.22, 1, 0.36, 1]` (`ease` in `patterns/reveal.tsx`, `-
 | Atmosphere | `Atmosphere`: a cutting mat and tiny dots behind every screen. Nothing moves |
 | Guide steps | See "Guide animations" |
 | Sliding marker (tabs, navigation) | Built into `CategoryTabs`, `AppSidebar`, `AppTabBar` |
-| Hover | Buttons lift 1px; glass tiles frost in (`glass-inset-hover`), never swap colour; `hover-zoom` on photos |
+| Hover | Buttons lift 1px and turn a bit lighter (`--control-hover`), never swap colour; `hover-zoom` on photos |
 
 No bounce. Reduced motion is respected everywhere (`MotionConfig reducedMotion="user"` plus the global CSS rule).
 

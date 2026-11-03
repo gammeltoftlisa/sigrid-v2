@@ -1,24 +1,25 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { IconArrowRight, IconSearch, IconZoomQuestion, type Icon as TablerIcon } from '@tabler/icons-react'
+import { IconArrowRight, IconShirt, IconZoomQuestion, type Icon as TablerIcon } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { FabricBagButton, FabricBagSheet } from '@/components/patterns/fabric-bag'
 import { ProductGrid } from '@/components/patterns/product-grid'
+import { SearchSuggest, type Suggestion, type SuggestionGroup } from '@/components/patterns/search-suggest'
 import { StatusMessage } from '@/components/patterns/status-message'
 import { addToBag, removeFromBag, useBag } from '@/lib/fabric/bag'
 import { marketplaces } from '@/lib/fabric/marketplaces'
-import { unitsFor } from '@/lib/fabric/pricing'
+import { formatMoney, unitsFor } from '@/lib/fabric/pricing'
 import type { FabricListing } from '@/lib/fabric/types'
-import { colours, facetLabels, getCategory, MULTICOLOUR, type Category, type FacetId } from '@/lib/shop/taxonomy'
+import { categories, colours, facetLabels, getCategory, MULTICOLOUR, subLabel, type Category, type FacetId } from '@/lib/shop/taxonomy'
 import type { ShopItem, ShopResponse, ShopRowsResponse, ShopSort } from '@/lib/shop/types'
 
 import { categoryIcon, subcategoryIcon } from './category-icons'
@@ -103,7 +104,7 @@ function CategoryBubbles({ response, state }: { response: Pick<ShopResponse, 'ca
         <>
           <Bubble href={hrefFor({ ...state, sub: undefined })} active={!sub} icon={categoryIcon(category.id)}>All {category.name.toLowerCase()}</Bubble>
           {response.subs.map((s) => (
-            <Bubble key={s.name} href={hrefFor({ ...state, sub: s.name })} active={s.name === sub} icon={subcategoryIcon(category.id, s.name)}>{s.name}</Bubble>
+            <Bubble key={s.name} href={hrefFor({ ...state, sub: s.name })} active={s.name === sub} icon={subcategoryIcon(category.id, s.name)}>{subLabel(category, s.name)}</Bubble>
           ))}
         </>
       ) : (
@@ -161,6 +162,25 @@ function useShopBag() {
   return { bag, bagOpen, setBagOpen, inBag, toggleBag }
 }
 
+/** The categories whose name (or a subcategory's) has all the typed words, as places to go */
+function matchingCategories(text: string, within?: Category): Suggestion[] {
+  const words = text.toLowerCase().split(/\s+/).filter(Boolean)
+  const hits = (name: string) => words.every((w) => name.toLowerCase().includes(w))
+  return (within ? [within] : categories).flatMap((c) => [
+    ...(!within && hits(c.name) ? [{ id: c.id, title: c.name, detail: 'Category', media: (() => { const I = categoryIcon(c.id); return <I aria-hidden /> })(), href: categoryHref(c.id) }] : []),
+    ...c.subs
+      .filter((sub) => hits(sub.label ?? sub.name))
+      .map((sub) => {
+        const I = subcategoryIcon(c.id, sub.name)
+        return { id: `${c.id}:${sub.name}`, title: sub.label ?? sub.name, detail: `In ${c.name.toLowerCase()}`, media: <I aria-hidden />, href: hrefFor({ category: c, sub: sub.name, filters: {}, price: null, q: '', sort: 'featured' }) }
+      }),
+  ]).slice(0, 4)
+}
+
+/**
+ * The shop's search, suggesting as you type: matching categories straight away, and the first matching products
+ * from the server a moment after the typing pauses. Inside a category it searches only there, as its words say.
+ */
 function ShopSearch({ category, q, onSearch }: { category?: Category; q: string; onSearch: (q: string) => void }) {
   const [text, setText] = useState(q)
   const [lastQ, setLastQ] = useState(q)
@@ -169,21 +189,65 @@ function ShopSearch({ category, q, onSearch }: { category?: Category; q: string;
     setText(q)
   }
   const where = category ? `Search ${category.name.toLowerCase()}` : 'Search the shop'
+
+  const typed = text.trim()
+  const [found, setFound] = useState<{ key: string; items: ShopItem[] } | null>(null)
+  const [failedKey, setFailedKey] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
+  const key = `${category?.id ?? ''}|${typed.toLowerCase()}`
+  useEffect(() => {
+    if (!typed) return
+    const ctrl = new AbortController()
+    // Wait for a pause in the typing, so each letter doesn't ask the server
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({ q: typed })
+      if (category) params.set('category', category.id)
+      fetch(`/api/shop?${params}`, { signal: AbortSignal.any([ctrl.signal, AbortSignal.timeout(15_000)]) })
+        .then((r) => (r.ok ? (r.json() as Promise<ShopResponse>) : Promise.reject(new Error(String(r.status)))))
+        .then((res) => {
+          setFailedKey(null)
+          setFound({ key, items: res.items.slice(0, 5) })
+        })
+        .catch(() => {
+          if (!ctrl.signal.aborted) setFailedKey(key)
+        })
+    }, 180)
+    return () => {
+      clearTimeout(timer)
+      ctrl.abort()
+    }
+  }, [typed, category, key, attempt])
+
+  const products = found?.key === key ? found.items : []
+  const groups: SuggestionGroup[] = typed
+    ? [
+        { label: category ? 'In this category' : 'Categories', items: matchingCategories(typed, category) },
+        {
+          label: 'Products',
+          items: products.map((item) => ({
+            id: item.id,
+            title: item.title,
+            detail: `${item.sourceName} · ${formatMoney(item.unitPrice, item.currency)}${item.priceUnit ? ` ${item.priceUnit}` : ''}`,
+            media: item.image ? <Image src={item.image} alt="" width={40} height={50} className="object-cover" /> : <IconShirt aria-hidden />,
+            href: item.url,
+            external: true,
+          })),
+        },
+      ]
+    : []
+
   return (
-    <form
-      role="search"
-      onSubmit={(e) => {
-        e.preventDefault()
-        onSearch(text.trim())
-      }}
-    >
-      <InputGroup className="bg-background">
-        <InputGroupAddon>
-          <IconSearch />
-        </InputGroupAddon>
-        <InputGroupInput type="search" aria-label={where} placeholder={where} value={text} onChange={(e) => setText(e.target.value)} />
-      </InputGroup>
-    </form>
+    <SearchSuggest
+      label={where}
+      placeholder={where}
+      value={text}
+      onValueChange={setText}
+      onSubmit={(value) => onSearch(value)}
+      groups={groups}
+      loading={!!typed && found?.key !== key && failedKey !== key}
+      failed={failedKey === key && products.length === 0}
+      onRetry={() => setAttempt((a) => a + 1)}
+    />
   )
 }
 
@@ -372,10 +436,10 @@ function ShopBrowse({ state }: { state: State }) {
   return (
     <>
       <ShopLayout
-        title={sub ?? category?.name ?? (q ? `“${q}”` : 'Shop')}
+        title={sub ? subLabel(category, sub) : category?.name ?? (q ? `“${q}”` : 'Shop')}
         breadcrumbs={
           category
-            ? [{ label: 'Shop', href: '/fabric' }, ...(sub ? [{ label: category.name, href: categoryHref(category.id) }, { label: sub }] : [{ label: category.name }])]
+            ? [{ label: 'Shop', href: '/fabric' }, ...(sub ? [{ label: category.name, href: categoryHref(category.id) }, { label: subLabel(category, sub) }] : [{ label: category.name }])]
             : q
               ? [{ label: 'Shop', href: '/fabric' }, { label: `“${q}”` }]
               : undefined
@@ -400,17 +464,18 @@ function ShopBrowse({ state }: { state: State }) {
       >
         <FilterTags tags={tags} onClear={clearAll} />
 
-        {failed === key && !response && (
+        {/* Nothing loaded yet, or a filter change didn't load: the results below would be the old ones */}
+        {failed === key && (!response || loaded?.key !== key) && (
           <StatusMessage
             status="error"
-            title="We couldn’t open the shop"
+            title={response ? 'These results didn’t load' : 'We couldn’t open the shop'}
             action={
               <Button variant="outline" size="sm" onClick={() => setAttempt((a) => a + 1)}>
                 Try again
               </Button>
             }
           >
-            Your bag is safe. Check your connection and try again.
+            {response ? 'What you see below is from before your last change. ' : ''}Your bag is safe. This is usually a connection problem.
           </StatusMessage>
         )}
 
@@ -441,7 +506,13 @@ function ShopBrowse({ state }: { state: State }) {
                   ))}
                 </div>
                 <div className="flex flex-col items-center gap-3 p-3">
-                  {loaded.items.length < response.total && (
+                  {/* More didn't load: say so where they would have appeared, with a way to ask again */}
+                  {failed === key && loaded.key === key && pageNumber > 1 && (
+                    <p className="text-center text-sm text-muted-foreground">The next products didn’t load. This is usually a connection problem.</p>
+                  )}
+                  {failed === key && loaded.key === key && pageNumber > 1 ? (
+                    <Button variant="outline" onClick={() => setAttempt((a) => a + 1)}>Try again</Button>
+                  ) : loaded.items.length < response.total && (
                     <Button variant="outline" disabled={busy} onClick={() => setPage({ key, n: pageNumber + 1 })}>
                       Show {Math.min(response.pageSize, response.total - loaded.items.length)} more
                       <span className="text-muted-foreground tabular-nums">· {loaded.items.length} of {response.total}</span>

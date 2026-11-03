@@ -88,7 +88,7 @@ export function CheckSheet({
                 <span
                   className={cn(
                     'flex size-7 shrink-0 items-center justify-center rounded-full',
-                    missing.length ? 'bg-muted text-muted-foreground' : 'bg-accent text-primary',
+                    missing.length ? 'icon-bubble text-muted-foreground' : 'bg-accent text-primary',
                   )}
                 >
                   {missing.length ? <span className="size-1.5 rounded-full bg-current" /> : <IconCheck className="size-3.5" stroke={2.5} aria-label="Done" />}

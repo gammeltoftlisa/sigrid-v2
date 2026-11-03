@@ -82,7 +82,7 @@ export default function SizeSheet({ garment, open, onClose, initialSize, onConfi
       {size ? (
         <dl className="grid grid-cols-3 gap-2">
           {chartFields.map((f) => (
-            <div key={f} className="flex flex-col gap-0.5 rounded-lg bg-muted px-3 py-2 text-center">
+            <div key={f} className="flex flex-col gap-0.5 rounded-(--control-radius) bg-card px-3 py-2 text-center">
               <dt className="text-xs text-muted-foreground">{fieldLabels[f]}</dt>
               <dd className="text-sm font-medium whitespace-nowrap tabular-nums">{standardSizes[size][f]} cm</dd>
             </div>
@@ -93,7 +93,7 @@ export default function SizeSheet({ garment, open, onClose, initialSize, onConfi
       )}
 
       <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
-        {!isChange && size && size === initialSize && <li>Your size from your profile.</li>}
+        {!isChange && size && size === initialSize && <li>Your size from Settings.</li>}
         {size && (
           <li className="flex items-start gap-2">
             <IconColorSwatch className="mt-0.5 size-4 shrink-0" aria-hidden />

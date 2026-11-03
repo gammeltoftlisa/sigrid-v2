@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useClerk, useUser } from '@clerk/nextjs'
 import { toast } from 'sonner'
 
@@ -9,20 +8,22 @@ import { CategoryTabs } from '@/components/patterns/category-tabs'
 import { Pill } from '@/components/patterns/profile-header'
 import { SettingsRow } from '@/components/patterns/settings'
 import { accountTypes, useAccountType, type AccountType } from '@/hooks/use-account-type'
-import { usePurchases } from '@/hooks/use-purchases'
-import { paymentsEnabled } from '@/lib/payments'
 import { flushSewing } from '@/lib/sewing-sync'
 
-/** Who this is, for the top of Profile: the name, email and kind of user. */
+/**
+ * Who this is, for the card on You: the name (the page's heading, as on any profile), the email and the kind of
+ * user. Without a name on the account, the part of the email before the @ stands in.
+ */
 export function AccountIdentity() {
   const { isLoaded, isSignedIn, user } = useUser()
   const { type, ready } = useAccountType()
   // The proxy only lets logged-in people here, so this is just the moment before Clerk has loaded
   if (!isLoaded || !isSignedIn) return <p className="text-sm text-muted-foreground">Checking…</p>
   const email = user.primaryEmailAddress?.emailAddress
+  const name = user.fullName || email?.split('@')[0] || 'Your profile'
   return (
     <div className="flex w-full min-w-0 flex-col gap-1">
-      <p className="title-md truncate">{user.fullName || 'Logged in'}</p>
+      <h1 className="title-lg truncate">{name}</h1>
       <p className="truncate text-sm text-muted-foreground" title={email}>{email}</p>
       {ready && (
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -46,7 +47,9 @@ export function AccountTypeRow() {
     try {
       await setType(typeByLabel[label])
     } catch {
-      toast.error('Couldn’t change your account type. Please try again.')
+      toast.error(`Couldn’t switch to ${label}, so your account type is unchanged. This is usually a connection problem.`, {
+        action: { label: 'Try again', onClick: () => void choose(label) },
+      })
     }
   }
   return (
@@ -55,18 +58,6 @@ export function AccountTypeRow() {
       description={type === 'maker' ? 'You sell your own patterns, and can still buy other makers’.' : 'You buy patterns and sew them. Choose Pattern maker to sell your own.'}
     >
       {ready && <CategoryTabs label="Account type" options={typeLabels} value={accountTypes[type].label} onValueChange={choose} />}
-    </SettingsRow>
-  )
-}
-
-/** The patterns this account has bought, when there are any. */
-export function BoughtPatternsRow() {
-  const purchases = usePurchases()
-  const count = purchases.garmentIds.length
-  if (!paymentsEnabled || count === 0) return null
-  return (
-    <SettingsRow title="Patterns you’ve bought" description={count === 1 ? '1 pattern, yours for good.' : `${count} patterns, yours for good.`}>
-      <Button variant="outline" nativeButton={false} render={<Link href="/patterns" />}>My patterns</Button>
     </SettingsRow>
   )
 }

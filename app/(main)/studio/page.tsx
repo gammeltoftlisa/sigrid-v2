@@ -1,68 +1,24 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { GarmentImage } from '@/components/garment/GarmentImage'
 import { useRouter } from 'next/navigation'
-import { IconPlus, IconRuler2, IconTrash } from '@tabler/icons-react'
-import { toast } from 'sonner'
+import { IconPlus, IconRuler2 } from '@tabler/icons-react'
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { PageContainer, PageHeader } from '@/components/patterns/page-header'
-import { Panel, PanelRow } from '@/components/patterns/panel'
-import { StatusBadge } from '@/components/patterns/status-badge'
+import { GarmentCard } from '@/components/patterns/garment-card'
+import { ProductGrid } from '@/components/patterns/product-grid'
 import { useAccountType } from '@/hooks/use-account-type'
 import { useMounted } from '@/hooks/use-mounted'
-import { createPattern, deletePattern, loadPatterns, plural, type StudioPattern } from '@/lib/studio/patterns'
-import { WIZARD, isDone } from '@/lib/studio/wizard'
-
-const updated = (t: number) => new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
-
-function DeleteButton({ pattern, onDelete }: { pattern: StudioPattern; onDelete: () => void }) {
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger render={<Button variant="ghost" size="icon-lg" aria-label={`Delete ${pattern.name}`} />}>
-        <IconTrash />
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete {pattern.name}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Its {pattern.steps.length} steps and {pattern.pieces.length} pieces are deleted from this browser. This can’t be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Keep it</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={onDelete}>
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
+import { createPattern, loadPatterns, plural } from '@/lib/studio/patterns'
 
 /** The pattern maker's back office: every pattern they are writing or have finished. */
 export default function StudioPage() {
   const router = useRouter()
   const mounted = useMounted()
   const account = useAccountType()
-  const [version, setVersion] = useState(0)
-  // Re-read after a delete; `version` is what changes
   const patterns = mounted ? loadPatterns() : []
-  void version
 
   const startNew = () => router.push(`/studio/${createPattern().id}`)
 
@@ -76,17 +32,17 @@ export default function StudioPage() {
   if (account.ready && account.type !== 'maker') {
     return (
       <PageContainer>
-        <PageHeader title="Pattern studio" breadcrumbs={[{ label: 'Profile', href: '/profile' }, { label: 'Pattern studio' }]} />
+        <PageHeader title="Pattern studio" breadcrumbs={[{ label: 'You', href: '/profile' }, { label: 'Pattern studio' }]} />
         <Empty className="bg-card rounded-(--radius)">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <IconRuler2 />
             </EmptyMedia>
             <EmptyTitle>The studio is for pattern makers</EmptyTitle>
-            <EmptyDescription>To sell your own patterns, change your account type to Pattern maker on your profile.</EmptyDescription>
+            <EmptyDescription>To sell your own patterns, change your account type to Pattern maker in Settings.</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button size="lg" nativeButton={false} render={<Link href="/profile" />}>Go to Profile</Button>
+            <Button size="lg" nativeButton={false} render={<Link href="/profile/settings" />}>Open Settings</Button>
           </EmptyContent>
         </Empty>
       </PageContainer>
@@ -97,8 +53,8 @@ export default function StudioPage() {
     <PageContainer>
       <PageHeader
         title="Pattern studio"
-        description="Write the sewing guide for your pattern: its pieces, sections and steps, exactly as sewers will follow them."
-        breadcrumbs={[{ label: 'Profile', href: '/profile' }, { label: 'Pattern studio' }]}
+        description="Make a pattern the way sewers will see it, then publish it to Explore."
+        breadcrumbs={[{ label: 'You', href: '/profile' }, { label: 'Pattern studio' }]}
         action={patterns.length > 0 ? newButton : undefined}
       />
 
@@ -114,39 +70,23 @@ export default function StudioPage() {
           <EmptyContent>{newButton}</EmptyContent>
         </Empty>
       ) : (
-        <Panel glass label="Your patterns" meta={patterns.length || undefined}>
-          {patterns.map((p) => {
-            const toFill = WIZARD.filter((w) => w.id !== 'publish')
-            const done = toFill.filter((w) => isDone(w.id, p)).length
-            return (
-              <div key={p.id} className="flex items-center gap-1">
-                <PanelRow
+        <ProductGrid label="Your patterns" meta={patterns.length || undefined}>
+          <div className="tiles">
+            {patterns.map((p) => (
+                <GarmentCard
+                  key={p.id}
                   href={`/studio/${p.id}`}
-                  className="flex-1"
-                  leading={
-                    <GarmentImage name={p.name} photoSrc={p.photo ?? null} sizes="72px" className="aspect-cover w-18 shrink-0 rounded-(--image-radius)" />
-
-                  }
-                  title={p.name}
-                  detail={`${plural(p.steps.length, 'step')} · ${plural(p.pieces.length, 'piece')} · edited ${updated(p.updatedAt)}`}
-                  meta={
-                    <StatusBadge status={p.publishedAt ? 'success' : 'neutral'}>
-                      {p.publishedAt ? 'Published' : `Draft · ${done} of ${toFill.length} steps done`}
-                    </StatusBadge>
-                  }
+                  name={p.name}
+                  difficulty={p.difficulty}
+                  photoSrc={p.photo ?? null}
+                  photos={p.photos}
+                  tag={p.publishedAt ? 'Published' : 'Draft'}
+                  byline={`${plural(p.steps.length, 'step')} · ${plural(p.pieces.length, 'piece')}`}
+                  price={p.price ?? undefined}
                 />
-                <DeleteButton
-                  pattern={p}
-                  onDelete={() => {
-                    deletePattern(p.id)
-                    setVersion((v) => v + 1)
-                    toast.success(`${p.name} is deleted.`)
-                  }}
-                />
-              </div>
-            )
-          })}
-        </Panel>
+            ))}
+          </div>
+        </ProductGrid>
       )}
     </PageContainer>
   )

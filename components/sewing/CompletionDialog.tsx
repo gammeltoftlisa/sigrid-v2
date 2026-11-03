@@ -107,14 +107,14 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
                 </div>
               </div>
 
-              <div className="px-6 pt-6 pb-4">
+              <div className="px-4 pt-5 pb-4">
                 <p className="kicker mb-3">Finished</p>
                 <h2 id="done-title" className="title-xl mb-3">You <em className="display-italic">made</em> this.</h2>
                 <p className="text-base text-muted-foreground mb-6">{garment.name} is finished, and you sewed every seam. Take a moment to enjoy it.</p>
 
                 {/* Rating */}
                 <h3 className="eyebrow text-muted-foreground mb-2">How did it go?</h3>
-                <div className="flex gap-2 justify-center" role="radiogroup" aria-label="Rate your make">
+                <div className="flex gap-2" role="radiogroup" aria-label="Rate your make">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <motion.button
                       key={star}
@@ -151,12 +151,12 @@ export default function CompletionDialog({ garment, open, onClose }: Props) {
               </div>
             </div>
 
-            <div className="shrink-0 px-6 pt-3 pb-6 md:pb-5 flex flex-col gap-2">
+            <div className="shrink-0 px-4 pt-3 pb-4 flex flex-col gap-2">
               <Button size="lg" className="w-full" nativeButton={false} render={<Link href="/explore" />}>
                 Start your next project
               </Button>
-              <Button size="lg" variant="outline" className="w-full" nativeButton={false} render={<Link href="/home" />}>
-                See it on Home
+              <Button size="lg" variant="outline" className="w-full" nativeButton={false} render={<Link href="/profile" />}>
+                See it with your patterns
               </Button>
             </div>
           </motion.div>

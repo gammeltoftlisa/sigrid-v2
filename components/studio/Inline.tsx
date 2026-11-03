@@ -9,12 +9,11 @@ import { arrowStep } from '@/lib/studio/arrow-step'
 
 /**
  * Write-in-place fields for the studio: they look like the text a sewer will
- * read, show a soft fill on hover, and turn white with the focus outline while
- * you type. Placeholders say what goes there.
+ * read, take the field's hover (lighter, with a stitch) and turn solid white with
+ * a crisp ink edge while you type, like every other field. Placeholders say what goes there.
  */
 // -mx-2 + px-2: room for the rounded ends, and the text lines up with the text around it; the soft fill appears only on hover and while typing
-const base =
-  '-mx-2 w-full min-w-0 bg-transparent px-2 py-0.5 outline-none transition-colors placeholder:text-muted-foreground hover:bg-foreground/5 focus-visible:bg-card'
+const base = '-mx-2 w-full min-w-0 bg-transparent px-2 py-0.5 placeholder:text-muted-foreground inline-field'
 
 export function InlineText({
   value,

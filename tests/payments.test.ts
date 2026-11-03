@@ -18,7 +18,7 @@ vi.mock('@/lib/payments', () => ({ paymentsEnabled: true }))
 const currentUser = vi.hoisted(() => ({ id: 'user_a' as string | null }))
 
 const { POST: webhook } = await import('@/app/api/webhooks/stripe/route')
-const { POST: checkout } = await import('@/app/api/checkout/route')
+const { POST: checkout, PATCH: waiver } = await import('@/app/api/checkout/route')
 const { GET: confirm } = await import('@/app/api/checkout/confirm/route')
 const { GET: guideRoute } = await import('@/app/api/garments/[id]/guide/route')
 const { setDbForTests } = await import('@/lib/server/db')
@@ -35,7 +35,7 @@ let pg: PGlite
 let fake: {
   webhooks: Stripe['webhooks']
   paymentIntents: { retrieve: ReturnType<typeof vi.fn> }
-  checkout: { sessions: { list: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; retrieve: ReturnType<typeof vi.fn> } }
+  checkout: { sessions: { list: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; retrieve: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> } }
 }
 
 beforeEach(async () => {
@@ -48,8 +48,9 @@ beforeEach(async () => {
     checkout: {
       sessions: {
         list: vi.fn(async () => ({ data: [] })),
-        create: vi.fn(async () => ({ url: 'https://checkout.stripe.test/new' })),
+        create: vi.fn(async () => ({ id: 'cs_new', client_secret: 'cs_new_secret' })),
         retrieve: vi.fn(),
+        update: vi.fn(async () => ({})),
       },
     },
   }
@@ -85,8 +86,10 @@ function send(type: string, object: object, created: number, id = `evt_${++event
 const paid = (created = 1001, over: object = {}) => send('checkout.session.completed', session(over), created)
 const charge = (over: object = {}) => ({ refunded: true, payment_intent: 'pi_1', ...over })
 const guideFor = () => guideRoute(new Request(`http://x.test/api/garments/${garmentId}/guide`), { params: Promise.resolve({ id: garmentId }) })
-const startCheckout = (body: object = { garmentId, acceptWithdrawalWaiver: true }) =>
+const startCheckout = (body: object = { garmentId }) =>
   checkout(new Request('http://x.test/api/checkout', { method: 'POST', body: JSON.stringify(body) }))
+const sendWaiver = (body: object = { sessionId: 'cs_1', acceptWithdrawalWaiver: true }) =>
+  waiver(new Request('http://x.test/api/checkout', { method: 'PATCH', body: JSON.stringify(body) }))
 const confirmFor = (id = 'cs_1') => confirm(new Request(`http://x.test/api/checkout/confirm?session_id=${id}`))
 
 describe('the webhook', () => {
@@ -202,24 +205,22 @@ describe('coming back from Stripe', () => {
 })
 
 describe('starting a checkout', () => {
-  it('needs the waiver', async () => {
-    expect((await startCheckout({ garmentId })).status).toBe(400)
-    expect(fake.checkout.sessions.create).not.toHaveBeenCalled()
-  })
-
   it('takes the price from the server, and uses an idempotency key', async () => {
-    const res = await startCheckout({ garmentId, acceptWithdrawalWaiver: true, price: 1 })
-    expect(await res.json()).toEqual({ url: 'https://checkout.stripe.test/new' })
+    const res = await startCheckout({ garmentId, price: 1 })
+    expect(await res.json()).toEqual({ sessionId: 'cs_new', clientSecret: 'cs_new_secret', email: 'a@test.dev' })
     const [params, options] = fake.checkout.sessions.create.mock.calls[0]
     const price = garments.find((g) => g.id === garmentId)!.price
+    expect(params.ui_mode).toBe('elements')
     expect(params.line_items[0].price_data.unit_amount).toBe(price * 100)
     expect(params.payment_intent_data.metadata).toMatchObject({ garmentId, userId: 'user_a' })
-    expect(options.idempotencyKey).toContain(`checkout-user_a-${garmentId}-`)
+    expect(params.metadata.withdrawalWaiver).toBe('pending')
+    expect(options.idempotencyKey).toContain(`user_a-${garmentId}-`)
   })
 
-  it('a second tab gets the same open page, so it cannot pay twice', async () => {
-    fake.checkout.sessions.list.mockResolvedValue({ data: [{ url: 'https://checkout.stripe.test/open', metadata: { garmentId, userId: 'user_a' } }] })
-    expect(await (await startCheckout()).json()).toEqual({ url: 'https://checkout.stripe.test/open' })
+  it('a second tab gets the same open checkout, so it cannot pay twice', async () => {
+    fake.checkout.sessions.list.mockResolvedValue({ data: [{ id: 'cs_open', ui_mode: 'elements', client_secret: null, metadata: { garmentId, userId: 'user_a' } }] })
+    fake.checkout.sessions.retrieve.mockResolvedValue({ id: 'cs_open', client_secret: 'cs_open_secret' })
+    expect(await (await startCheckout()).json()).toMatchObject({ sessionId: 'cs_open', clientSecret: 'cs_open_secret' })
     expect(fake.checkout.sessions.create).not.toHaveBeenCalled()
   })
 
@@ -232,6 +233,32 @@ describe('starting a checkout', () => {
   it('needs a login', async () => {
     currentUser.id = null
     expect((await startCheckout()).status).toBe(401)
+  })
+})
+
+describe('pressing Pay', () => {
+  it('needs the waiver', async () => {
+    expect((await sendWaiver({ sessionId: 'cs_1' })).status).toBe(400)
+    expect(fake.checkout.sessions.update).not.toHaveBeenCalled()
+  })
+
+  it('marks the waiver on your own open checkout', async () => {
+    fake.checkout.sessions.retrieve.mockResolvedValue(session({ status: 'open', metadata: { garmentId, userId: 'user_a', withdrawalWaiver: 'pending' } }))
+    expect((await sendWaiver()).status).toBe(200)
+    const [id, params] = fake.checkout.sessions.update.mock.calls[0]
+    expect(id).toBe('cs_1')
+    expect(params.metadata).toMatchObject({ garmentId, userId: 'user_a', withdrawalWaiver: 'accepted' })
+  })
+
+  it("cannot mark someone else's checkout", async () => {
+    fake.checkout.sessions.retrieve.mockResolvedValue(session({ status: 'open', metadata: { garmentId, userId: 'user_b' } }))
+    expect((await sendWaiver()).status).toBe(404)
+    expect(fake.checkout.sessions.update).not.toHaveBeenCalled()
+  })
+
+  it('needs a login', async () => {
+    currentUser.id = null
+    expect((await sendWaiver()).status).toBe(401)
   })
 })
 

@@ -1,13 +1,5 @@
-import { neon } from '@neondatabase/serverless'
-
+import { getSql } from './db'
 import type { SewingState } from './sewing-types'
-
-/** Connects on first use, so building the app doesn't need the database */
-let client: ReturnType<typeof neon> | null = null
-function getSql() {
-  client ??= neon(process.env.DATABASE_URL!)
-  return client
-}
 
 // One account can't fill the database, however it calls the API
 const MAX_PROJECTS = 500
@@ -18,7 +10,7 @@ export class TooMuchData extends Error {}
 type Row = Record<string, unknown>
 const iso = (value: unknown) => new Date(value as string).toISOString()
 
-async function readState(userId: string): Promise<SewingState> {
+export async function readState(userId: string): Promise<SewingState> {
   const sql = getSql()
   const [projects, steps, profiles] = (await Promise.all([
     sql`SELECT garment_id, size, completed_until, updated_at FROM sewing_projects WHERE user_id = ${userId}`,
@@ -100,6 +92,9 @@ export async function mergeSewing(userId: string, incoming: SewingState): Promis
       SET size = excluded.size, size_updated_at = excluded.size_updated_at
       WHERE sewing_profiles.size_updated_at IS NULL OR excluded.size_updated_at > sewing_profiles.size_updated_at`
   }
+  // For automatic deletion: this account is in use (app/api/cron/retention)
+  await sql`INSERT INTO sewing_profiles (user_id, last_seen_at) VALUES (${userId}, now())
+    ON CONFLICT (user_id) DO UPDATE SET last_seen_at = now()`
   return readState(userId)
 }
 

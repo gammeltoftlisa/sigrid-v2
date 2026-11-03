@@ -4,9 +4,28 @@ import { cn } from 'cn'
 
 import { Panel } from '@/components/patterns/panel'
 import { dayKey, stepsByDay, type StepDone } from '@/lib/activity'
+import { getGuideOutline } from '@/lib/data'
 import { minutesPerStep, type ProjectSummary } from '@/lib/project-summary'
 
-const hoursText = (minutes: number) => (minutes < 45 ? 'Under 1 h' : `~${Math.round(minutes / 30) / 2} h`)
+/** "2 h 15 min", rounded to five minutes */
+const durationText = (minutes: number) => {
+  const total = Math.round(minutes / 5) * 5
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  if (h === 0) return `${m} min`
+  return m === 0 ? `${h} h` : `${h} h ${m} min`
+}
+
+/** Stages of the guide whose every step is done */
+const stagesDone = ({ garment, project }: ProjectSummary) => {
+  let end = 0
+  let done = 0
+  for (const size of getGuideOutline(garment.id)?.stages ?? []) {
+    end += size
+    if (project.completedUntil >= end) done++
+  }
+  return done
+}
 
 /**
  * How the sewing is going, kept plain: this week's letters, ringed on the days you sewed, then what it has added up to.
@@ -30,12 +49,14 @@ export function SewingDashboard({ activity, projects }: { activity: StepDone[]; 
 
   const finished = projects.filter((p) => p.finished).length
   const stepsDone = projects.reduce((n, p) => n + Math.min(p.project.completedUntil, p.totalSteps), 0)
+  const stages = projects.reduce((n, p) => n + stagesDone(p), 0)
   const minutes = projects.reduce((n, p) => n + Math.min(p.project.completedUntil, p.totalSteps) * minutesPerStep(p.garment.estimatedTime, p.totalSteps), 0)
 
   // A total of nothing only discourages, so "finished" waits for the first one
   const totals = [
+    { label: 'Stages done', value: String(stages) },
     { label: 'Steps done', value: String(stepsDone) },
-    { label: 'Time sewn', value: hoursText(minutes) },
+    { label: 'Time sewn', value: durationText(minutes) },
     ...(finished > 0 ? [{ label: 'Finished', value: String(finished) }] : []),
   ]
 

@@ -5,7 +5,7 @@ import { cn } from 'cn'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 /**
- * A row of small choice chips: tiles that turn ink when chosen.
+ * A row of small choice chips: frosted tiles that turn lighter when chosen, like every control.
  * Single choice by default; `multiple` lets several be on at once.
  */
 export function ChipGroup<T extends string>({
@@ -38,7 +38,6 @@ export function ChipGroup<T extends string>({
           key={o.value}
           value={o.value}
           data-shape="tile"
-          className="data-pressed:bg-primary data-pressed:text-primary-foreground"
         >
           {o.label}
         </ToggleGroupItem>

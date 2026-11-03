@@ -31,6 +31,7 @@ function asGarment(p: StudioPattern): Garment {
     sizes: p.sizes,
     description: p.description,
     photo: p.photo ?? null,
+    photos: p.photos ?? (p.photo ? [p.photo] : []),
     published: true,
   }
 }

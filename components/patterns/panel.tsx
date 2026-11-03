@@ -40,7 +40,7 @@ export function Panel({
   return (
     <section className={cn(glass ? 'glass-panel' : 'product-grid solid-panel', 'flex flex-col overflow-hidden rounded-(--radius) border', className)}>
       {!glass && <Stipple />}
-      <header className="flex flex-col gap-2 px-4 pt-4 pb-3">
+      <header className="container-head flex flex-col justify-center gap-2">
         <div className="flex items-center justify-between gap-3">
           <h2 className="eyebrow text-muted-foreground">{label}</h2>
           <div className="flex items-center gap-3">
@@ -62,7 +62,7 @@ export function Panel({
 
 export type RowState = 'done' | 'active' | 'upcoming'
 
-/** Round status marker from the guide: done = soft with a check, active = solid, upcoming = outlined. */
+/** Round status marker from the guide: done = soft with a check, active = solid, upcoming = a stitched outline. */
 export function StepDot({ state, children, className }: { state: RowState; children?: React.ReactNode; className?: string }) {
   return (
     <span
@@ -71,7 +71,7 @@ export function StepDot({ state, children, className }: { state: RowState; child
         'flex size-7 shrink-0 items-center justify-center rounded-full text-2xs font-medium tabular-nums transition-colors duration-200',
         state === 'done' && 'bg-accent text-primary',
         state === 'active' && 'bg-primary text-primary-foreground',
-        state === 'upcoming' && 'border bg-muted text-muted-foreground',
+        state === 'upcoming' && 'border border-dashed border-(--app-border-strong) text-muted-foreground',
         className,
       )}
     >
@@ -117,9 +117,10 @@ export function PanelRow({
       {...(onClick && { type: 'button' as const, onClick })}
       {...(external && { target: '_blank', rel: 'noopener' })}
       data-state={state}
+      {...((href || onClick) && { 'data-control': '' })}
       className={cn(
         'flex items-center gap-3 rounded-(--control-radius) border px-2.5 py-2.5 transition-colors',
-        (href || onClick) && 'group/row w-full text-left outline-none hover:bg-background',
+        (href || onClick) && 'press-row group/row w-full text-left outline-none',
         state === 'active' ? 'border-foreground/35 bg-background' : 'bg-card',
         state === 'done' && 'border-transparent',
         className,

@@ -3,20 +3,20 @@ import { cn } from 'cn'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import type { Creator } from '@/lib/types'
 
-/** A creator's initial in a round sand avatar. xl is the big one on a profile header (white, on glass). */
+/** A creator's initial in a round sand avatar. `profile` is the big one in their ProfileHeader. */
 export function CreatorAvatar({
   creator,
   size = 'default',
   className,
 }: {
   creator: Pick<Creator, 'name'>
-  /** xl: the big avatar on a profile header */
-  size?: 'sm' | 'default' | 'lg' | 'xl'
+  /** profile: fills the photo spot of a ProfileHeader, as your own photo does on You */
+  size?: 'sm' | 'default' | 'lg' | 'profile'
   className?: string
 }) {
-  if (size === 'xl') {
+  if (size === 'profile') {
     return (
-      <Avatar className={cn('size-20 md:size-24', className)}>
+      <Avatar className={cn('aspect-square size-auto w-full', className)}>
         <AvatarFallback className="title-xl bg-card">{creator.name[0]}</AvatarFallback>
       </Avatar>
     )

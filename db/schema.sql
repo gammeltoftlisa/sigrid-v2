@@ -54,3 +54,26 @@ CREATE TABLE IF NOT EXISTS shop_products (
   data jsonb NOT NULL,
   refreshed_at timestamptz NOT NULL
 );
+
+-- Proof of consent (lib/consent.ts): every answer anyone gives, never updated, so the history shows who agreed
+-- to what, which version of the text, when and where. The newest row per person and kind is their current answer.
+-- Deleted with the account (app/api/me/route.ts).
+CREATE TABLE IF NOT EXISTS consents (
+  id          bigserial PRIMARY KEY,
+  user_id     text NOT NULL,
+  kind        text NOT NULL CHECK (kind IN ('terms', 'age', 'analytics', 'marketing')),
+  granted     boolean NOT NULL,
+  version     text NOT NULL,
+  source      text NOT NULL,
+  recorded_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS consents_by_user ON consents (user_id, kind, recorded_at DESC);
+
+-- Automatic deletion (app/api/cron/retention): when each account last used Sigrid. Sewing of accounts
+-- unused for 24 months is deleted.
+ALTER TABLE sewing_profiles ADD COLUMN IF NOT EXISTS last_seen_at timestamptz;
+UPDATE sewing_profiles SET last_seen_at = now() WHERE last_seen_at IS NULL;
+
+-- Purchases are bookkeeping records and stay 7 years (bokföringslagen 7 kap. 2 §), also after the account is
+-- deleted; this says when it was, so they can go after that.
+ALTER TABLE entitlements ADD COLUMN IF NOT EXISTS account_deleted_at timestamptz

@@ -36,7 +36,7 @@ export function useStudioPattern(id: string) {
         setMissing(true)
         return
       }
-      setPattern((current) => (current && current.updatedAt >= fresh.updatedAt && current.photo === fresh.photo ? current : fresh))
+      setPattern((current) => (current && current.updatedAt >= fresh.updatedAt && (current.photos ?? []).join() === (fresh.photos ?? []).join() ? current : fresh))
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)

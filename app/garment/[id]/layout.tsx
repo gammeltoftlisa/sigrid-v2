@@ -1,24 +1,15 @@
-'use client'
+import type { Metadata } from 'next'
 
-import { use } from 'react'
-import { usePathname } from 'next/navigation'
-import { AppShell } from '@/components/patterns/app-nav'
-import { PublishedGate } from '@/components/garment/published-gate'
+import { GarmentFrame } from '@/components/garment/garment-frame'
+import { catalogGarments } from '@/lib/data'
 
-export default function GarmentIdLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode
-  params: Promise<{ id: string }>
-}) {
-  const { id } = use(params)
-  const pathname = usePathname()
-  // The printable pattern takes the whole screen; everything else sits in the app frame
-  if (pathname === `/garment/${id}/pattern`) return <PublishedGate id={id}>{children}</PublishedGate>
-  return (
-    <AppShell>
-      <PublishedGate id={id}>{children}</PublishedGate>
-    </AppShell>
-  )
+// The pattern's own name in the browser tab. Patterns published from the studio live in one browser,
+// so the server doesn't know their names and the tab says "Pattern".
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  return { title: catalogGarments.find((g) => g.id === id)?.name ?? 'Pattern' }
+}
+
+export default function GarmentIdLayout({ children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }) {
+  return <GarmentFrame params={params}>{children}</GarmentFrame>
 }

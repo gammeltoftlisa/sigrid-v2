@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { cn } from 'cn'
 import { IconChevronRight, IconShirt, type Icon } from '@tabler/icons-react'
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -19,8 +20,8 @@ interface Thing {
 function Tile({ thing }: { thing: Thing }) {
   const body = (
     <>
-      <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
-        <thing.Icon className="size-5" />
+      <span aria-hidden className="icon-bubble size-10">
+        <thing.Icon />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-sm font-medium">{thing.name}</span>
@@ -29,13 +30,13 @@ function Tile({ thing }: { thing: Thing }) {
       {thing.href && <IconChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover/row:translate-x-0.5" aria-hidden />}
     </>
   )
-  const className = 'flex items-center gap-3 rounded-(--control-radius) border bg-card p-2.5'
+  const className = 'flex items-center gap-3 rounded-(--control-radius) p-2.5'
   return thing.href ? (
-    <Link href={thing.href} className={`group/row outline-none hover:bg-background ${className}`}>
+    <Link href={thing.href} data-control className={cn('press-row group/row outline-none transition-colors', className)}>
       {body}
     </Link>
   ) : (
-    <div className={className}>{body}</div>
+    <div className={cn('border border-transparent', className)}>{body}</div>
   )
 }
 

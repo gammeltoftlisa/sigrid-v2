@@ -10,10 +10,10 @@ import { photoFromFile } from '@/lib/studio/photo'
 import { ActionBar } from '@/components/patterns/action-bar'
 import { ChipGroup } from '@/components/patterns/chip-group'
 import { Panel, PanelRow, StepDot } from '@/components/patterns/panel'
-import { GarmentImage } from '@/components/garment/GarmentImage'
+import { GarmentGallery } from '@/components/garment/GarmentGallery'
 import { ProductFrame } from '@/components/patterns/product-grid'
 import { TOOLS, type Tool } from '@/components/sewing/tools'
-import { baseSize, plural, type StudioPattern } from '@/lib/studio/patterns'
+import { baseSize, MAX_PHOTOS, plural, setPhotos, type StudioPattern } from '@/lib/studio/patterns'
 import { isDone } from '@/lib/studio/wizard'
 import type { Difficulty, GarmentCategory } from '@/lib/types'
 import { InlineNumber, InlinePick, InlineText, InlineTextarea } from './Inline'
@@ -37,17 +37,13 @@ function EditRow({ leading, title, detail }: { leading: React.ReactNode; title: 
   )
 }
 
-/** A PanelRow that opens something in the studio */
+/** A PanelRow that opens something in the studio; a stitched edge while it still needs something */
 function OpenRow(props: React.ComponentProps<typeof PanelRow> & { onOpen: () => void; action: string; todo?: boolean }) {
   const { onOpen, action, todo, ...row } = props
   return (
-    <button type="button" onClick={onOpen} data-missing={todo || undefined} className="rounded-(--control-radius) text-left">
-      <PanelRow
-        {...row}
-        trailing={<span className="shrink-0 text-xs font-medium">{action}</span>}
-        className="glass-inset-hover"
-      />
-    </button>
+    <div data-missing={todo || undefined} className="rounded-(--control-radius)">
+      <PanelRow {...row} onClick={onOpen} trailing={<span className="shrink-0 text-xs font-medium">{action}</span>} />
+    </div>
   )
 }
 
@@ -70,6 +66,8 @@ export function StudioPatternPage({
   onOpenGuide: () => void
 }) {
   const { fabric, sizes } = pattern
+  // The photo on screen, so Remove takes that one
+  const [shown, setShown] = useState(0)
   const base = baseSize(sizes)
   const sizeRange = sizes.length === 0 ? '' : sizes.length === 1 ? sizes[0] : `${sizes[0]}–${sizes[sizes.length - 1]}`
   const meters = fabric.metersBySize[base]
@@ -82,23 +80,25 @@ export function StudioPatternPage({
   )
 
   return (
-    <div className="md:grid md:min-h-0 md:flex-1 md:grid-cols-12 md:gap-x-(--grid-gutter) md:pr-8 md:pl-4">
-      {/* Garment image, as on the garment page */}
-      <div className="md:col-span-6 md:h-full md:min-h-0 md:pb-6">
-        <ProductFrame className="mx-4 mt-4 sm:mx-6 md:m-0 md:h-full">
-        <GarmentImage
-          name={pattern.name}
-          className="aspect-product rounded-(--image-radius) md:aspect-auto md:h-full"
-          sizes="(min-width: 768px) 50vw, 100vw"
-          photoSrc={pattern.photo ?? null}
-        >
-          <PhotoControls photo={pattern.photo} onChange={(photo) => onChange({ photo })} />
-        </GarmentImage>
+    <div className="md:grid md:grid-cols-12 md:gap-x-(--grid-gutter) md:px-3 md:pb-(--page-bottom)">
+      {/* The photos, as on the garment page, with buttons to add and remove them */}
+      <div className="md:sticky md:top-4 md:col-span-6 garment-photo-pane md:self-start">
+        <ProductFrame className="mx-4 mt-1 sm:mx-6 md:m-0 md:h-full">
+          <GarmentGallery
+            name={pattern.name}
+            className="aspect-product rounded-(--image-radius) md:aspect-auto md:h-full"
+            sizes="(min-width: 768px) 50vw, 100vw"
+            photoSrc={pattern.photo ?? null}
+            photos={pattern.photos}
+            onIndexChange={setShown}
+          >
+            <PhotoControls photos={pattern.photos ?? (pattern.photo ? [pattern.photo] : [])} shown={shown} onChange={(photos) => onChange(setPhotos(photos))} />
+          </GarmentGallery>
         </ProductFrame>
       </div>
 
-      <div className="flex flex-col md:col-span-6 md:min-h-0 md:pb-6">
-        <div className="flex w-full flex-1 flex-col gap-6 px-4 pt-6 pb-44 sm:px-6 md:min-h-0 md:px-0 md:pt-2 md:pb-0">
+      <div className="flex flex-col md:sticky md:top-4 md:col-span-6 md:self-start">
+        <div className="flex w-full flex-1 flex-col gap-3 px-4 pt-3 pb-44 sm:px-6 md:px-0 md:pt-0 md:pb-0">
           <header className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-4">
               <h1 className="min-w-0 flex-1 title-compact">
@@ -140,7 +140,7 @@ export function StudioPatternPage({
                 onClick={onOpenSizes}
                 data-required
                 data-empty={sizes.length === 0}
-                className="-mx-1 inline-flex items-center gap-0.5 rounded-md px-1 py-0.5 transition-colors hover:bg-foreground/5"
+                className="inline-field -mx-1 inline-flex items-center gap-0.5 px-1 py-0.5"
               >
                 {sizeRange || 'Add sizes'}
                 <IconChevronDown className="size-3 opacity-60" aria-hidden />
@@ -169,7 +169,7 @@ export function StudioPatternPage({
           <TodoBar pattern={pattern} onOpen={(what) => (what === 'sizes' ? onOpenSizes() : what === 'pieces' ? onOpenPieces() : onOpenGuide())} />
 
           {/* One container, like the garment page: rows scroll inside, the main button stays at its bottom */}
-          <Panel glass className="md:min-h-0" bodyClassName="md:overflow-y-auto" footer={<div className="hidden md:block">{cta}</div>} label="Overview">
+          <Panel glass footer={<div className="hidden md:block">{cta}</div>} label="Overview">
             <OpenRow
               onOpen={onOpenGuide}
               action={pattern.steps.length ? 'Edit guide' : 'Write guide'}
@@ -241,15 +241,19 @@ export function StudioPatternPage({
   )
 }
 
-/** Add, change or remove the garment photo, on the photo itself */
-function PhotoControls({ photo, onChange }: { photo?: string; onChange: (photo: string | undefined) => void }) {
+/** Add photos, or remove the one on screen, on the photo itself. The first photo is the cover. */
+function PhotoControls({ photos, shown, onChange }: { photos: string[]; shown: number; onChange: (photos: string[]) => void }) {
   const input = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
-  const pick = async (file?: File) => {
-    if (!file) return
+  const room = MAX_PHOTOS - photos.length
+  const pick = async (files: FileList | null) => {
+    if (!files?.length) return
     setBusy(true)
     try {
-      onChange(await photoFromFile(file))
+      const added: string[] = []
+      for (const file of [...files].slice(0, room)) added.push(await photoFromFile(file))
+      onChange([...photos, ...added])
+      if (files.length > room) toast(`A pattern keeps ${MAX_PHOTOS} photos, so ${files.length - room === 1 ? 'one wasn’t' : `${files.length - room} weren’t`} added.`)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'This photo couldn’t be added.')
     } finally {
@@ -257,18 +261,29 @@ function PhotoControls({ photo, onChange }: { photo?: string; onChange: (photo: 
       if (input.current) input.current.value = ''
     }
   }
+  const current = Math.min(shown, photos.length - 1)
   return (
-    <div className="absolute bottom-3 left-3 flex flex-wrap gap-2">
-      <Button variant="outline" size="sm" disabled={busy} onClick={() => input.current?.click()}>
-        {busy ? <Spinner data-icon="inline-start" /> : <IconCamera data-icon="inline-start" />}
-        {photo ? 'Change photo' : 'Add a photo'}
-      </Button>
-      {photo && (
-        <Button variant="outline" size="sm" onClick={() => onChange(undefined)}>
-          Remove
+    <div className="absolute top-3 left-3 z-20 flex flex-wrap gap-2">
+      {room > 0 && (
+        <Button variant="outline" size="sm" disabled={busy} onClick={() => input.current?.click()}>
+          {busy ? <Spinner data-icon="inline-start" /> : <IconCamera data-icon="inline-start" />}
+          Add photos
         </Button>
       )}
-      <input ref={input} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => pick(e.target.files?.[0])} />
+      {photos.length > 0 && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const before = photos
+            onChange(photos.filter((_, i) => i !== current))
+            toast('Photo removed', { action: { label: 'Undo', onClick: () => onChange(before) } })
+          }}
+        >
+          {photos.length > 1 ? `Remove photo ${current + 1}` : 'Remove photo'}
+        </Button>
+      )}
+      <input ref={input} type="file" accept="image/*" multiple className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => pick(e.target.files)} />
     </div>
   )
 }

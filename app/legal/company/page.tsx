@@ -2,7 +2,7 @@ import { LegalPage, LegalSection } from '@/components/patterns/legal-page'
 import { DetailList } from '@/components/patterns/detail-list'
 import { business } from '@/lib/legal'
 
-export const metadata = { title: 'Company details · Sigrid' }
+export const metadata = { title: 'Company details' }
 
 const rows = [
   { label: 'Company', value: business.name },
