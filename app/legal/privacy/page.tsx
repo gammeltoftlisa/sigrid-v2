@@ -8,7 +8,7 @@ import { subProcessors } from '@/lib/sub-processors'
 
 export const metadata = { title: 'Privacy policy' }
 
-// Keep in step with lib/account-data.ts (retention) and db/schema.sql
+// Keep in step with lib/account-data.ts (retention) and db/migrations
 const keeping = [
   { what: 'Your account (email, login, account type)', how: 'Until you delete your account' },
   { what: 'Your sewing (projects, progress, size, the days you sewed)', how: 'Until you delete it, or 24 months after you last used Sigrid' },
@@ -17,6 +17,8 @@ const keeping = [
   { what: 'The record of payment messages from Stripe', how: '90 days' },
   { what: 'Usage statistics, only if you said yes', how: 'Counted in aggregate by Vercel; not linked to your account' },
   { what: 'Technical logs at our host', how: 'A short period set by Vercel, for security' },
+  { what: 'Request counters (an IP address or account id, and a count), to stop abuse', how: '1 day' },
+  { what: 'Error reports (what broke and where, never who)', how: '30 days, at Sentry' },
 ]
 
 export default function PrivacyPage() {
@@ -59,6 +61,10 @@ export default function PrivacyPage() {
           <li>
             <strong>Technical logs.</strong> Our host processes your IP address, browser type and the pages you request, to deliver the site and keep it
             secure. Our legitimate interest in a secure service (art. 6.1 f).
+          </li>
+          <li>
+            <strong>Error reports.</strong> When something breaks, we send a report of the error, the page and the code it happened in to Sentry, so we can
+            fix it. Reports carry no name, email, cookie or anything you typed. Our legitimate interest in a working service (art. 6.1 f).
           </li>
         </ul>
         <p>

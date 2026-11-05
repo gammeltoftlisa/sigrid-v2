@@ -1,11 +1,14 @@
 'use client'
 
 import { useEffect } from 'react'
+import * as Sentry from '@sentry/nextjs'
 
 /** The last resort, when the root layout itself fails. It replaces the whole document, so it styles itself. */
 export default function GlobalError({ error, retry }: { error: unknown; retry: () => void }) {
   useEffect(() => {
     console.error(error)
+    // A page the error page replaced still has to reach error tracking
+    Sentry.captureException(error)
   }, [error])
 
   return (

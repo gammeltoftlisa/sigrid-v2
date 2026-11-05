@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import * as Sentry from '@sentry/nextjs'
 import Link from 'next/link'
 import { IconNeedleThread } from '@tabler/icons-react'
 
@@ -11,6 +12,8 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 export default function PageError({ error, retry }: { error: unknown; retry: () => void }) {
   useEffect(() => {
     console.error(error)
+    // A page the error page replaced still has to reach error tracking
+    Sentry.captureException(error)
   }, [error])
 
   return (

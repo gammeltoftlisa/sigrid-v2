@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs'
-
 import { PGlite } from '@electric-sql/pglite'
 import Stripe from 'stripe'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { applyMigrations } from './migrations'
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(async () => ({ userId: currentUser.id })),
@@ -24,6 +24,7 @@ const { GET: guideRoute } = await import('@/app/api/garments/[id]/guide/route')
 const { setDbForTests } = await import('@/lib/server/db')
 const { hasEntitlement, listPurchases, entitlementStatus } = await import('@/lib/server/entitlements')
 const { setStripeForTests } = await import('@/lib/stripe')
+const { resetRateLimitsForTests } = await import('@/lib/rate-limit')
 const { garments } = await import('@/lib/data')
 const { garmentGuides } = await import('@/lib/guides')
 
@@ -41,7 +42,7 @@ let fake: {
 
 beforeEach(async () => {
   pg = new PGlite()
-  await pg.exec(readFileSync(new URL('../db/schema.sql', import.meta.url), 'utf8'))
+  await applyMigrations(pg)
   setDbForTests(async (text, params = []) => (await pg.query<Record<string, unknown>>(text, params)).rows)
   fake = {
     webhooks: real.webhooks,
@@ -62,6 +63,7 @@ beforeEach(async () => {
   setStripeForTests(fake as unknown as Stripe)
   vi.stubEnv('STRIPE_WEBHOOK_SECRET', SECRET)
   currentUser.id = 'user_a'
+  resetRateLimitsForTests()
 })
 
 afterEach(async () => {
@@ -256,6 +258,37 @@ describe('starting a checkout', () => {
     await paid()
     expect((await startCheckout()).status).toBe(409)
     expect(fake.checkout.sessions.create).not.toHaveBeenCalled()
+  })
+
+  it('does not start a second payment while the first is still clearing', async () => {
+    await send('checkout.session.completed', session({ payment_status: 'unpaid' }), 1001)
+    expect(await entitlementStatus('user_a', garmentId)).toBe('processing')
+    const res = await startCheckout()
+    expect(res.status).toBe(409)
+    expect((await res.json()).error).toMatch(/still being processed/)
+    expect(fake.checkout.sessions.create).not.toHaveBeenCalled()
+  })
+
+  it('a payment Stripe has but the webhook has not told us about yet counts, and is recorded', async () => {
+    fake.checkout.sessions.list.mockImplementation(async ({ status }: { status: string }) => ({ data: status === 'complete' ? [session()] : [] }))
+    expect((await startCheckout()).status).toBe(409)
+    expect(fake.checkout.sessions.create).not.toHaveBeenCalled()
+    expect(await hasEntitlement('user_a', garmentId)).toBe(true)
+  })
+
+  it('a double click at the same moment still makes one checkout', async () => {
+    await Promise.all([startCheckout(), startCheckout()])
+    const keys = fake.checkout.sessions.create.mock.calls.map((c) => (c as unknown[])[1] as { idempotencyKey: string })
+    expect(new Set(keys.map((k) => k.idempotencyKey)).size).toBe(1)
+  })
+
+  it('stops the eleventh checkout in a minute, counted across every server', async () => {
+    for (let i = 0; i < 10; i++) expect((await startCheckout()).status).not.toBe(429)
+    // Another server instance, with nothing in its memory, still says no
+    resetRateLimitsForTests()
+    const res = await startCheckout()
+    expect(res.status).toBe(429)
+    expect(Number(res.headers.get('Retry-After'))).toBeGreaterThan(0)
   })
 
   it('needs a login', async () => {

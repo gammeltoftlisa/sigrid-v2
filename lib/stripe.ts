@@ -73,6 +73,18 @@ async function customerFor(userId: string) {
   return { customerId: customer.id, email }
 }
 
+/**
+ * A finished, paid checkout for this person and pattern, if Stripe has one. Normally the webhook has
+ * already recorded it; this catches the gap before it arrives, so nobody is offered the same pattern twice.
+ */
+export async function findPaidCheckout(userId: string, garmentId: string): Promise<Stripe.Checkout.Session | null> {
+  const user = await (await clerkClient()).users.getUser(userId)
+  const customer = user.privateMetadata.stripeCustomerId
+  if (typeof customer !== 'string') return null
+  const done = await getStripe().checkout.sessions.list({ customer, status: 'complete', limit: 100 })
+  return done.data.find((s) => s.metadata?.garmentId === garmentId && s.metadata?.userId === userId && (s.payment_status === 'paid' || s.payment_status === 'no_payment_required')) ?? null
+}
+
 /** A checkout stays payable for at least an hour; two tabs within the same hour share one */
 const HOUR = 3600
 

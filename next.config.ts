@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 import { IMAGE_HOSTS } from "./lib/fabric/safe-listing";
@@ -21,6 +22,8 @@ const vercelAnalyticsDev = isDev ? " https://va.vercel-scripts.com" : "";
 const stripeJs = "https://js.stripe.com https://*.js.stripe.com";
 const stripeFrames = `${stripeJs} https://hooks.stripe.com`;
 const stripeApi = "https://api.stripe.com";
+// Error tracking from the browser (lib/sentry-options.ts), to Sentry's EU or US ingest
+const sentryIngest = "https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://*.ingest.us.sentry.io";
 
 /**
  * Content Security Policy: only Sigrid's own scripts, styles, fonts and images load, plus Clerk for
@@ -35,7 +38,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https://img.clerk.com",
   "font-src 'self'",
-  `connect-src 'self' ${clerk} ${clerkProtectProbe} ${stripeApi}`,
+  `connect-src 'self' ${clerk} ${clerkProtectProbe} ${stripeApi} ${sentryIngest}`,
   `frame-src ${turnstile} ${stripeFrames}`,
   "worker-src 'self' blob:",
   "object-src 'none'",
@@ -77,4 +80,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Source maps go to Sentry only when its token is there (the Vercel integration sets it), so readable
+// stack traces never ship to browsers. Without the token, building works exactly as before.
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN, deleteSourcemapsAfterUpload: true },
+  telemetry: false,
+});

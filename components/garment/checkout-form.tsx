@@ -7,6 +7,7 @@ import { useTheme } from 'next-themes'
 import { loadStripe, type Appearance } from '@stripe/stripe-js'
 import { CheckoutElementsProvider, PaymentElement, useCheckoutElements } from '@stripe/react-stripe-js/checkout'
 import { IconLock, IconShieldLock } from '@tabler/icons-react'
+import { toast } from 'sonner'
 
 import { Panel } from '@/components/patterns/panel'
 import { StatusMessage } from '@/components/patterns/status-message'
@@ -97,8 +98,12 @@ export function CheckoutForm({ garmentId, price }: { garmentId: string; price: n
     let live = true
     fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ garmentId }) })
       .then(async (res) => {
-        // Bought in another tab or on another device
-        if (res.status === 409) return router.replace(`/garment/${garmentId}`)
+        // Bought in another tab or on another device, or a payment for it is still clearing
+        if (res.status === 409) {
+          const { error } = (await res.json().catch(() => ({}))) as { error?: string }
+          if (error?.includes('processed')) toast.info('Your payment for this pattern is still being processed, so you can’t be charged twice. It opens as soon as it clears.', { duration: 10_000 })
+          return router.replace(`/garment/${garmentId}`)
+        }
         if (!res.ok) throw new Error(String(res.status))
         const next = (await res.json()) as { sessionId: string; clientSecret: string; email?: string }
         if (live) setSession(next)

@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 
 import { applyRetention } from '@/lib/account-data'
+import { forgetOldLimits } from '@/lib/server/rate-limit'
 
 /** Vercel Cron, daily: deletes data that's past its keeping time (lib/account-data.ts). Vercel sends CRON_SECRET. */
 export async function GET(request: NextRequest) {
@@ -8,6 +9,7 @@ export async function GET(request: NextRequest) {
   if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) return Response.json({ error: 'Not allowed' }, { status: 401 })
   try {
     const deleted = await applyRetention()
+    await forgetOldLimits()
     console.info('Retention', deleted)
     return Response.json(deleted, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {

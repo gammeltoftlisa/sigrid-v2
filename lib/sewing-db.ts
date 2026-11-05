@@ -61,48 +61,60 @@ export async function mergeSewing(userId: string, incoming: SewingState): Promis
   const steps = incoming.activity.filter((s) => afterErase(s.at))
   const size = incoming.size && afterErase(incoming.size.updatedAt) ? incoming.size : null
 
+  // One transaction, which starts by taking this person's profile row. "Delete my data" takes the same row
+  // first, so the two can't interleave, and every insert checks the erase time in the same transaction.
+  const queries = [
+    // For automatic deletion: this account is in use (app/api/cron/retention)
+    sql`INSERT INTO sewing_profiles (user_id, last_seen_at) VALUES (${userId}, now())
+      ON CONFLICT (user_id) DO UPDATE SET last_seen_at = now()`,
+  ]
   if (projects.length > 0) {
-    await sql`INSERT INTO sewing_projects (user_id, garment_id, size, completed_until, updated_at)
-      SELECT ${userId}, * FROM unnest(
+    queries.push(sql`INSERT INTO sewing_projects (user_id, garment_id, size, completed_until, updated_at)
+      SELECT ${userId}, t.* FROM unnest(
         ${projects.map((p) => p.garmentId)}::text[],
         ${projects.map((p) => p.size)}::text[],
         ${projects.map((p) => p.completedUntil)}::int[],
         ${projects.map((p) => stamp(p.updatedAt))}::timestamptz[]
-      )
+      ) AS t(garment_id, size, completed_until, updated_at)
+      WHERE t.updated_at > COALESCE((SELECT erased_at FROM sewing_profiles WHERE user_id = ${userId}), '-infinity'::timestamptz)
       ON CONFLICT (user_id, garment_id) DO UPDATE
       SET size = excluded.size, completed_until = excluded.completed_until, updated_at = excluded.updated_at
-      WHERE excluded.updated_at > sewing_projects.updated_at`
+      WHERE excluded.updated_at > sewing_projects.updated_at`)
   }
   if (steps.length > 0) {
-    await sql`INSERT INTO sewing_steps (user_id, garment_id, step, action, done_at)
-      SELECT ${userId}, * FROM unnest(
+    queries.push(sql`INSERT INTO sewing_steps (user_id, garment_id, step, action, done_at)
+      SELECT ${userId}, t.* FROM unnest(
         ${steps.map((s) => s.garmentId)}::text[],
         ${steps.map((s) => s.step)}::int[],
         ${steps.map((s) => s.action)}::text[],
         ${steps.map((s) => stamp(s.at))}::timestamptz[]
-      )
+      ) AS t(garment_id, step, action, done_at)
+      WHERE t.done_at > COALESCE((SELECT erased_at FROM sewing_profiles WHERE user_id = ${userId}), '-infinity'::timestamptz)
       ON CONFLICT (user_id, garment_id, step) DO UPDATE
       SET action = excluded.action, done_at = excluded.done_at
-      WHERE excluded.done_at > sewing_steps.done_at`
+      WHERE excluded.done_at > sewing_steps.done_at`)
   }
   if (size) {
-    await sql`INSERT INTO sewing_profiles (user_id, size, size_updated_at)
-      VALUES (${userId}, ${size.size}, ${stamp(size.updatedAt)})
-      ON CONFLICT (user_id) DO UPDATE
-      SET size = excluded.size, size_updated_at = excluded.size_updated_at
-      WHERE sewing_profiles.size_updated_at IS NULL OR excluded.size_updated_at > sewing_profiles.size_updated_at`
+    queries.push(sql`UPDATE sewing_profiles SET size = ${size.size}, size_updated_at = ${stamp(size.updatedAt)}
+      WHERE user_id = ${userId}
+        AND (size_updated_at IS NULL OR ${stamp(size.updatedAt)}::timestamptz > size_updated_at)
+        AND ${stamp(size.updatedAt)}::timestamptz > COALESCE(erased_at, '-infinity'::timestamptz)`)
   }
-  // For automatic deletion: this account is in use (app/api/cron/retention)
-  await sql`INSERT INTO sewing_profiles (user_id, last_seen_at) VALUES (${userId}, now())
-    ON CONFLICT (user_id) DO UPDATE SET last_seen_at = now()`
+  await sql.transaction(queries)
   return readState(userId)
 }
 
-/** Deletes everything saved for this account, keeping only the moment it happened (see mergeSewing) */
+/**
+ * Deletes everything saved for this account, keeping only the moment it happened (see mergeSewing).
+ * One transaction that first takes the profile row, so a sync from another device either finishes
+ * before (and is deleted) or starts after (and is refused as older than the erase).
+ */
 export async function eraseSewing(userId: string) {
   const sql = getSql()
-  await sql`DELETE FROM sewing_projects WHERE user_id = ${userId}`
-  await sql`DELETE FROM sewing_steps WHERE user_id = ${userId}`
-  await sql`INSERT INTO sewing_profiles (user_id, erased_at) VALUES (${userId}, now())
-    ON CONFLICT (user_id) DO UPDATE SET size = NULL, size_updated_at = NULL, erased_at = now()`
+  await sql.transaction([
+    sql`INSERT INTO sewing_profiles (user_id, erased_at) VALUES (${userId}, now())
+      ON CONFLICT (user_id) DO UPDATE SET size = NULL, size_updated_at = NULL, erased_at = now()`,
+    sql`DELETE FROM sewing_projects WHERE user_id = ${userId}`,
+    sql`DELETE FROM sewing_steps WHERE user_id = ${userId}`,
+  ])
 }

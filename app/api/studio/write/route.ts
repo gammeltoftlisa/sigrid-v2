@@ -1,6 +1,7 @@
 import { createTextStreamResponse, Output, streamText, toTextStream } from 'ai'
 
-import { clientIp, rateLimit } from '@/lib/rate-limit'
+import { clientIp } from '@/lib/rate-limit'
+import { limitShared } from '@/lib/server/rate-limit'
 import { errorMessage, logEvent } from '@/lib/server/log'
 import { STUDIO_AI_ENABLED } from '@/lib/studio/flags'
 import { guideDraftSchema, writeRequestSchema } from '@/lib/studio/schema'
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'The assistant is switched off for now.' }, { status: 503 })
   }
 
-  const limited = rateLimit(`studio:${clientIp(request.headers)}`, LIMIT, WINDOW_MS)
+  const limited = await limitShared(`studio:${clientIp(request.headers)}`, LIMIT, WINDOW_MS)
   if (!limited.ok) {
     return Response.json(
       { error: 'Too many requests. Try again in a minute.' },

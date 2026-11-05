@@ -3,10 +3,11 @@ import { z } from 'zod'
 
 import { getCatalogItem, getGuideOutline } from '@/lib/data'
 import { paymentsEnabled } from '@/lib/payments'
-import { rateLimit } from '@/lib/rate-limit'
-import { hasEntitlement } from '@/lib/server/entitlements'
+import { limitShared } from '@/lib/server/rate-limit'
+import { entitlementStatus } from '@/lib/server/entitlements'
 import { errorMessage, logEvent } from '@/lib/server/log'
-import { acceptWaiver, createCheckout } from '@/lib/stripe'
+import { applyCheckoutSession } from '@/lib/server/stripe-events'
+import { acceptWaiver, createCheckout, findPaidCheckout } from '@/lib/stripe'
 
 const bodySchema = z.object({ garmentId: z.string().min(1).max(100) })
 
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
   const { userId } = await auth()
   if (!userId) return Response.json({ error: 'Log in first' }, { status: 401 })
 
-  const limited = rateLimit(`checkout:${userId}`, 10, 60_000)
+  const limited = await limitShared(`checkout:${userId}`, 10, 60_000)
   if (!limited.ok) return Response.json({ error: 'Too many tries' }, { status: 429, headers: { 'Retry-After': String(limited.retryAfter) } })
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null))
@@ -34,7 +35,16 @@ export async function POST(request: Request) {
   if (!getGuideOutline(garmentId)?.steps.length) return Response.json({ error: 'This guide isn’t ready yet' }, { status: 409 })
 
   try {
-    if (await hasEntitlement(userId, garmentId)) return Response.json({ error: 'Already yours' }, { status: 409 })
+    // Never a second payment for the same pattern: not when it's owned, not while the first is still clearing,
+    // and not when Stripe has a payment the webhook hasn't told us about yet
+    const status = await entitlementStatus(userId, garmentId)
+    if (status === 'active') return Response.json({ error: 'Already yours' }, { status: 409 })
+    if (status === 'processing') return Response.json({ error: 'Your payment for this pattern is still being processed' }, { status: 409 })
+    const paid = await findPaidCheckout(userId, garmentId)
+    if (paid) {
+      await applyCheckoutSession(paid, paid.created)
+      return Response.json({ error: 'Already yours' }, { status: 409 })
+    }
     const checkout = await createCheckout({ userId, garmentId, name: item.name, price: item.price, origin: new URL(request.url).origin })
     return Response.json(checkout, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {

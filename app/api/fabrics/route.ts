@@ -5,7 +5,8 @@ import { cleanSearch, supplyFor } from '@/lib/fabric/catalog'
 import { getFabricNeed } from '@/lib/fabric/needs'
 import { cacheControlFor, searchAllSources } from '@/lib/fabric/sources'
 import type { FabricListing, FabricSearchResponse, SourceStatus } from '@/lib/fabric/types'
-import { clientIp, rateLimit } from '@/lib/rate-limit'
+import { clientIp } from '@/lib/rate-limit'
+import { limitShared } from '@/lib/server/rate-limit'
 import { errorMessage, logEvent, withRequestId } from '@/lib/server/log'
 
 // Each search calls every shop, so one visitor gets 30 a minute (the store makes a few per page)
@@ -27,7 +28,7 @@ const paramsSchema = z.object({
  *   ?q=invisible zip                          one of its supplies
  */
 export async function GET(request: NextRequest) {
-  const limited = rateLimit(`fabrics:${clientIp(request.headers)}`, LIMIT, WINDOW_MS)
+  const limited = await limitShared(`fabrics:${clientIp(request.headers)}`, LIMIT, WINDOW_MS)
   if (!limited.ok) {
     return Response.json(
       { error: 'Too many searches. Try again in a minute.' },

@@ -1,0 +1,38 @@
+name: Roll back production
+
+# When a deploy breaks the app: GitHub → Actions → "Roll back production" → Run workflow.
+# Puts the production deployment before the newest back live in seconds, without building anything.
+# Or name one: paste a deployment URL from `vercel ls --prod` or the Vercel dashboard.
+# It undoes code only, never the database: read OPERATIONS.md before rolling back past a migration.
+# The next push to main deploys forward again as usual.
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment:
+        description: Deployment URL to put back (empty = the one before the newest)
+        required: false
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Choose the deployment
+        id: pick
+        env:
+          WANTED: ${{ inputs.deployment }}
+        run: |
+          if [ -n "$WANTED" ]; then
+            echo "url=$WANTED" >> "$GITHUB_OUTPUT"
+          else
+            url=$(npx -y vercel@57 ls --prod --status READY --format json --token=${{ secrets.VERCEL_TOKEN }} | jq -r '.deployments[1].url')
+            echo "url=$url" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Roll back
+        run: |
+          echo "Putting back https://${{ steps.pick.outputs.url }}"
+          npx -y vercel@57 rollback "${{ steps.pick.outputs.url }}" --yes --token=${{ secrets.VERCEL_TOKEN }}

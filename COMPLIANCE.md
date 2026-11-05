@@ -32,6 +32,7 @@ Until then it isn't true, so don't launch first.**
       or terms; download and keep a signed copy of each:
   - [ ] Vercel
   - [ ] Clerk
+  - [ ] Sentry (error tracking, added 2026-11-05 through the Vercel Marketplace). Accept its DPA in Sentry's settings → Legal, and choose the EU data region if offered. It receives no names, emails, cookies, headers or typed text (`lib/sentry-options.ts`)
   - [ ] Neon
   - [ ] Stripe
 
@@ -45,7 +46,7 @@ Until then it isn't true, so don't launch first.**
 - [ ] **Confirm the cookie names** in the cookie policy against what Clerk sets in production (browser devtools →
       Application → Cookies, after logging in on the live site).
 - [ ] **Turn on Vercel Web Analytics** for the project (Vercel dashboard → Analytics). The code loads it only after consent.
-- [ ] **Run the database migration**: `npm run db:migrate` against production (adds `consents` and the retention columns).
+- [x] **Database migrations** now run on production automatically in the deploy workflow (`db/migrations`, see OPERATIONS.md).
 - [ ] **`CRON_SECRET`** is set in production, so the daily deletion job runs.
 - [ ] **Record of processing activities (art. 30)**: keep the table below up to date and stored with the DPAs.
 - [ ] **Breach plan**: name who is responsible, and make sure they have read the section below.
