@@ -1,13 +1,13 @@
 import { neon } from '@neondatabase/serverless'
 
-import { assertDatabaseAllowed } from './db-guard.mjs'
+import { assertDatabaseAllowed, databaseUrl } from './db-guard.mjs'
 
 /** The database (Neon, Frankfurt). Connects on first use, so building the app doesn't need it. Server only. */
 let client: ReturnType<typeof neon> | null = null
 export function getSql() {
   if (!client) {
-    assertDatabaseAllowed(process.env.DATABASE_URL ?? '')
-    client = neon(process.env.DATABASE_URL!)
+    assertDatabaseAllowed(databaseUrl())
+    client = neon(databaseUrl())
   }
   return client
 }

@@ -2,7 +2,7 @@ import 'server-only'
 
 import { neon } from '@neondatabase/serverless'
 
-import { assertDatabaseAllowed } from '../db-guard.mjs'
+import { assertDatabaseAllowed, databaseUrl } from '../db-guard.mjs'
 
 /**
  * The database, as one function. Each call is one statement, and one statement is atomic, so the
@@ -16,9 +16,10 @@ let db: Query | null = null
 
 export function getDb(): Query {
   if (db) return db
-  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set')
-  assertDatabaseAllowed(process.env.DATABASE_URL)
-  const sql = neon(process.env.DATABASE_URL)
+  const url = databaseUrl()
+  if (!url) throw new Error('DATABASE_URL is not set')
+  assertDatabaseAllowed(url)
+  const sql = neon(url)
   db = (text, params = [], options) => sql.query(text, params, { fetchOptions: { signal: AbortSignal.timeout(options?.timeoutMs ?? TIMEOUT_MS) } }) as Promise<Record<string, unknown>[]>
   return db
 }

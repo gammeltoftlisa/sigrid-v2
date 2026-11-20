@@ -11,9 +11,9 @@ import { readdirSync, readFileSync } from 'node:fs'
 
 import { neon } from '@neondatabase/serverless'
 
-import { isProductionDatabase } from '../lib/db-guard.mjs'
+import { databaseUrl, isProductionDatabase } from '../lib/db-guard.mjs'
 
-const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL
+const url = databaseUrl({ unpooled: true })
 if (!url) {
   console.error('DATABASE_URL is not set.')
   process.exit(1)
